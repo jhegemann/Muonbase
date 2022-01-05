@@ -1,0 +1,7 @@
+{
+  "ip": "0.0.0.0",
+  "port": "8260",
+  "data_path": "./db/data.db",
+  "user_path": "./config/users.json",
+  "working_directory": "."
+}
