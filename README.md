@@ -1,21 +1,22 @@
-# Baseload
-High Performance Schemaless Key-Value In-Memory Database Server
+# Baseload.DB
+High Performance Schemaless In-Memory JSON Document Database Server
 
-# Essentials
+# Essential Features
 * fast lookups - usage of templated in-memory b+ tree data structure
 * no special drivers - exposure of rest interface
 * small footprint - single-threaded multiplexed http server
-* few dependencies - coded mainly from scratch in vanilla c/c++ (exceptions: openssl)
+* few dependencies - coded mainly from scratch in vanilla c/c++
 * overseeable codebase - easy to understand and fully transparent
 * seamless integration - use of json as data exchange format
+* automated testing - load scenario with random inserts, lookups and removals
 
-# Upcoming
-* Journaling
+# Upcoming Features
 * Persistence
 * Sharding
 * Encryption
 * Compression
 * Indexing
+* Queries
 
 # Storage Engine
 As a data structure, baseload implements a templated in-memory b+ tree, which serves as a key value store.
@@ -46,9 +47,9 @@ Regarding authorization, baseload implements only simple http basic authorizatio
 to set user permissions on specific documents, meaning that all users can read and modify all documents.
 
 # API
-* POST /insert: insert a document
-* POST /remove: remove a document
-* POST /find: find a document
+* POST /insert: insert a document - requires plain json document in request body
+* POST /remove: remove a document - requires json wrapped id in request body
+* POST /find: find a document - requires json wrapped id in request body
 * GET /keys: retrieve all keys
 * GET /dump: retrieve a complete json dump
 
