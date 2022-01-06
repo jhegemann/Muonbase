@@ -1,5 +1,5 @@
 # Baseload.DB
-High Performance Schemaless In-Memory JSON Document Database Server - Jonas Hegemann
+High Performance Schemaless In-Memory JSON Document Database Server
 
 # Essential Features
 * fast lookups - usage of templated in-memory b+ tree data structure
