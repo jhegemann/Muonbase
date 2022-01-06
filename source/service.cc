@@ -37,7 +37,6 @@ void DocumentDatabase::Initialize() {
 }
 
 void DocumentDatabase::Tick() {
-  Log::GetInstance()->Info("rollover database journal");
   Rollover();
 }
 
@@ -53,6 +52,7 @@ void DocumentDatabase::Rollover() {
   if (FileSize(filepath_journal_) < FileSize(filepath_)) {
     return;
   }
+  Log::GetInstance()->Info("rollover database journal");
   std::fstream stream;
   stream.open(filepath_snapshot_, std::fstream::out | std::fstream::binary);
   serializer_.Serialize(db_, stream);

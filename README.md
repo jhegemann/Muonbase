@@ -18,6 +18,20 @@ High Performance Schemaless In-Memory JSON Document Database Server
 * Indexing
 * Queries
 
+# Disclaimer
+This software is far from being perfect and it explicitly does not claim to be so. However, it is written
+with a decent amount of diligence and care and has been tested thoroughly as far as possible. This software will contain
+bugs and some things might be poorly designed. Both applies (more or less) to any other software as well. Though I have
+spent a lot of time in the past to make this piece of software what it is, it has always been a private
+project parallel to my fulltime employments. Please understand that du to this reason maintainance might sometimes be
+a bit slow and sluggish, I will try my very best!
+
+This software does not aim to be extremely portable, instead it is designed to run under linux providing
+a recent version of g++ that is compatible with C++ 20. The g++ version that has been used for development
+is g++ 9.3.0. The reason for not making it highly portable in the first place is to save development time,
+and second it is assumed to run on *servers* that in most cases run a linux distribution. It is mandatory
+that this linux version (or the c library) supports the epoll system calls.
+
 # Storage Engine
 As a data structure, baseload implements a templated in-memory b+ tree, which serves as a key value store.
 Both variants are implemented, the unique key to value mapping (corresponding to std::map) as well as
@@ -46,12 +60,35 @@ version, there are only two services available, which are i) the storage engine,
 Regarding authorization, baseload implements only simple http basic authorization and there is no possibility
 to set user permissions on specific documents, meaning that all users can read and modify all documents.
 
+# Haproxy
+
+# Logrotate
+
+# Usage
+
+```
+jonas@DESKTOP-EE4KNAM:/mnt/c/Home/Native/Baseload.DB$ ./bin/database.app
+Usage: ./bin/database.app [-v] [-d] [-c <config>].
+         -v : verbose
+         -d : daemon
+         -c <config> : configuration in json format
+```
+
 # API
+
+## Routes
 * POST /insert: insert a document - requires plain json document in request body
 * POST /remove: remove a document - requires json wrapped id in request body
 * POST /find: find a document - requires json wrapped id in request body
 * GET /keys: retrieve all keys
 * GET /dump: retrieve a complete json dump
+
+### Insert
+
+### Remove
+
+### Find
+
 
 
 
