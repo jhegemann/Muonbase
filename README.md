@@ -83,11 +83,11 @@ Usage: ./bin/database.app [-v] [-d] [-c <config>].
 # API
 
 ## Routes
-* POST /insert: insert a document
-* POST /remove: remove a document
-* POST /find: find a document
-* GET /keys: retrieve all keys
-* GET /dump: retrieve json dump
+* POST /insert
+* POST /remove
+* POST /fetch
+* GET /keys
+* GET /dump
 
 ### Insert
 Request:

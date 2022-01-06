@@ -131,11 +131,10 @@ bool TcpSocket::WaitReceive(long timeout) {
   event.fd = descriptor_;
   event.events = POLLIN | POLLHUP | POLLERR;
   int ready = poll(&event, 1, timeout);
-  if (event.revents & POLLHUP || event.revents & POLLERR) {
-    return false;
-  }
   if (ready > 0 && event.revents & POLLIN) {
     return true;
+  } else if (event.revents & POLLHUP || event.revents & POLLERR) {
+    return false;
   }
   return false;
 }
@@ -145,11 +144,10 @@ bool TcpSocket::WaitSend(long timeout) {
   event.fd = descriptor_;
   event.events = POLLOUT | POLLHUP | POLLERR;
   int ready = poll(&event, 1, timeout);
-  if (event.revents & POLLHUP || event.revents & POLLERR) {
-    return false;
-  }
   if (ready > 0 && event.revents & POLLOUT) {
     return true;
+  } else if (event.revents & POLLHUP || event.revents & POLLERR) {
+    return false;
   }
   return false;
 }

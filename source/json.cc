@@ -208,15 +208,15 @@ void JsonObject::FromString(const std::string &source, size_t &offset) {
       throw std::runtime_error("invalid json object");
     }
     if (source.substr(off, 4).compare("null") == 0 &&
-        CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}]")) {
+        CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}")) {
       PutNull(key);
       off += 4;
     } else if (source.substr(off, 4).compare("true") == 0 &&
-               CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}]")) {
+               CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}")) {
       PutBoolean(key, true);
       off += 4;
     } else if (source.substr(off, 5).compare("false") == 0 &&
-               CharIsAnyOf(source[off + 5], "\b\t\n\a\r ,}]")) {
+               CharIsAnyOf(source[off + 5], "\b\t\n\a\r ,}")) {
       PutBoolean(key, false);
       off += 5;
     } else if (source[off] == '\"') {
@@ -230,7 +230,7 @@ void JsonObject::FromString(const std::string &source, size_t &offset) {
       size_t pos = off + 1;
       bool dot_found = false;
       while (pos < source.length()) {
-        if (CharIsAnyOf(source[pos], "\b\t\n\a\r ,}]")) {
+        if (CharIsAnyOf(source[pos], "\b\t\n\a\r ,}")) {
           break;
         }
         if (source[pos] == '.') {
@@ -272,6 +272,8 @@ void JsonObject::FromString(const std::string &source, size_t &offset) {
     } else if (source[off] == '}') {
       off++;
       break;
+    } else {
+      throw std::runtime_error("invalid json object");
     }
   }
   offset = off;
@@ -442,15 +444,15 @@ void JsonArray::FromString(const std::string &source, size_t &offset) {
       throw std::runtime_error("invalid json object");
     }
     if (source.substr(off, 4).compare("null") == 0 &&
-        CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}]")) {
+        CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,]")) {
       PutNull();
       off += 4;
     } else if (source.substr(off, 4).compare("true") == 0 &&
-               CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}]")) {
+               CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,]")) {
       PutBoolean(true);
       off += 4;
     } else if (source.substr(off, 5).compare("false") == 0 &&
-               CharIsAnyOf(source[off + 5], "\b\t\n\a\r ,}]")) {
+               CharIsAnyOf(source[off + 5], "\b\t\n\a\r ,]")) {
       PutBoolean(false);
       off += 5;
     } else if (source[off] == '\"') {
@@ -464,7 +466,7 @@ void JsonArray::FromString(const std::string &source, size_t &offset) {
       size_t pos = off + 1;
       bool dot_found = false;
       while (pos < source.length()) {
-        if (CharIsAnyOf(source[pos], "\b\t\n\a\r ,}]")) {
+        if (CharIsAnyOf(source[pos], "\b\t\n\a\r ,]")) {
           break;
         }
         if (source[pos] == '.') {
@@ -506,6 +508,8 @@ void JsonArray::FromString(const std::string &source, size_t &offset) {
     } else if (source[off] == ']') {
       off++;
       break;
+    } else {
+      throw std::runtime_error("invalid json object");
     }
   }
   offset = off;
