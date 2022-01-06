@@ -20,58 +20,57 @@ High Performance Schemaless In-Memory JSON Document Database Server
 
 # Disclaimer
 This software is far from being perfect and it explicitly does not claim to be so. However, it is written
-with a decent amount of diligence and care and has been tested thoroughly as far as possible. This software will contain
-bugs and some things might be poorly designed. Both applies (more or less) to any other software as well. Though I have
-spent a lot of time in the past to make this piece of software what it is, it has always been a private
-project parallel to my fulltime employments. Please understand that due to this reason maintainance might sometimes be
+with a decent amount of diligence and care and has been tested thoroughly as far as possible. This software contains
+and will contain bugs and some things might be poorly designed. Both applies (more or less) to any other software as well. 
+Though I have spent years to make this piece of software what it is, it has always been a private
+project parallel to my fulltime employments. Please understand that for that reason maintainance might sometimes be
 a bit slow and sluggish, I will try my very best!
 
-This software does not aim to be extremely portable, instead it is designed to run under linux providing
-a recent version of g++ that is compatible with C++ 20. The g++ version that has been used for development
-is g++ 9.3.0. The reason for not making it highly portable in the first place is to save development time,
-and second it is assumed to run on *servers* that in most cases run a linux distribution anyway. It is mandatory
+This software does not aim to be extremely portable, instead it is designed to run within a linux distribution.
+It can be build with gcc and C++-20 standard. The g++ version that is currently in use for development
+is g++ 9.3.0. The reason for not making it highly portable in the first place was to save development time.
+In addition, it is assumed to run on *servers* that in most cases run a linux distribution anyway. It is mandatory
 that this linux distribution (or the c library) supports the epoll system calls.
 
 # Storage Engine
-As a data structure, baseload implements a templated in-memory b+ tree, which serves as a key value store.
+As a data structure, the software implements a templated in-memory b+ tree, which serves as a key value store.
 Both variants are implemented, the unique key to value mapping (corresponding to std::map) as well as
 the one key to many values mapping (corresponding to std::multimap). In contrast to an ordinary b tree,
-b+ trees hold their data exclusively in leaf nodes, which on the one hand allows for interconnecting
-the leaf nodes in order to iterate them like a linked list and optimize for range queries, 
-and on the other hand enables what is commonly
-known as bulk loading meaning that key value pairs are read from a continuous stream while the tree is
-built on top of the leaf-level. This avoids costly insertions during loading and is thus very efficient.
+b+ trees hold their data exclusively in leaf nodes, which on the one hand allows for (bidirectionally) interconnecting
+the leaf nodes in order to iterate them like a linked list, and on the other hand enables what is commonly
+known as bulk loading meaning that key value pairs are read from a continuous sorted stream while the tree is
+built on top of the leaf level. This avoids costly insertions during loading and is thus very efficient.
 
-Though the implementation is templated, at the moment baseload is employing only the specific mapping
+Though the implementation is templated, at the moment the software is employing only the specific mapping
 from std::string to json object as it is commonly used in document or no-sql databases. For all native
-types, standard library containers, and classes specific to baseload like json object and json array, 
+types, standard library containers, and specific classes like json object and json array, 
 specialized serializers are implemented. Serialization is realized by binary reading from std::istream
-and writing to std::ostream. Though currently only the document database is implemented, the road
-is paved for implementing key value stores allowing for common native types.
+and writing to std::ostream. Though currently only the document database (unique mapping from std::string to json object) 
+is implemented, the road is in principle paved for implementing key value stores allowing for common native types.
 
 # Transport Layer
-Instead of shipping a set of drivers for several programming languages, baseload relies on the unified
-http rest api approach. The http server is implemented in a single thread using the linux epoll multiplexing
-interface, which allows for asynchroneous handling of multiple clients. The epoll instance is also connected
-to a timer descriptor to enable regular events and to a signal descriptor to handle signals and terminate
+Instead of shipping a set of drivers for several programming languages, the software relies on the unified
+http rest api approach. The http server is implemented in a *single thread* using the linux epoll interface, 
+which allows for highly performant asynchroneous handling of multiple clients. The epoll instance is also connected
+to a timer descriptor to enable regular events and it is connected to a signal descriptor to handle signals and terminate
 the server gracefully in case of a received sigterm or sigkill signal. Incoming http requests are forwarded 
-to the api, which performs tasks based on services that can be injected into the http server. In the current 
-version, there are only two services available, which are i) the storage engine, and ii) the user management.
-Regarding authorization, baseload implements only simple http basic authorization and there is no possibility
+to the htpp rest api, which performs tasks based on services that can be injected into the http server event loop. 
+In the current version, there are only two services available, which are i) the storage engine, and ii) the user management.
+Regarding authorization, the software implements only simple http basic authorization and there is no possibility
 to set user permissions on specific documents, meaning that all users can read and modify all documents.
 
 # Haproxy
-This software only supports plain http transport and no secure sockets! In order to set up https end points it 
-is recommended to bind this software locally and let e.g. haproxy (or another proxy) do the ssl termination. 
+This software supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
+is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
 # Logrotate
-At the current early stage of the software the logging can only be very verbose or totally absent. If you
-really need the logging, either start the server in foreground and watch it on the standard output, or 
-make sure you use e.g. logrotate to avoid blocking your disk space with very large logfiles.
+At the current early stage, logging can only be (very) verbose or totally absent. If you
+really need the logging, either start the server in foreground and observe what happens on the standard output, 
+or make sure you use e.g. logrotate to avoid blocking your disk space with very large logfiles.
 
 # Usage
-
+Database server:
 ```
 root@linux-machine:/home/db$ ./bin/database.app
 Usage: ./bin/database.app [-v] [-d] [-c <config>].
@@ -80,6 +79,7 @@ Usage: ./bin/database.app [-v] [-d] [-c <config>].
          -c <config> : mandatory configuration in json format
 ```
 
+Test client:
 ```
 root@linux-machine:/home/db$ ./bin/test.app
 Usage: ./bin/database.app [-v] [-d] [-c <config>].
@@ -87,14 +87,33 @@ Usage: ./bin/database.app [-v] [-d] [-c <config>].
          -p : port - defaults to 8260
 ```
 
+# Configuration
+```
+{
+  "ip": "127.0.0.1",
+  "port": "8260",
+  "data_path": "./data/storage.db",
+  "user_path": "./config/users.json",
+  "log_path": "./server.log",
+  "working_directory": "."
+}
+```
+
+# User Management
+```
+{
+  "root": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"
+}
+```
+
 # API
 
 ## Routes
 * POST /insert
-* POST /remove
-* POST /fetch
+* POST /erase
+* POST /find
 * GET /keys
-* GET /dump
+* GET /image
 
 ### Insert
 Request:
@@ -120,10 +139,10 @@ server: baseload/1
 {"id":"dMxiajoFmCZirIiD","success":true}
 ```
 
-### Remove
+### Erase
 Request:
 ```
-POST /remove HTTP/1.1
+POST /erase HTTP/1.1
 authorization: Basic cm9vdDowMDAw
 content-length: 25
 content-type: application/json
@@ -144,10 +163,10 @@ server: baseload/1
 {"id":"GI0xHlR9SHXpNPT9","success":true}
 ```
 
-### Fetch
+### Find
 Request:
 ```
-POST /fetch HTTP/1.1
+POST /find HTTP/1.1
 authorization: Basic cm9vdDowMDAw
 content-length: 25
 content-type: application/json

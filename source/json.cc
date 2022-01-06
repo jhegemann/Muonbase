@@ -2,7 +2,7 @@
 
 JsonObject::JsonObject() {}
 
-JsonObject::JsonObject(const std::string &source) { FromString(source); }
+JsonObject::JsonObject(const std::string &source) { Parse(source); }
 
 JsonObject::~JsonObject() {}
 
@@ -177,12 +177,12 @@ std::string JsonObject::AsString() {
   return ss.str();
 }
 
-void JsonObject::FromString(const std::string &source) {
+void JsonObject::Parse(const std::string &source) {
   size_t off = 0;
-  FromString(source, off);
+  Parse(source, off);
 }
 
-void JsonObject::FromString(const std::string &source, size_t &offset) {
+void JsonObject::Parse(const std::string &source, size_t &offset) {
   values_.clear();
   size_t off = offset;
   size_t pos;
@@ -254,11 +254,11 @@ void JsonObject::FromString(const std::string &source, size_t &offset) {
       off = pos;
     } else if (source[off] == '{') {
       JsonObject obj;
-      obj.FromString(source, off);
+      obj.Parse(source, off);
       PutObject(key, obj);
     } else if (source[off] == '[') {
       JsonArray arr;
-      arr.FromString(source, off);
+      arr.Parse(source, off);
       PutArray(key, arr);
     } else {
       throw std::runtime_error("invalid json object");
@@ -281,7 +281,7 @@ void JsonObject::FromString(const std::string &source, size_t &offset) {
 
 JsonArray::JsonArray() {}
 
-JsonArray::JsonArray(const std::string &source) { FromString(source); }
+JsonArray::JsonArray(const std::string &source) { Parse(source); }
 
 JsonArray::~JsonArray() {}
 
@@ -426,12 +426,12 @@ std::string JsonArray::AsString() {
   return ss.str();
 }
 
-void JsonArray::FromString(const std::string &source) {
+void JsonArray::Parse(const std::string &source) {
   size_t off = 0;
-  FromString(source, off);
+  Parse(source, off);
 }
 
-void JsonArray::FromString(const std::string &source, size_t &offset) {
+void JsonArray::Parse(const std::string &source, size_t &offset) {
   values_.clear();
   size_t off = offset;
   size_t pos;
@@ -490,11 +490,11 @@ void JsonArray::FromString(const std::string &source, size_t &offset) {
       off = pos;
     } else if (source[off] == '{') {
       JsonObject obj;
-      obj.FromString(source, off);
+      obj.Parse(source, off);
       PutObject(obj);
     } else if (source[off] == '[') {
       JsonArray arr;
-      arr.FromString(source, off);
+      arr.Parse(source, off);
       PutArray(arr);
     } else {
       throw std::runtime_error("invalid json object");

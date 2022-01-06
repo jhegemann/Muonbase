@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
       break;
     case 'c':
       std::cout << optarg << std::endl;
-      config.FromString(FileToString(optarg));
+      config.Parse(FileToString(optarg));
       config_available = true;
       break;
     case 'd':
@@ -77,15 +77,16 @@ int main(int argc, char **argv) {
   HttpServer server;
 
   Log::GetInstance()->Info("set up services");
-  server.RegisterService("db", new DocumentDatabase(data_path));
-  server.RegisterService("user", new UserPool(user_path));
+  server.RegisterService(db_api::kDatabaseService,
+                         new DocumentDatabase(data_path));
+  server.RegisterService(db_api::kUserService, new UserPool(user_path));
 
   Log::GetInstance()->Info("set up routes");
   server.RegisterHandler(HttpMethod::POST, "/insert", db_api::Insert);
-  server.RegisterHandler(HttpMethod::POST, "/remove", db_api::Remove);
-  server.RegisterHandler(HttpMethod::POST, "/fetch", db_api::Fetch);
+  server.RegisterHandler(HttpMethod::POST, "/erase", db_api::Erase);
+  server.RegisterHandler(HttpMethod::POST, "/find", db_api::Find);
   server.RegisterHandler(HttpMethod::GET, "/keys", db_api::Keys);
-  server.RegisterHandler(HttpMethod::GET, "/dump", db_api::Dump);
+  server.RegisterHandler(HttpMethod::GET, "/image", db_api::Image);
 
   Log::GetInstance()->Info("start server");
   std::string ip = "127.0.0.1";

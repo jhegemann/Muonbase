@@ -12,6 +12,9 @@
 
 template <class K, class V> class Map;
 
+const std::string kJournalSuffix = ".journal";
+const std::string kSnapshotSuffix = ".snapshot";
+
 class ApiService {
 public:
   ApiService();
@@ -30,10 +33,10 @@ public:
   virtual void Shutdown();
   void Rollover();
   std::optional<std::string> Insert(JsonObject &document);
-  std::optional<std::string> Remove(std::string id);
-  std::optional<JsonObject> Fetch(std::string id);
+  std::optional<std::string> Erase(std::string id);
+  std::optional<JsonObject> Find(std::string id);
   std::vector<std::string> Keys();
-  JsonObject Dump();
+  JsonObject Image();
 
 private:
   std::string filepath_;

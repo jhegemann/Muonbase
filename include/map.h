@@ -226,10 +226,10 @@ std::tuple<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
   const size_t children_left = keys_left + 1;
   InnerNode<K, V> *sibling = new InnerNode<K, V>();
   const K up_key = keys_[keys_left];
-  move(keys_.begin() + keys_left + 1, keys_.end(),
-       back_inserter(sibling->keys_));
-  move(children_.begin() + children_left, children_.end(),
-       back_inserter(sibling->children_));
+  std::move(keys_.begin() + keys_left + 1, keys_.end(),
+            std::back_inserter(sibling->keys_));
+  std::move(children_.begin() + children_left, children_.end(),
+            std::back_inserter(sibling->children_));
   keys_.erase(keys_.begin() + keys_left, keys_.end());
   children_.erase(children_.begin() + children_left, children_.end());
   for (auto it = sibling->children_.begin(); it != sibling->children_.end();
@@ -285,14 +285,15 @@ template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
   const K up_key =
       static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index];
   keys_.push_back(up_key);
-  move(sibling->keys_.begin(), sibling->keys_.end(), back_inserter(keys_));
+  std::move(sibling->keys_.begin(), sibling->keys_.end(),
+            std::back_inserter(keys_));
   sibling->keys_.clear();
   for (auto it = sibling->children_.begin(); it != sibling->children_.end();
        ++it) {
     (*it)->SetParent(this);
   }
-  move(sibling->children_.begin(), sibling->children_.end(),
-       back_inserter(children_));
+  std::move(sibling->children_.begin(), sibling->children_.end(),
+            std::back_inserter(children_));
   sibling->children_.clear();
   return true;
 }
@@ -461,9 +462,10 @@ std::tuple<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
   const size_t size = keys_.size();
   const size_t keys_left = (size % 2 == 0) ? size / 2 : size / 2 + 1;
   OuterNode<K, V> *sibling = new OuterNode<K, V>();
-  move(keys_.begin() + keys_left, keys_.end(), back_inserter(sibling->keys_));
-  move(values_.begin() + keys_left, values_.end(),
-       back_inserter(sibling->values_));
+  std::move(keys_.begin() + keys_left, keys_.end(),
+            std::back_inserter(sibling->keys_));
+  std::move(values_.begin() + keys_left, values_.end(),
+            std::back_inserter(sibling->values_));
   keys_.erase(keys_.begin() + keys_left, keys_.end());
   values_.erase(values_.begin() + keys_left, values_.end());
   const K up_key = sibling->keys_.front();
@@ -504,9 +506,10 @@ template <class K, class V> bool OuterNode<K, V>::Coalesce(Node *node) {
   if (sibling->keys_.size() + keys_.size() > OUTER_FANOUT) {
     return false;
   }
-  move(sibling->keys_.begin(), sibling->keys_.end(), back_inserter(keys_));
-  move(sibling->values_.begin(), sibling->values_.end(),
-       back_inserter(values_));
+  std::move(sibling->keys_.begin(), sibling->keys_.end(),
+            std::back_inserter(keys_));
+  std::move(sibling->values_.begin(), sibling->values_.end(),
+            std::back_inserter(values_));
   sibling->keys_.clear();
   sibling->values_.clear();
   next_ = sibling->next_;
@@ -537,10 +540,11 @@ public:
   Map();
   virtual ~Map();
   void Clear();
-  size_t GetSize();
-  void Put(const K &key, const V &value);
-  void Put(MapIterator<K, V> &iter, const V &value);
-  const V &Get(K const &key) const;
+  size_t Size();
+  void Insert(const K &key, const V &value);
+  void Insert(MapIterator<K, V> &iter, const V &value);
+  const V &operator[](const K &key) const;
+  V &operator[](const K &key);
   bool Erase(const K &key);
   bool Erase(MapIterator<K, V> iter);
   bool Contains(const K &key);
@@ -553,6 +557,7 @@ public:
 protected:
   Node *root_;
   size_t size_;
+  V &Get(const K &key);
   bool Erase(OuterNode<K, V> *outer, const K &key);
   Node *LeftNode(Node *node);
   Node *RightNode(Node *node);
@@ -592,7 +597,7 @@ template <class K, class V> void Map<K, V>::Clear() {
   size_ = 0;
 }
 
-template <class K, class V> size_t Map<K, V>::GetSize() { return size_; }
+template <class K, class V> size_t Map<K, V>::Size() { return size_; }
 
 template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) {
   if (node == root_) {
@@ -711,22 +716,31 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() {
   return static_cast<OuterNode<K, V> *>(current);
 }
 
-template <class K, class V> const V &Map<K, V>::Get(const K &key) const {
+template <class K, class V> V &Map<K, V>::Get(const K &key) {
   size_t position;
   OuterNode<K, V> *outer_node;
   std::tie(position, outer_node) = Locate(key);
   return outer_node->values_[position];
 }
 
+template <class K, class V> const V &Map<K, V>::operator[](const K &key) const {
+  return Get(key);
+}
+
+template <class K, class V> V &Map<K, V>::operator[](const K &key) {
+  return Get(key);
+}
+
 template <class K, class V>
-void Map<K, V>::Put(MapIterator<K, V> &iter, const V &value) {
+void Map<K, V>::Insert(MapIterator<K, V> &iter, const V &value) {
   if (iter == End()) {
     return;
   }
   iter.GetNode()->values_[iter.GetIndex()] = value;
 }
 
-template <class K, class V> void Map<K, V>::Put(const K &key, const V &value) {
+template <class K, class V>
+void Map<K, V>::Insert(const K &key, const V &value) {
   if (root_ == nullptr) {
     OuterNode<K, V> *outer_node = new OuterNode<K, V>();
     outer_node->Insert(key, value);
@@ -1009,9 +1023,10 @@ template <class K, class V> class Multimap {
 public:
   Multimap();
   virtual ~Multimap();
-  void Put(const K &key, const V &value);
-  void Put(MultimapIterator<K, V> &iter, const V &value);
-  const std::vector<V> &Get(const K &key) const;
+  void Insert(const K &key, const V &value);
+  void Insert(MultimapIterator<K, V> &iter, const V &value);
+  const std::vector<V> &operator[](const K &key) const;
+  std::vector<V> &operator[](const K &key);
   void Clear();
   bool Erase(const K &key);
   bool Erase(const K &key, const V &value);
@@ -1025,6 +1040,7 @@ public:
 
 protected:
   Map<K, std::vector<V>> tree_;
+  std::vector<V> &Get(const K &key);
   MultimapIterator<K, V> BeginIterator();
 };
 
@@ -1033,19 +1049,19 @@ template <class K, class V> Multimap<K, V>::Multimap() {}
 template <class K, class V> Multimap<K, V>::~Multimap() {}
 
 template <class K, class V>
-void Multimap<K, V>::Put(const K &key, const V &value) {
+void Multimap<K, V>::Insert(const K &key, const V &value) {
   MapIterator<K, std::vector<V>> iter = tree_.Find(key);
   if (iter != tree_.End()) {
     std::vector<V> &multi_value = iter.Value();
     multi_value.push_back(value);
     return;
   }
-  tree_.Put(key, std::vector<V>{value});
+  tree_.Insert(key, std::vector<V>{value});
   return;
 }
 
 template <class K, class V>
-void Multimap<K, V>::Put(MultimapIterator<K, V> &iter, const V &value) {
+void Multimap<K, V>::Insert(MultimapIterator<K, V> &iter, const V &value) {
   MapIterator<K, std::vector<V>> single_iter;
   single_iter.node_ = iter.node_;
   single_iter.index_ = iter.index_;
@@ -1054,12 +1070,22 @@ void Multimap<K, V>::Put(MultimapIterator<K, V> &iter, const V &value) {
 }
 
 template <class K, class V>
-inline const std::vector<V> &Multimap<K, V>::Get(const K &key) const {
+inline std::vector<V> &Multimap<K, V>::Get(const K &key) {
   return tree_.Get(key);
 }
 
 template <class K, class V> inline void Multimap<K, V>::Clear() {
   tree_.Clear();
+}
+
+template <class K, class V>
+const std::vector<V> &Multimap<K, V>::operator[](const K &key) const {
+  return Get(key);
+}
+
+template <class K, class V>
+std::vector<V> &Multimap<K, V>::operator[](const K &key) {
+  return Get(key);
 }
 
 template <class K, class V> inline bool Multimap<K, V>::Erase(const K &key) {
@@ -1512,7 +1538,7 @@ size_t Serializer<Map<K, V>>::Serialize(Map<K, V> &map, std::ostream &stream) {
   if (map.root_ == nullptr) {
     return bytes;
   }
-  size_t size = map.GetSize();
+  size_t size = map.Size();
   stream.write((const char *)&size, sizeof(size_t));
   bytes += sizeof(size_t);
   OuterNode<K, V> *cursor = map.FirstLeaf();

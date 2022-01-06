@@ -1,20 +1,19 @@
 #include "api.h"
 
-static const std::string kSuccess = "{\"success\":true}";
-static const std::string kNoSuccess = "{\"success\":false}";
+namespace db_api {
 
 static bool AccessPermitted(const HttpRequest &request, ServiceMap services) {
-  UserPool *user = static_cast<UserPool *>(services["user"]);
-  std::string auth = request.GetHeader("authorization");
+  UserPool *user = static_cast<UserPool *>(services[kUserService]);
+  std::string auth = request.GetHeader(kAuthorization);
   if (auth.empty()) {
     return false;
   }
   std::vector<std::string> parts = StringExplode(auth, kStringSpace);
-  if (parts.size() != 2 || parts[0].compare("Basic") != 0) {
+  if (parts.size() != 2 || parts[0].compare(kBasic) != 0) {
     return false;
   }
   std::string auth_decoded = DecodeBase64(parts[1]);
-  parts = StringExplode(auth_decoded, ":");
+  parts = StringExplode(auth_decoded, kStringColon);
   if (parts.size() != 2) {
     return false;
   }
@@ -24,11 +23,9 @@ static bool AccessPermitted(const HttpRequest &request, ServiceMap services) {
   return true;
 }
 
-namespace db_api {
-
 HttpResponse Insert(const HttpRequest &request, ServiceMap services) {
-  if (services.find("user") == services.end() ||
-      services.find("db") == services.end()) {
+  if (services.find(kUserService) == services.end() ||
+      services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
                                APPLICATION_JSON, kNoSuccess);
   }
@@ -36,7 +33,7 @@ HttpResponse Insert(const HttpRequest &request, ServiceMap services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
                                kNoSuccess);
   }
-  if (request.GetHeader("content-type")
+  if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
@@ -44,26 +41,27 @@ HttpResponse Insert(const HttpRequest &request, ServiceMap services) {
   }
   JsonObject object;
   try {
-    object.FromString(request.GetBody());
+    object.Parse(request.GetBody());
   } catch (std::runtime_error &) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
                                kNoSuccess);
   }
-  DocumentDatabase *db = static_cast<DocumentDatabase *>(services["db"]);
+  DocumentDatabase *db =
+      static_cast<DocumentDatabase *>(services[kDatabaseService]);
   auto id = db->Insert(object);
   if (!id) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
                                APPLICATION_JSON, kNoSuccess);
   }
   JsonObject result(kSuccess);
-  result.PutString("id", *id);
+  result.PutString(kId, *id);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              result.AsString());
 }
 
-HttpResponse Remove(const HttpRequest &request, ServiceMap services) {
-  if (services.find("user") == services.end() ||
-      services.find("db") == services.end()) {
+HttpResponse Erase(const HttpRequest &request, ServiceMap services) {
+  if (services.find(kUserService) == services.end() ||
+      services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
                                APPLICATION_JSON, kNoSuccess);
   }
@@ -71,7 +69,7 @@ HttpResponse Remove(const HttpRequest &request, ServiceMap services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
                                kNoSuccess);
   }
-  if (request.GetHeader("content-type")
+  if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
@@ -79,30 +77,31 @@ HttpResponse Remove(const HttpRequest &request, ServiceMap services) {
   }
   JsonObject object;
   try {
-    object.FromString(request.GetBody());
+    object.Parse(request.GetBody());
   } catch (std::runtime_error &) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
                                kNoSuccess);
   }
-  if (!object.Has("id") || !object.IsString("id")) {
+  if (!object.Has(kId) || !object.IsString(kId)) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
                                kNoSuccess);
   }
-  DocumentDatabase *db = static_cast<DocumentDatabase *>(services["db"]);
-  auto id = db->Remove(object.GetAsString("id"));
+  DocumentDatabase *db =
+      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+  auto id = db->Erase(object.GetAsString(kId));
   if (!id) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
                                kNoSuccess);
   }
   JsonObject result(kSuccess);
-  result.PutString("id", *id);
+  result.PutString(kId, *id);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              result.AsString());
 }
 
-HttpResponse Fetch(const HttpRequest &request, ServiceMap services) {
-  if (services.find("user") == services.end() ||
-      services.find("db") == services.end()) {
+HttpResponse Find(const HttpRequest &request, ServiceMap services) {
+  if (services.find(kUserService) == services.end() ||
+      services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
                                APPLICATION_JSON, kNoSuccess);
   }
@@ -110,7 +109,7 @@ HttpResponse Fetch(const HttpRequest &request, ServiceMap services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
                                kNoSuccess);
   }
-  if (request.GetHeader("content-type")
+  if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
@@ -118,32 +117,33 @@ HttpResponse Fetch(const HttpRequest &request, ServiceMap services) {
   }
   JsonObject object;
   try {
-    object.FromString(request.GetBody());
+    object.Parse(request.GetBody());
   } catch (std::runtime_error &) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
                                kNoSuccess);
   }
-  if (!object.Has("id") || !object.IsString("id")) {
+  if (!object.Has(kId) || !object.IsString(kId)) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
                                kNoSuccess);
   }
-  DocumentDatabase *db = static_cast<DocumentDatabase *>(services["db"]);
-  auto id = db->Fetch(object.GetAsString("id"));
+  DocumentDatabase *db =
+      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+  auto id = db->Find(object.GetAsString(kId));
   JsonObject result(kSuccess);
-  result.PutString("id", object.GetAsString("id"));
+  result.PutString(kId, object.GetAsString(kId));
   if (id) {
-    result.PutObject("document", *id);
-    result.PutBoolean("found", true);
+    result.PutObject(kDocument, *id);
+    result.PutBoolean(kFound, true);
   } else {
-    result.PutBoolean("found", false);
+    result.PutBoolean(kFound, false);
   }
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              result.AsString());
 }
 
 HttpResponse Keys(const HttpRequest &request, ServiceMap services) {
-  if (services.find("user") == services.end() ||
-      services.find("db") == services.end()) {
+  if (services.find(kUserService) == services.end() ||
+      services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
                                APPLICATION_JSON, kNoSuccess);
   }
@@ -151,27 +151,28 @@ HttpResponse Keys(const HttpRequest &request, ServiceMap services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
                                kNoSuccess);
   }
-  if (request.GetHeader("content-type")
+  if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
                                kNoSuccess);
   }
   JsonObject result;
-  DocumentDatabase *db = static_cast<DocumentDatabase *>(services["db"]);
+  DocumentDatabase *db =
+      static_cast<DocumentDatabase *>(services[kDatabaseService]);
   std::vector<std::string> keys = db->Keys();
   JsonArray array;
   for (size_t i = 0; i < keys.size(); i++) {
     array.PutString(keys[i]);
   }
-  result.PutArray("keys", array);
+  result.PutArray(kKeys, array);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              result.AsString());
 }
 
-HttpResponse Dump(const HttpRequest &request, ServiceMap services) {
-  if (services.find("user") == services.end() ||
-      services.find("db") == services.end()) {
+HttpResponse Image(const HttpRequest &request, ServiceMap services) {
+  if (services.find(kUserService) == services.end() ||
+      services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
                                APPLICATION_JSON, kNoSuccess);
   }
@@ -179,9 +180,10 @@ HttpResponse Dump(const HttpRequest &request, ServiceMap services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
                                kNoSuccess);
   }
-  DocumentDatabase *db = static_cast<DocumentDatabase *>(services["db"]);
+  DocumentDatabase *db =
+      static_cast<DocumentDatabase *>(services[kDatabaseService]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
-                             db->Dump().AsString());
+                             db->Image().AsString());
 }
 
 } // namespace db_api

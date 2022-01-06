@@ -105,7 +105,7 @@ public:
   virtual ~HttpPacket();
   void AddHeader(const std::string &key, const std::string &value);
   void AddHeader(const std::string &key, size_t value);
-  const std::string GetHeader(const std::string &key) const;
+  const std::string &GetHeader(const std::string &key) const;
   size_t CountHeaders() const;
   void ClearHeaders();
   void SetBody(const std::string &body);
@@ -252,7 +252,7 @@ private:
 };
 
 std::optional<HttpResponse>
-SendRequest(const std::string ip, const std::string port, HttpMethod method,
+SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
             const std::string &url, const std::string &user = kStringEmpty,
             const std::string &password = kStringEmpty,
             HttpContentType content_type = INVALID_CONTENT_TYPE,

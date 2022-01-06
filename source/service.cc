@@ -5,8 +5,8 @@ ApiService::ApiService() {}
 ApiService::~ApiService() {}
 
 DocumentDatabase::DocumentDatabase(const std::string &filepath)
-    : filepath_(filepath), filepath_journal_(filepath + ".journal"),
-      filepath_snapshot_(filepath + ".snapshot") {}
+    : filepath_(filepath), filepath_journal_(filepath + kJournalSuffix),
+      filepath_snapshot_(filepath + kSnapshotSuffix) {}
 
 DocumentDatabase::~DocumentDatabase() {}
 
@@ -23,9 +23,9 @@ void DocumentDatabase::Initialize() {
   for (auto it = log_.Log().begin(); it != log_.Log().end(); it++) {
     switch (it->GetOperation()) {
     case STORAGE_INSERT:
-      db_.Put(it->GetKey(), *it->GetValue());
+      db_.Insert(it->GetKey(), *it->GetValue());
       break;
-    case STORAGE_REMOVE:
+    case STORAGE_ERASE:
       db_.Erase(it->GetKey());
       break;
     default:
@@ -41,7 +41,7 @@ void DocumentDatabase::Tick() { Rollover(); }
 void DocumentDatabase::Shutdown() {}
 
 void DocumentDatabase::Rollover() {
-  if (db_.GetSize() == 0) {
+  if (db_.Size() == 0) {
     return;
   }
   if (!FileExists(filepath_journal_)) {
@@ -60,30 +60,30 @@ void DocumentDatabase::Rollover() {
 }
 
 std::optional<std::string> DocumentDatabase::Insert(JsonObject &document) {
-  std::string uuid;
+  std::string id;
   bool unique = false;
   while (!unique) {
-    uuid = random_.Uuid();
-    if (db_.Find(uuid) == db_.End()) {
+    id = random_.Uuid();
+    if (db_.Find(id) == db_.End()) {
       unique = true;
     }
   }
-  log_.Append(filepath_journal_, STORAGE_INSERT, uuid, &document);
-  db_.Put(uuid, document);
-  return uuid;
+  log_.Append(filepath_journal_, STORAGE_INSERT, id, &document);
+  db_.Insert(id, document);
+  return id;
 }
 
-std::optional<std::string> DocumentDatabase::Remove(std::string id) {
+std::optional<std::string> DocumentDatabase::Erase(std::string id) {
   MapIterator<std::string, JsonObject> it = db_.Find(id);
   if (it == db_.End()) {
     return {};
   }
-  log_.Append(filepath_journal_, STORAGE_REMOVE, id, nullptr);
+  log_.Append(filepath_journal_, STORAGE_ERASE, id, nullptr);
   db_.Erase(it);
   return id;
 }
 
-std::optional<JsonObject> DocumentDatabase::Fetch(std::string id) {
+std::optional<JsonObject> DocumentDatabase::Find(std::string id) {
   MapIterator<std::string, JsonObject> it = db_.Find(id);
   if (it == db_.End()) {
     return {};
@@ -101,21 +101,21 @@ std::vector<std::string> DocumentDatabase::Keys() {
   return keys;
 }
 
-JsonObject DocumentDatabase::Dump() {
-  JsonObject dump;
+JsonObject DocumentDatabase::Image() {
+  JsonObject image;
   MapIterator<std::string, JsonObject> it = db_.Begin();
   while (it != db_.End()) {
-    dump.PutObject(it.GetKey(), it.GetValue());
+    image.PutObject(it.GetKey(), it.GetValue());
     it++;
   }
-  return dump;
+  return image;
 }
 
 UserPool::UserPool(const std::string &filepath) : filepath_(filepath) {}
 
 UserPool::~UserPool() {}
 
-void UserPool::Initialize() { users_.FromString(FileToString(filepath_)); }
+void UserPool::Initialize() { users_.Parse(FileToString(filepath_)); }
 
 void UserPool::Tick() {}
 

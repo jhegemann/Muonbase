@@ -53,11 +53,11 @@ public:
   bool IsArray(size_t index);
   void Clear();
   std::string AsString();
-  void FromString(const std::string &source);
+  void Parse(const std::string &source);
 
 private:
   std::vector<std::any> values_;
-  void FromString(const std::string &source, size_t &offset);
+  void Parse(const std::string &source, size_t &offset);
 };
 
 class JsonObject {
@@ -90,11 +90,11 @@ public:
   std::vector<std::string> GetKeys();
   void Clear();
   std::string AsString();
-  void FromString(const std::string &source);
+  void Parse(const std::string &source);
 
 private:
   std::unordered_map<std::string, std::any> values_;
-  void FromString(const std::string &source, size_t &offset);
+  void Parse(const std::string &source, size_t &offset);
 };
 
 size_t SerializeJsonObject(JsonObject &object, std::ostream &stream);

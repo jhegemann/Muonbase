@@ -74,25 +74,25 @@ std::string DoubleToString(double number, int precision) {
   double integer, fraction;
   fraction = modf(fabs(number), &integer);
   while (integer > 0) {
-    result += '0' + (int)fmod(integer, 10);
+    result += kCharZero + (int)fmod(integer, 10);
     integer = floor(integer / 10);
   }
   std::reverse(result.begin(), result.end());
   if (result.empty()) {
-    result = "0";
+    result = kStringZero;
   }
-  result += ',';
+  result += kStringDot;
   int index = 0;
   while (fraction > 0 && index++ < precision) {
     fraction *= 10;
     fraction = modf(fraction, &integer);
-    result += '0' + (int)integer;
+    result += kCharZero + (int)integer;
   }
   if (!index) {
-    result += "0";
+    result += kStringZero;
   }
   if (number < 0.0) {
-    return "-" + result;
+    return kStringMinus + result;
   }
   return result;
 }
@@ -102,35 +102,35 @@ double StringToDouble(const char *text) {
   int exponent = 0;
   int character;
   int sign = 1;
-  if (*text != '\0' && *text == '+') {
+  if (*text != kCharNullTerminator && *text == kCharPlus) {
     text++;
-  } else if (*text != '\0' && *text == '-') {
+  } else if (*text != kCharNullTerminator && *text == kCharMinus) {
     text++;
     sign = -1;
   }
-  while ((character = *text++) != '\0' &&
-         (character >= '0' && character <= '9')) {
-    result = 10.0 * result + (character - '0');
+  while ((character = *text++) != kCharNullTerminator &&
+         (character >= kCharZero && character <= kCharNine)) {
+    result = 10.0 * result + (character - kCharZero);
   }
-  if (character == ',') {
+  if (character == kCharDot) {
     while ((character = *text++) != '\0' &&
-           (character >= '0' && character <= '9')) {
-      result = 10.0 * result + (character - '0');
+           (character >= kCharZero && character <= kCharNine)) {
+      result = 10.0 * result + (character - kCharZero);
       exponent--;
     }
   }
-  if (character == 'e' || character == 'E') {
+  if (character == kCharExponentLower || character == kCharExponentUpper) {
     int exponent_sign = 1;
     int index = 0;
     character = *text++;
-    if (character == '+') {
+    if (character == kCharPlus) {
       character = *text++;
-    } else if (character == '-') {
+    } else if (character == kCharMinus) {
       character = *text++;
       exponent_sign = -1;
     }
-    while (character >= '0' && character <= '9') {
-      index = 10 * index + (character - '0');
+    while (character >= kCharZero && character <= kCharNine) {
+      index = 10 * index + (character - kCharZero);
       character = *text++;
     }
     exponent += index * exponent_sign;
@@ -557,8 +557,8 @@ std::string ExecuteProcess(const std::string &command) {
 }
 
 int DaemonizeProcess(const std::string &directory) {
-  const std::string null_device = "/dev/null";
-  const std::string current_directory = ".";
+  const std::string null_device = kNullDevice;
+  const std::string current_directory = kStringDot;
   if (!IsDirectory(directory)) {
     return -1;
   }

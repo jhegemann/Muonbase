@@ -17,7 +17,7 @@ void Client::RandomInsert(const size_t count) {
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("INSERTION REQUEST");
     }
-    return_value.FromString((*response).GetBody());
+    return_value.Parse((*response).GetBody());
     if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
         !return_value.GetAsBoolean("success")) {
       Log::GetInstance()->Info("TEST FAILED: INSERTION SUCCESS ATTRIBUTE");
@@ -29,7 +29,7 @@ void Client::RandomInsert(const size_t count) {
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("INSERTION ID ATTRIBUTE");
     }
-    internal.insert(
+    internal_.insert(
         std::make_pair(return_value.GetAsString("id"), insert_object));
   }
 }
@@ -38,10 +38,10 @@ void Client::RandomRemove(const size_t count) {
   RandomGenerator rnd(time(nullptr));
   JsonObject return_value;
   for (size_t i = 0; i < count; i++) {
-    auto it = internal.begin();
-    std::advance(it, rnd.Uint64() % internal.size());
+    auto it = internal_.begin();
+    std::advance(it, rnd.Uint64() % internal_.size());
     std::string key = it->first;
-    it = internal.erase(it);
+    it = internal_.erase(it);
     auto response = SendRequest(ip_, port_, POST, "/remove", "root", "0000",
                                 APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
@@ -49,7 +49,7 @@ void Client::RandomRemove(const size_t count) {
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("REMOVE REQUEST");
     }
-    return_value.FromString((*response).GetBody());
+    return_value.Parse((*response).GetBody());
     if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
         !return_value.GetAsBoolean("success")) {
       Log::GetInstance()->Info("TEST FAILED: FIND SUCCESS ATTRIBUTE");
@@ -66,7 +66,7 @@ void Client::RandomRemove(const size_t count) {
 
 void Client::CompleteLookup() {
   JsonObject return_value;
-  for (auto it = internal.begin(); it != internal.end(); it++) {
+  for (auto it = internal_.begin(); it != internal_.end(); it++) {
     std::string key = it->first;
     auto response = SendRequest(ip_, port_, POST, "/fetch", "root", "0000",
                                 APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
@@ -75,7 +75,7 @@ void Client::CompleteLookup() {
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("FETCH REQUEST");
     }
-    return_value.FromString((*response).GetBody());
+    return_value.Parse((*response).GetBody());
     if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
         !return_value.GetAsBoolean("success")) {
       Log::GetInstance()->Info("TEST FAILED: FETCH SUCCESS ATTRIBUTE");

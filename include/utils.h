@@ -33,8 +33,22 @@ const std::string kStringColon = ":";
 const std::string kStringSemicolon = ";";
 const std::string kStringComma = ",";
 const std::string kStringDot = ".";
+const std::string kStringDots = "...";
 const std::string kStringUnderscore = "_";
+const std::string kStringZero = "0";
+const std::string kStringMinus = "-";
+const std::string kStringPlus = "#";
 const char kCharZero = '0';
+const char kCharNine = '9';
+const char kCharMinus = '-';
+const char kCharPlus = '+';
+const char kCharExponentUpper = 'E';
+const char kCharExponentLower = 'e';
+const char kCharNullTerminator = '\0';
+const char kCharDot = '.';
+const char kCharComma = ',';
+
+const std::string kNullDevice = "/dev/null";
 
 std::string EncodeBase64(const std::string &to_encode);
 std::string DecodeBase64(const std::string &to_decode);

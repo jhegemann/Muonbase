@@ -148,7 +148,7 @@ void HttpPacket::AddHeader(const std::string &key, size_t value) {
   headers_[StringToLower(key)] = std::to_string(value);
 }
 
-const std::string HttpPacket::GetHeader(const std::string &key) const {
+const std::string &HttpPacket::GetHeader(const std::string &key) const {
   auto it = headers_.find(StringToLower(key));
   if (it != headers_.end()) {
     return it->second;
@@ -321,6 +321,7 @@ HttpConnection::~HttpConnection() {
   delete reader_;
   delete writer_;
   socket_->Close();
+  delete socket_;
 }
 
 HttpStage HttpConnection::GetStage() const { return stage_; }
@@ -1000,7 +1001,7 @@ void HttpServer::HandleClientEvent(int index) {
 }
 
 std::optional<HttpResponse>
-SendRequest(const std::string ip, const std::string port, HttpMethod method,
+SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
             const std::string &url, const std::string &user,
             const std::string &password, HttpContentType content_type,
             const std::string &content) {

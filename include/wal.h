@@ -7,7 +7,7 @@
 template <class K, class V> class LogEntry;
 template <class K, class V> class WriteAheadLog;
 
-enum StorageModification { STORAGE_INSERT = 0, STORAGE_REMOVE };
+enum StorageModification { STORAGE_INSERT = 0, STORAGE_ERASE };
 
 template <class K, class V> class LogEntry {
   template <class, class> friend class ::WriteAheadLog;
@@ -84,7 +84,7 @@ void WriteAheadLog<K, V>::Load(const std::string &filepath) {
         operation = STORAGE_INSERT;
         break;
       case 1:
-        operation = STORAGE_REMOVE;
+        operation = STORAGE_ERASE;
         break;
       default:
         throw std::runtime_error("WriteAheadLog: unknown storage operation");
@@ -104,7 +104,14 @@ void WriteAheadLog<K, V>::Load(const std::string &filepath) {
   }
 }
 
-template <class K, class V> void WriteAheadLog<K, V>::Unload() { log_.clear(); }
+template <class K, class V> void WriteAheadLog<K, V>::Unload() { 
+  for (auto it = log_.begin(); it != log_.end(); it++) {
+    if (it->value_) {
+      delete it->value_;
+    }
+  }
+  log_.clear(); 
+}
 
 template <class K, class V>
 void WriteAheadLog<K, V>::Append(const std::string &filepath,

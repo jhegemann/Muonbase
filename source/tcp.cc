@@ -1,6 +1,9 @@
 #include "tcp.h"
 
-EpollInstance::EpollInstance() {}
+EpollInstance::EpollInstance() {
+  memset(&event_, 0, sizeof(epoll_event));
+  memset(&events_, 0, kMaximumEvents * sizeof(epoll_event));
+}
 
 EpollInstance::~EpollInstance() {}
 

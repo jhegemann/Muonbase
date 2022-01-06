@@ -20,7 +20,7 @@ public:
 private:
   std::string ip_;
   std::string port_;
-  std::map<std::string, JsonObject> internal;
+  std::map<std::string, JsonObject> internal_;
 };
 
 #endif
