@@ -600,26 +600,32 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
   running_ = true;
   while (running_) {
     int ready = epoll_instance_.Wait();
+    if (ready == -1) {
+      if (errno != EINTR) {
+        running_ = false;
+      }
+      continue;
+    }
     for (size_t idx = 0; idx < (size_t)ready; idx++) {
       int current_descriptor = epoll_instance_.GetDescriptor(idx);
       if (timer_descriptor_ == current_descriptor) {
-        if (epoll_instance_.HasErrors(idx)) {
+        if (epoll_instance_.IsReadable(idx)) {
+          HandleTimerEvent();
+        } else if (epoll_instance_.HasErrors(idx)) {
           HandleTimerError();
-          continue;
         }
-        HandleTimerEvent();
       } else if (signal_descriptor_ == current_descriptor) {
-        if (epoll_instance_.HasErrors(idx)) {
+        if (epoll_instance_.IsReadable(idx)) {
+          HandleSignalEvent();
+        } else if (epoll_instance_.HasErrors(idx)) {
           HandleSignalError();
-          continue;
         }
-        HandleSignalEvent();
       } else if (server_socket_.GetDescriptor() == current_descriptor) {
-        if (epoll_instance_.HasErrors(idx)) {
+        if (epoll_instance_.IsReadable(idx)) {
+          HandleServerEvent();
+        } else if (epoll_instance_.HasErrors(idx)) {
           HandleServerError(service, host);
-          continue;
         }
-        HandleServerEvent();
       } else {
         HandleClientEvent(idx);
       }
@@ -934,12 +940,6 @@ void HttpServer::HandleClientEvent(int index) {
   }
   int descriptor = lookup->first;
   HttpConnection *connection = lookup->second;
-  if (!connection->IsGood() || epoll_instance_.HasErrors(index)) {
-    Log::GetInstance()->Info(
-        "error condition on client socket - remove client");
-    DeleteConnection(descriptor);
-    return;
-  }
   if (epoll_instance_.IsReadable(index)) {
     connection->ResetExpiry();
     if (connection->GetStage() == END) {
@@ -949,11 +949,6 @@ void HttpServer::HandleClientEvent(int index) {
       return;
     }
     connection->GetReader()->ReadSome();
-    if (connection->GetReader()->HasErrors()) {
-      Log::GetInstance()->Info("error condition on reader - connection closed");
-      DeleteConnection(descriptor);
-      return;
-    }
     connection->ParseRequest();
     if (connection->GetStage() == FAILED) {
       Log::GetInstance()->Info("parsing of request failed");
@@ -978,13 +973,6 @@ void HttpServer::HandleClientEvent(int index) {
   } else if (epoll_instance_.IsWritable(index)) {
     connection->ResetExpiry();
     connection->GetWriter()->SendSome();
-    if (connection->GetWriter()->HasErrors()) {
-      Log::GetInstance()->Info(
-          "error occurred when sending response " +
-          std::to_string(connection->GetWriter()->GetStatus()));
-      DeleteConnection(descriptor);
-      return;
-    }
     if (connection->GetWriter()->IsEmpty()) {
       Log::GetInstance()->Info("response has been sent for connection " +
                                std::to_string(descriptor));
@@ -1004,8 +992,8 @@ void HttpServer::HandleClientEvent(int index) {
       DeleteConnection(descriptor);
       return;
     }
-  } else {
-    Log::GetInstance()->Info("unknown event on client socket");
+  } else if (epoll_instance_.HasErrors(index)) {
+    Log::GetInstance()->Info("client socket has errors");
     DeleteConnection(descriptor);
     return;
   }
