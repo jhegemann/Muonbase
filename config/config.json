@@ -1,5 +1,5 @@
 {
-  "ip": "0.0.0.0",
+  "ip": "127.0.0.1",
   "port": "8260",
   "data_path": "./data/storage.db",
   "user_path": "./config/users.json",

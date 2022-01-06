@@ -1,5 +1,5 @@
 # Baseload.DB
-High Performance Schemaless In-Memory JSON Document Database Server
+High Performance Schemaless In-Memory JSON Document Database Server - Jonas Hegemann
 
 # Essential Features
 * fast lookups - usage of templated in-memory b+ tree data structure
@@ -23,14 +23,14 @@ This software is far from being perfect and it explicitly does not claim to be s
 with a decent amount of diligence and care and has been tested thoroughly as far as possible. This software will contain
 bugs and some things might be poorly designed. Both applies (more or less) to any other software as well. Though I have
 spent a lot of time in the past to make this piece of software what it is, it has always been a private
-project parallel to my fulltime employments. Please understand that du to this reason maintainance might sometimes be
+project parallel to my fulltime employments. Please understand that due to this reason maintainance might sometimes be
 a bit slow and sluggish, I will try my very best!
 
 This software does not aim to be extremely portable, instead it is designed to run under linux providing
 a recent version of g++ that is compatible with C++ 20. The g++ version that has been used for development
 is g++ 9.3.0. The reason for not making it highly portable in the first place is to save development time,
-and second it is assumed to run on *servers* that in most cases run a linux distribution. It is mandatory
-that this linux version (or the c library) supports the epoll system calls.
+and second it is assumed to run on *servers* that in most cases run a linux distribution anyway. It is mandatory
+that this linux distribution (or the c library) supports the epoll system calls.
 
 # Storage Engine
 As a data structure, baseload implements a templated in-memory b+ tree, which serves as a key value store.
@@ -61,13 +61,19 @@ Regarding authorization, baseload implements only simple http basic authorizatio
 to set user permissions on specific documents, meaning that all users can read and modify all documents.
 
 # Haproxy
+This software only supports plain http transport and no secure sockets! In order to set up https end points it 
+is recommended to bind this software locally and let e.g. haproxy (or another proxy) do the ssl termination. 
+This is easy, secure, and performant.
 
 # Logrotate
+At the current early stage of the software the logging can only be very verbose or totally absent. If you
+really need the logging, either start the server in foreground and watch it on the standard output, or 
+make sure you use e.g. logrotate to avoid blocking your disk space with very large logfiles.
 
 # Usage
 
 ```
-jonas@DESKTOP-EE4KNAM:/mnt/c/Home/Native/Baseload.DB$ ./bin/database.app
+root@linux-machine:/home/db$ ./bin/database.app
 Usage: ./bin/database.app [-v] [-d] [-c <config>].
          -v : verbose
          -d : daemon
@@ -77,18 +83,83 @@ Usage: ./bin/database.app [-v] [-d] [-c <config>].
 # API
 
 ## Routes
-* POST /insert: insert a document - requires plain json document in request body
-* POST /remove: remove a document - requires json wrapped id in request body
-* POST /find: find a document - requires json wrapped id in request body
+* POST /insert: insert a document
+* POST /remove: remove a document
+* POST /find: find a document
 * GET /keys: retrieve all keys
-* GET /dump: retrieve a complete json dump
+* GET /dump: retrieve json dump
 
 ### Insert
+Request:
+```
+[2748|06.01.2022-12:12:27|Info] incoming request: POST /insert HTTP/1.1
+authorization: Basic cm9vdDowMDAw
+content-length: 275
+content-type: application/json
+
+{"qRADfzL9qSZdWfCB":[true,0.481446,319226,null],"KneSOtkMNGxvUhH1":{"BrWUguL5y0ov17n3":728229,"VeGU6JjPxbWrWe79":null,"cMvIo2nbwkvcnMBe":0.691427,"2f4e7JvjxynQnotm":false},"j8O5fgYpvwRb38hy":null,"qmirthOPG2AyuSwD":792874,"PGjfooCv98HL1dTf":0.054929,"fE40YyX8iIgaQuXV":false}
+```
+
+Response:
+```
+HTTP/1.1 200 OK
+access-control-allow-methods: GET, POST
+access-control-allow-origin: *
+content-length: 40
+content-type: application/json
+date: 20220106121227
+server: baseload/1
+
+{"id":"dMxiajoFmCZirIiD","success":true}
+```
 
 ### Remove
+Request:
+```
+POST /remove HTTP/1.1
+authorization: Basic cm9vdDowMDAw
+content-length: 25
+content-type: application/json
+
+{"id":"GI0xHlR9SHXpNPT9"}
+```
+
+Response:
+```
+HTTP/1.1 200 OK
+access-control-allow-methods: GET, POST
+access-control-allow-origin: *
+content-length: 40
+content-type: application/json
+date: 20220106121227
+server: baseload/1
+
+{"id":"GI0xHlR9SHXpNPT9","success":true}
+```
 
 ### Find
+Request:
+```
+[2748|06.01.2022-12:12:27|Info] incoming request: POST /find HTTP/1.1
+authorization: Basic cm9vdDowMDAw
+content-length: 25
+content-type: application/json
 
+{"id":"0jEdOcRMlgQeeuGe"}
+```
+
+Response:
+```
+HTTP/1.1 200 OK
+access-control-allow-methods: GET, POST
+access-control-allow-origin: *
+content-length: 339
+content-type: application/json
+date: 20220106121227
+server: baseload/1
+
+{"found":true,"document":{"fE40YyX8iIgaQuXV":false,"PGjfooCv98HL1dTf":0.451518,"qmirthOPG2AyuSwD":246816,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":true,"cMvIo2nbwkvcnMBe":0.663296,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":53522},"qRADfzL9qSZdWfCB":[false,0.133002,195159,null]},"id":"0jEdOcRMlgQeeuGe","success":true}
+```
 
 
 
