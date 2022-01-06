@@ -92,7 +92,7 @@ Usage: ./bin/database.app [-v] [-d] [-c <config>].
 ### Insert
 Request:
 ```
-[2748|06.01.2022-12:12:27|Info] incoming request: POST /insert HTTP/1.1
+POST /insert HTTP/1.1
 authorization: Basic cm9vdDowMDAw
 content-length: 275
 content-type: application/json
@@ -140,7 +140,7 @@ server: baseload/1
 ### Find
 Request:
 ```
-[2748|06.01.2022-12:12:27|Info] incoming request: POST /find HTTP/1.1
+POST /find HTTP/1.1
 authorization: Basic cm9vdDowMDAw
 content-length: 25
 content-type: application/json
