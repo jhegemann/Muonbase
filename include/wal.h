@@ -1,3 +1,17 @@
+/* Copyright [2022] [Jonas Hegemann]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. */
+
 #ifndef WAL_H
 #define WAL_H
 
@@ -104,13 +118,13 @@ void WriteAheadLog<K, V>::Load(const std::string &filepath) {
   }
 }
 
-template <class K, class V> void WriteAheadLog<K, V>::Unload() { 
+template <class K, class V> void WriteAheadLog<K, V>::Unload() {
   for (auto it = log_.begin(); it != log_.end(); it++) {
     if (it->value_) {
       delete it->value_;
     }
   }
-  log_.clear(); 
+  log_.clear();
 }
 
 template <class K, class V>

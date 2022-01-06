@@ -4,7 +4,7 @@ High Performance Schemaless In-Memory JSON Document Database Server
 # Essential Features
 * fast lookups - usage of templated in-memory b+ tree data structure
 * no special drivers - exposure of rest interface
-* small footprint - single-threaded multiplexed http server
+* small footprint - single-threaded epoll http server
 * few dependencies - coded mainly from scratch in vanilla c/c++
 * overseeable codebase - easy to understand and fully transparent
 * seamless integration - use of json as data exchange format
@@ -54,17 +54,17 @@ http rest api approach. The http server is implemented in a *single thread* usin
 which allows for highly performant asynchroneous handling of multiple clients. The epoll instance is also connected
 to a timer descriptor to enable regular events and it is connected to a signal descriptor to handle signals and terminate
 the server gracefully in case of a received sigterm or sigkill signal. Incoming http requests are forwarded 
-to the htpp rest api, which performs tasks based on services that can be injected into the http server event loop. 
+to the http rest api, which performs tasks based on services that can be injected into the http server event loop. 
 In the current version, there are only two services available, which are i) the storage engine, and ii) the user management.
 Regarding authorization, the software implements only simple http basic authorization and there is no possibility
 to set user permissions on specific documents, meaning that all users can read and modify all documents.
 
-# Haproxy
+# SSL / Haproxy
 This software supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
-# Logrotate
+# Logging / Logrotate
 At the current early stage, logging can only be (very) verbose or totally absent. If you
 really need the logging, either start the server in foreground and observe what happens on the standard output, 
 or make sure you use e.g. logrotate to avoid blocking your disk space with very large logfiles.
