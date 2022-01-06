@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
     }
   }
 
+  Log::GetInstance()->SetVerbose(true);
+
   Client client(ip, port);
   const size_t count = 128;
   try {

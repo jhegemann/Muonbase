@@ -11,8 +11,12 @@ int main(int argc, char **argv) {
   JsonObject config;
   bool daemonize = false;
   bool config_available = false;
-  while ((option = getopt(argc, argv, "dc:")) != -1) {
+  bool verbose = false;
+  while ((option = getopt(argc, argv, "vdc:")) != -1) {
     switch (option) {
+    case 'v':
+      verbose = true;
+      break;
     case 'c':
       std::cout << optarg << std::endl;
       config.FromString(FileToString(optarg));
@@ -23,10 +27,10 @@ int main(int argc, char **argv) {
       break;
     case ':':
       Log::GetInstance()->Info("option needs a value");
-      break;
+      exit(1);
     case '?':
       Log::GetInstance()->Info("unknown option " + std::string(optopt, 1));
-      break;
+      exit(1);
     default:
       printf("Usage: %s [-d] [-c <config>].\n", argv[0]);
       exit(0);
@@ -34,11 +38,18 @@ int main(int argc, char **argv) {
   }
 
   if (!config_available) {
-    printf("Usage: %s [-d] [-c <config>].\n", argv[0]);
+    printf("Usage: %s [-v] [-d] [-c <config>].\n", argv[0]);
+    printf("\t -v : verbose\n");
+    printf("\t -d : daemon\n");
+    printf("\t -c <config> : configuration in json format\n");
     exit(0);
   }
 
   std::cout << config.AsString() << std::endl;
+
+  if (verbose) {
+    Log::GetInstance()->SetVerbose(true);
+  }
 
   std::string working_directory = ".";
   if (daemonize) {
@@ -48,6 +59,9 @@ int main(int argc, char **argv) {
     }
     Log::GetInstance()->Info("daemonize process");
     DaemonizeProcess(working_directory);
+    if (config.Has("log_path") && config.IsString("log_path")) {
+      Log::GetInstance()->SetLogfile(config.GetAsString("log_path"));
+    }
   }
 
   std::string data_path = "core.db";

@@ -1,0 +1,4 @@
+data/*.db
+bin/*.app
+build/*.o
+.vscode

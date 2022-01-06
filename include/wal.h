@@ -97,7 +97,6 @@ void WriteAheadLog<K, V>::Load(const std::string &filepath) {
       } else {
         value = new JsonObject();
         bytes += value_serializer_.Deserialize((*value), stream_);
-        std::cout << value->AsString() << std::endl;
       }
       log_.emplace_back(operation, key, value);
     }

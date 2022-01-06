@@ -15,6 +15,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <optional>
 
 #include "log.h"
 #include "service.h"
