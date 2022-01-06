@@ -68,29 +68,29 @@ void Client::CompleteLookup() {
   JsonObject return_value;
   for (auto it = internal.begin(); it != internal.end(); it++) {
     std::string key = it->first;
-    auto response = SendRequest(ip_, port_, POST, "/find", "root", "0000",
+    auto response = SendRequest(ip_, port_, POST, "/fetch", "root", "0000",
                                 APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
-      Log::GetInstance()->Info("TEST FAILED: FIND REQUEST");
+      Log::GetInstance()->Info("TEST FAILED: FETCH REQUEST");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FIND REQUEST");
+      throw std::runtime_error("FETCH REQUEST");
     }
     return_value.FromString((*response).GetBody());
     if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
         !return_value.GetAsBoolean("success")) {
-      Log::GetInstance()->Info("TEST FAILED: FIND SUCCESS ATTRIBUTE");
+      Log::GetInstance()->Info("TEST FAILED: FETCH SUCCESS ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FIND SUCCESS ATTRIBUTE");
+      throw std::runtime_error("FETCH SUCCESS ATTRIBUTE");
     }
     if (!return_value.Has("id") || !return_value.IsString("id")) {
-      Log::GetInstance()->Info("TEST FAILED: FIND ID ATTRIBUTE");
+      Log::GetInstance()->Info("TEST FAILED: FETCH ID ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FIND ID ATTRIBUTE");
+      throw std::runtime_error("FETCH ID ATTRIBUTE");
     }
     if (!return_value.Has("document") || !return_value.IsObject("document")) {
-      Log::GetInstance()->Info("TEST FAILED: FIND DOCUMENT");
+      Log::GetInstance()->Info("TEST FAILED: FETCH DOCUMENT");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FIND DOCUMENT");
+      throw std::runtime_error("FETCH DOCUMENT");
     }
     if (it->second.AsString().compare(
             return_value.GetAsObject("document").AsString()) != 0) {

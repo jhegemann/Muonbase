@@ -100,7 +100,7 @@ HttpResponse Remove(const HttpRequest &request, ServiceMap services) {
                              result.AsString());
 }
 
-HttpResponse Find(const HttpRequest &request, ServiceMap services) {
+HttpResponse Fetch(const HttpRequest &request, ServiceMap services) {
   if (services.find("user") == services.end() ||
       services.find("db") == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
@@ -128,7 +128,7 @@ HttpResponse Find(const HttpRequest &request, ServiceMap services) {
                                kNoSuccess);
   }
   DocumentDatabase *db = static_cast<DocumentDatabase *>(services["db"]);
-  auto id = db->Find(object.GetAsString("id"));
+  auto id = db->Fetch(object.GetAsString("id"));
   JsonObject result(kSuccess);
   result.PutString("id", object.GetAsString("id"));
   if (id) {

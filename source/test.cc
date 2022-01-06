@@ -51,4 +51,5 @@ int main(int argc, char **argv) {
   }
   Log::GetInstance()->Info("ALL TESTS PASSED!");
 
+  return 0;
 }

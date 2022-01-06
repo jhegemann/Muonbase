@@ -9,7 +9,7 @@ namespace db_api {
 
 HttpResponse Insert(const HttpRequest &request, ServiceMap services);
 HttpResponse Remove(const HttpRequest &request, ServiceMap services);
-HttpResponse Find(const HttpRequest &request, ServiceMap services);
+HttpResponse Fetch(const HttpRequest &request, ServiceMap services);
 HttpResponse Keys(const HttpRequest &request, ServiceMap services);
 HttpResponse Dump(const HttpRequest &request, ServiceMap services);
 

@@ -36,9 +36,7 @@ void DocumentDatabase::Initialize() {
   Rollover();
 }
 
-void DocumentDatabase::Tick() {
-  Rollover();
-}
+void DocumentDatabase::Tick() { Rollover(); }
 
 void DocumentDatabase::Shutdown() {}
 
@@ -85,7 +83,7 @@ std::optional<std::string> DocumentDatabase::Remove(std::string id) {
   return id;
 }
 
-std::optional<JsonObject> DocumentDatabase::Find(std::string id) {
+std::optional<JsonObject> DocumentDatabase::Fetch(std::string id) {
   MapIterator<std::string, JsonObject> it = db_.Find(id);
   if (it == db_.End()) {
     return {};

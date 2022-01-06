@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
   Log::GetInstance()->Info("set up routes");
   server.RegisterHandler(HttpMethod::POST, "/insert", db_api::Insert);
   server.RegisterHandler(HttpMethod::POST, "/remove", db_api::Remove);
-  server.RegisterHandler(HttpMethod::POST, "/find", db_api::Find);
+  server.RegisterHandler(HttpMethod::POST, "/fetch", db_api::Fetch);
   server.RegisterHandler(HttpMethod::GET, "/keys", db_api::Keys);
   server.RegisterHandler(HttpMethod::GET, "/dump", db_api::Dump);
 

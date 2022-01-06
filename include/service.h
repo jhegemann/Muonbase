@@ -31,7 +31,7 @@ public:
   void Rollover();
   std::optional<std::string> Insert(JsonObject &document);
   std::optional<std::string> Remove(std::string id);
-  std::optional<JsonObject> Find(std::string id);
+  std::optional<JsonObject> Fetch(std::string id);
   std::vector<std::string> Keys();
   JsonObject Dump();
 

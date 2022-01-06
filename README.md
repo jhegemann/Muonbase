@@ -75,9 +75,16 @@ make sure you use e.g. logrotate to avoid blocking your disk space with very lar
 ```
 root@linux-machine:/home/db$ ./bin/database.app
 Usage: ./bin/database.app [-v] [-d] [-c <config>].
-         -v : verbose
-         -d : daemon
-         -c <config> : configuration in json format
+         -v : verbose - defaults to false
+         -d : daemon - defaults to false
+         -c <config> : mandatory configuration in json format
+```
+
+```
+root@linux-machine:/home/db$ ./bin/test.app
+Usage: ./bin/database.app [-v] [-d] [-c <config>].
+         -i : ip - defaults to 127.0.0.1
+         -p : port - defaults to 8260
 ```
 
 # API
@@ -137,10 +144,10 @@ server: baseload/1
 {"id":"GI0xHlR9SHXpNPT9","success":true}
 ```
 
-### Find
+### Fetch
 Request:
 ```
-POST /find HTTP/1.1
+POST /fetch HTTP/1.1
 authorization: Basic cm9vdDowMDAw
 content-length: 25
 content-type: application/json
