@@ -52,6 +52,12 @@ const std::string kStringUnderscore = "_";
 const std::string kStringZero = "0";
 const std::string kStringMinus = "-";
 const std::string kStringPlus = "#";
+const std::string kStringCurlyBracketOpen = "{";
+const std::string kStringCurlyBracketClose = "}";
+const std::string kStringSquareBracketOpen = "[";
+const std::string kStringSquareBracketClose = "]";
+const std::string kStringDoubleQuote = "\"";
+const std::string kStringSingleQuote = "'";
 const char kCharZero = '0';
 const char kCharNine = '9';
 const char kCharMinus = '-';
@@ -61,6 +67,12 @@ const char kCharExponentLower = 'e';
 const char kCharNullTerminator = '\0';
 const char kCharDot = '.';
 const char kCharComma = ',';
+const char kCharDoubleQuote = '\"';
+const char kCharSingleQuote = '\'';
+const char kCharCurlyBracketOpen = '{';
+const char kCharCurlyBracketClose = '}';
+const char kCharSquareBracketOpen = '[';
+const char kCharSquareBracketClose = ']';
 
 const std::string kNullDevice = "/dev/null";
 

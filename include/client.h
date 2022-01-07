@@ -28,8 +28,8 @@ public:
   Client(const std::string &ip, const std::string &port);
   virtual ~Client();
   void RandomInsert(const size_t count = 1);
-  void RandomRemove(const size_t count = 1);
-  void CompleteLookup();
+  void RandomErase(const size_t count = 1);
+  void FindAll();
 
 private:
   std::string ip_;

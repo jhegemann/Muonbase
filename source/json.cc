@@ -158,18 +158,18 @@ void JsonObject::Clear() { values_.clear(); }
 
 std::string JsonObject::AsString() {
   std::stringstream ss;
-  std::string sep = "";
-  ss << "{";
+  std::string sep = kStringEmpty;
+  ss << kStringCurlyBracketOpen;
   for (auto it = values_.begin(); it != values_.end(); it++) {
     ss << sep;
     ss << "\"" << it->first << "\":";
     if (it->second.type() == typeid(void)) {
-      ss << "null";
+      ss << kJsonNull;
     } else if (it->second.type() == typeid(JsonBoolean)) {
       if (std::any_cast<JsonBoolean>(it->second)) {
-        ss << "true";
+        ss << kJsonTrue;
       } else {
-        ss << "false";
+        ss << kJsonFalse;
       }
     } else if (it->second.type() == typeid(JsonInteger)) {
       ss << std::any_cast<JsonInteger>(it->second);
@@ -185,9 +185,9 @@ std::string JsonObject::AsString() {
       std::cout << ss.str() << std::endl;
       throw std::runtime_error("incompatible json type");
     }
-    sep = ",";
+    sep = kStringComma;
   }
-  ss << "}";
+  ss << kStringCurlyBracketClose;
   return ss.str();
 }
 
@@ -202,49 +202,53 @@ void JsonObject::Parse(const std::string &source, size_t &offset) {
   size_t pos;
   std::string key;
   std::string value;
-  if (!ExpectString(source, "{", off)) {
+  if (!ExpectString(source, kStringCurlyBracketOpen, off)) {
     throw std::runtime_error("invalid json object");
   }
   for (;;) {
-    if (!ExpectString(source, "\"", off)) {
+    if (!ExpectString(source, kStringDoubleQuote, off)) {
       throw std::runtime_error("invalid json object");
     }
-    pos = source.find("\"", off);
+    pos = source.find(kStringDoubleQuote, off);
     if (pos == std::string::npos) {
       throw std::runtime_error("invalid json object");
     }
     key = source.substr(off, pos - off);
     off = pos + 1;
-    if (!ExpectString(source, ":", off)) {
+    if (!ExpectString(source, kStringColon, off)) {
       throw std::runtime_error("invalid json object");
     }
     if (!ExpectString(source, kStringEmpty, off)) {
       throw std::runtime_error("invalid json object");
     }
-    if (source.substr(off, 4).compare("null") == 0 &&
-        CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}")) {
+    if (source.substr(off, 4).compare(kJsonNull) == 0 &&
+        CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
+                                         kStringCurlyBracketClose)) {
       PutNull(key);
       off += 4;
-    } else if (source.substr(off, 4).compare("true") == 0 &&
-               CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,}")) {
+    } else if (source.substr(off, 4).compare(kJsonTrue) == 0 &&
+               CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
+                                                kStringCurlyBracketClose)) {
       PutBoolean(key, true);
       off += 4;
-    } else if (source.substr(off, 5).compare("false") == 0 &&
-               CharIsAnyOf(source[off + 5], "\b\t\n\a\r ,}")) {
+    } else if (source.substr(off, 5).compare(kJsonFalse) == 0 &&
+               CharIsAnyOf(source[off + 5], kJsonWssCharset + kStringComma +
+                                                kStringCurlyBracketClose)) {
       PutBoolean(key, false);
       off += 5;
-    } else if (source[off] == '\"') {
-      pos = source.find("\"", off + 1);
+    } else if (source[off] == kCharDoubleQuote) {
+      pos = source.find(kStringDoubleQuote, off + 1);
       if (pos == std::string::npos) {
         throw std::runtime_error("invalid json object");
       }
       PutString(key, source.substr(off + 1, pos - off - 1));
       off = pos + 1;
-    } else if (CharIsAnyOf(source[off], "0123456789+-")) {
+    } else if (CharIsAnyOf(source[off], kJsonNumberCharset)) {
       size_t pos = off + 1;
       bool dot_found = false;
       while (pos < source.length()) {
-        if (CharIsAnyOf(source[pos], "\b\t\n\a\r ,}")) {
+        if (CharIsAnyOf(source[pos], kJsonWssCharset + kStringComma +
+                                         kStringCurlyBracketClose)) {
           break;
         }
         if (source[pos] == '.') {
@@ -266,11 +270,11 @@ void JsonObject::Parse(const std::string &source, size_t &offset) {
         throw std::runtime_error("invalid number format");
       }
       off = pos;
-    } else if (source[off] == '{') {
+    } else if (source[off] == kCharCurlyBracketOpen) {
       JsonObject obj;
       obj.Parse(source, off);
       PutObject(key, obj);
-    } else if (source[off] == '[') {
+    } else if (source[off] == kCharSquareBracketOpen) {
       JsonArray arr;
       arr.Parse(source, off);
       PutArray(key, arr);
@@ -280,10 +284,10 @@ void JsonObject::Parse(const std::string &source, size_t &offset) {
     if (!ExpectString(source, kStringEmpty, off)) {
       throw std::runtime_error("invalid json object");
     }
-    if (source[off] == ',') {
+    if (source[off] == kCharComma) {
       off++;
       continue;
-    } else if (source[off] == '}') {
+    } else if (source[off] == kCharCurlyBracketClose) {
       off++;
       break;
     } else {
@@ -409,17 +413,17 @@ void JsonArray::Clear() { values_.clear(); }
 
 std::string JsonArray::AsString() {
   std::stringstream ss;
-  std::string sep = "";
-  ss << "[";
+  std::string sep = kStringEmpty;
+  ss << kStringSquareBracketOpen;
   for (auto it = values_.begin(); it != values_.end(); it++) {
     ss << sep;
     if (it->type() == typeid(void)) {
-      ss << "null";
+      ss << kJsonNull;
     } else if (it->type() == typeid(JsonBoolean)) {
       if (std::any_cast<JsonBoolean>(*it)) {
-        ss << "true";
+        ss << kJsonTrue;
       } else {
-        ss << "false";
+        ss << kJsonFalse;
       }
     } else if (it->type() == typeid(JsonInteger)) {
       ss << std::any_cast<JsonInteger>(*it);
@@ -434,9 +438,9 @@ std::string JsonArray::AsString() {
     } else {
       throw std::runtime_error("incompatible json type");
     }
-    sep = ",";
+    sep = kStringComma;
   }
-  ss << "]";
+  ss << kStringSquareBracketClose;
   return ss.str();
 }
 
@@ -450,37 +454,41 @@ void JsonArray::Parse(const std::string &source, size_t &offset) {
   size_t off = offset;
   size_t pos;
   std::string value;
-  if (!ExpectString(source, "[", off)) {
+  if (!ExpectString(source, kStringSquareBracketOpen, off)) {
     throw std::runtime_error("invalid json object:");
   }
   for (;;) {
     if (!ExpectString(source, kStringEmpty, off)) {
       throw std::runtime_error("invalid json object");
     }
-    if (source.substr(off, 4).compare("null") == 0 &&
-        CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,]")) {
+    if (source.substr(off, 4).compare(kJsonNull) == 0 &&
+        CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
+                                         kStringSquareBracketClose)) {
       PutNull();
       off += 4;
-    } else if (source.substr(off, 4).compare("true") == 0 &&
-               CharIsAnyOf(source[off + 4], "\b\t\n\a\r ,]")) {
+    } else if (source.substr(off, 4).compare(kJsonTrue) == 0 &&
+               CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
+                                                kStringSquareBracketClose)) {
       PutBoolean(true);
       off += 4;
-    } else if (source.substr(off, 5).compare("false") == 0 &&
-               CharIsAnyOf(source[off + 5], "\b\t\n\a\r ,]")) {
+    } else if (source.substr(off, 5).compare(kJsonFalse) == 0 &&
+               CharIsAnyOf(source[off + 5], kJsonWssCharset + kStringComma +
+                                                kStringSquareBracketClose)) {
       PutBoolean(false);
       off += 5;
-    } else if (source[off] == '\"') {
-      pos = source.find("\"", off + 1);
+    } else if (source[off] == kCharDoubleQuote) {
+      pos = source.find(kStringDoubleQuote, off + 1);
       if (pos == std::string::npos) {
         throw std::runtime_error("invalid json object");
       }
       PutString(source.substr(off + 1, pos - off - 1));
       off = pos + 1;
-    } else if (CharIsAnyOf(source[off], "0123456789+-")) {
+    } else if (CharIsAnyOf(source[off], kJsonNumberCharset)) {
       size_t pos = off + 1;
       bool dot_found = false;
       while (pos < source.length()) {
-        if (CharIsAnyOf(source[pos], "\b\t\n\a\r ,]")) {
+        if (CharIsAnyOf(source[pos], kJsonWssCharset + kStringComma +
+                                         kStringSquareBracketClose)) {
           break;
         }
         if (source[pos] == '.') {
@@ -502,11 +510,11 @@ void JsonArray::Parse(const std::string &source, size_t &offset) {
         throw std::runtime_error("invalid number format");
       }
       off = pos;
-    } else if (source[off] == '{') {
+    } else if (source[off] == kCharCurlyBracketOpen) {
       JsonObject obj;
       obj.Parse(source, off);
       PutObject(obj);
-    } else if (source[off] == '[') {
+    } else if (source[off] == kCharSquareBracketOpen) {
       JsonArray arr;
       arr.Parse(source, off);
       PutArray(arr);
@@ -516,10 +524,10 @@ void JsonArray::Parse(const std::string &source, size_t &offset) {
     if (!ExpectString(source, kStringEmpty, off)) {
       throw std::runtime_error("invalid json object");
     }
-    if (source[off] == ',') {
+    if (source[off] == kCharComma) {
       off++;
       continue;
-    } else if (source[off] == ']') {
+    } else if (source[off] == kCharSquareBracketClose) {
       off++;
       break;
     } else {

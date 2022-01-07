@@ -30,6 +30,12 @@ limitations under the License. */
 #include "rand.h"
 #include "utils.h"
 
+const std::string kJsonNull = "null";
+const std::string kJsonFalse = "false";
+const std::string kJsonTrue = "true";
+const std::string kJsonNumberCharset = "0123456789+-";
+const std::string kJsonWssCharset = "\b\t\n\a\r ";
+
 typedef bool JsonBoolean;
 typedef int64_t JsonInteger;
 typedef double JsonFloat;

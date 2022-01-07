@@ -47,18 +47,18 @@ int main(int argc, char **argv) {
   Log::GetInstance()->SetVerbose(true);
 
   Client client(ip, port);
-  const size_t count = 1024;
+  const size_t count = 128;
   const size_t cycles = 8;
   try {
     Log::GetInstance()->Info("TEST INIT");
     client.RandomInsert(count);
-    client.CompleteLookup();
+    client.FindAll();
     for (size_t i = 1; i <= cycles; i++) {
       Log::GetInstance()->Info("TEST CYCLE " + std::to_string(i));
       client.RandomInsert(count / cycles);
-      client.CompleteLookup();
-      client.RandomRemove(count / cycles);
-      client.CompleteLookup();
+      client.FindAll();
+      client.RandomErase(count / cycles);
+      client.FindAll();
     }
   } catch (std::runtime_error &) {
     Log::GetInstance()->Info("TEST FAILED!");

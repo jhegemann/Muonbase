@@ -27,28 +27,28 @@ void Client::RandomInsert(const size_t count) {
     auto response = SendRequest(ip_, port_, POST, "/insert", "root", "0000",
                                 APPLICATION_JSON, insert_object.AsString());
     if (!response) {
-      Log::GetInstance()->Info("TEST FAILED: INSERTION REQUEST");
+      Log::GetInstance()->Info("TEST FAILED: INSERT REQUEST");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("INSERTION REQUEST");
+      throw std::runtime_error("INSERT REQUEST");
     }
     return_value.Parse((*response).GetBody());
     if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
         !return_value.GetAsBoolean("success")) {
-      Log::GetInstance()->Info("TEST FAILED: INSERTION SUCCESS ATTRIBUTE");
+      Log::GetInstance()->Info("TEST FAILED: INSERT SUCCESS ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("INSERTION SUCCESS ATTRIBUTE");
+      throw std::runtime_error("INSERT SUCCESS ATTRIBUTE");
     }
     if (!return_value.Has("id") || !return_value.IsString("id")) {
-      Log::GetInstance()->Info("TEST FAILED: INSERTION ID ATTRIBUTE");
+      Log::GetInstance()->Info("TEST FAILED: INSERT ID ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("INSERTION ID ATTRIBUTE");
+      throw std::runtime_error("INSERT ID ATTRIBUTE");
     }
     internal_.insert(
         std::make_pair(return_value.GetAsString("id"), insert_object));
   }
 }
 
-void Client::RandomRemove(const size_t count) {
+void Client::RandomErase(const size_t count) {
   RandomGenerator rnd(time(nullptr));
   JsonObject return_value;
   for (size_t i = 0; i < count; i++) {
@@ -56,12 +56,38 @@ void Client::RandomRemove(const size_t count) {
     std::advance(it, rnd.Uint64() % internal_.size());
     std::string key = it->first;
     it = internal_.erase(it);
-    auto response = SendRequest(ip_, port_, POST, "/remove", "root", "0000",
+    auto response = SendRequest(ip_, port_, POST, "/erase", "root", "0000",
                                 APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
-      Log::GetInstance()->Info("TEST FAILED: REMOVE REQUEST");
+      Log::GetInstance()->Info("TEST FAILED: ERASE REQUEST");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("REMOVE REQUEST");
+      throw std::runtime_error("ERASE REQUEST");
+    }
+    return_value.Parse((*response).GetBody());
+    if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
+        !return_value.GetAsBoolean("success")) {
+      Log::GetInstance()->Info("TEST FAILED: ERASE SUCCESS ATTRIBUTE");
+      Log::GetInstance()->Info((*response).AsString());
+      throw std::runtime_error("ERASE SUCCESS ATTRIBUTE");
+    }
+    if (!return_value.Has("id") || !return_value.IsString("id")) {
+      Log::GetInstance()->Info("TEST FAILED: ERASE ID ATTRIBUTE");
+      Log::GetInstance()->Info((*response).AsString());
+      throw std::runtime_error("ERASE ID ATTRIBUTE");
+    }
+  }
+}
+
+void Client::FindAll() {
+  JsonObject return_value;
+  for (auto it = internal_.begin(); it != internal_.end(); it++) {
+    std::string key = it->first;
+    auto response = SendRequest(ip_, port_, POST, "/find", "root", "0000",
+                                APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
+    if (!response) {
+      Log::GetInstance()->Info("TEST FAILED: FIND REQUEST");
+      Log::GetInstance()->Info((*response).AsString());
+      throw std::runtime_error("FIND REQUEST");
     }
     return_value.Parse((*response).GetBody());
     if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
@@ -71,40 +97,14 @@ void Client::RandomRemove(const size_t count) {
       throw std::runtime_error("FIND SUCCESS ATTRIBUTE");
     }
     if (!return_value.Has("id") || !return_value.IsString("id")) {
-      Log::GetInstance()->Info("TEST FAILED: REMOVE ID ATTRIBUTE");
+      Log::GetInstance()->Info("TEST FAILED: FIND ID ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("REMOVE ID ATTRIBUTE");
-    }
-  }
-}
-
-void Client::CompleteLookup() {
-  JsonObject return_value;
-  for (auto it = internal_.begin(); it != internal_.end(); it++) {
-    std::string key = it->first;
-    auto response = SendRequest(ip_, port_, POST, "/fetch", "root", "0000",
-                                APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
-    if (!response) {
-      Log::GetInstance()->Info("TEST FAILED: FETCH REQUEST");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FETCH REQUEST");
-    }
-    return_value.Parse((*response).GetBody());
-    if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
-        !return_value.GetAsBoolean("success")) {
-      Log::GetInstance()->Info("TEST FAILED: FETCH SUCCESS ATTRIBUTE");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FETCH SUCCESS ATTRIBUTE");
-    }
-    if (!return_value.Has("id") || !return_value.IsString("id")) {
-      Log::GetInstance()->Info("TEST FAILED: FETCH ID ATTRIBUTE");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FETCH ID ATTRIBUTE");
+      throw std::runtime_error("FIND ID ATTRIBUTE");
     }
     if (!return_value.Has("document") || !return_value.IsObject("document")) {
-      Log::GetInstance()->Info("TEST FAILED: FETCH DOCUMENT");
+      Log::GetInstance()->Info("TEST FAILED: FIND DOCUMENT");
       Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("FETCH DOCUMENT");
+      throw std::runtime_error("FIND DOCUMENT");
     }
     if (it->second.AsString().compare(
             return_value.GetAsObject("document").AsString()) != 0) {
