@@ -251,7 +251,7 @@ void JsonObject::Parse(const std::string &source, size_t &offset) {
                                          kStringCurlyBracketClose)) {
           break;
         }
-        if (source[pos] == '.') {
+        if (source[pos] == kCharDot) {
           dot_found = true;
         }
         pos++;
@@ -491,7 +491,7 @@ void JsonArray::Parse(const std::string &source, size_t &offset) {
                                          kStringSquareBracketClose)) {
           break;
         }
-        if (source[pos] == '.') {
+        if (source[pos] == kCharDot) {
           dot_found = true;
         }
         pos++;
