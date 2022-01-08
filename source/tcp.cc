@@ -16,7 +16,7 @@ limitations under the License. */
 
 EpollInstance::EpollInstance() {
   memset(&event_, 0, sizeof(epoll_event));
-  memset(&events_, 0, kMaximumEvents * sizeof(epoll_event));
+  memset(&events_, 0, kEpollMaximumEvents * sizeof(epoll_event));
 }
 
 EpollInstance::~EpollInstance() {}
@@ -32,7 +32,7 @@ bool EpollInstance::Create() {
 void EpollInstance::Release() { close(instance_); }
 
 int EpollInstance::Wait(long timeout) {
-  return epoll_wait(instance_, events_, kMaximumEvents, timeout);
+  return epoll_wait(instance_, events_, kEpollMaximumEvents, timeout);
 }
 
 bool EpollInstance::AddDescriptor(int descriptor, int flags) {
@@ -73,14 +73,14 @@ bool EpollInstance::ModifyDescriptor(int descriptor, int flags) {
 }
 
 int EpollInstance::GetDescriptor(size_t index) {
-  if (index >= kMaximumEvents) {
+  if (index >= kEpollMaximumEvents) {
     return -1;
   }
   return events_[index].data.fd;
 }
 
 int EpollInstance::GetEvents(size_t index) {
-  if (index >= kMaximumEvents) {
+  if (index >= kEpollMaximumEvents) {
     return -1;
   }
   return events_[index].events;

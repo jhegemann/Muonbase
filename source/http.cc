@@ -923,7 +923,7 @@ void HttpServer::HandleServerError(const std::string &service,
 
 void HttpServer::HandleServerEvent() {
   Log::GetInstance()->Info("event on server socket");
-  if (connections_.size() >= kMaximumEvents - kHttpReservedSockets) {
+  if (connections_.size() >= kEpollMaximumEvents - kHttpReservedSockets) {
     Log::GetInstance()->Info("cannot accept more connections");
     return;
   }

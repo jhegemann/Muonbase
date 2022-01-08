@@ -36,7 +36,7 @@ limitations under the License. */
 
 #include "utils.h"
 
-const unsigned kMaximumEvents = 256;
+const unsigned kEpollMaximumEvents = 256;
 
 class EpollInstance {
 public:
@@ -63,7 +63,7 @@ public:
 private:
   int instance_;
   epoll_event event_;
-  epoll_event events_[kMaximumEvents];
+  epoll_event events_[kEpollMaximumEvents];
 };
 
 const std::string kTcpLocalHost = "127.0.0.1";
