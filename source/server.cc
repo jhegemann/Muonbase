@@ -23,7 +23,8 @@ limitations under the License. */
 static const char kOptionVerbose = 'v';
 static const char kOptionConfig = 'c';
 static const char kOptionDaemon = 'd';
-static const char *kOptionString = "vdc:";
+static const char kOptionHelp = 'h';
+static const char *kOptionString = "hvdc:";
 
 static const std::string kIp = "ip";
 static const std::string kIpDefault = "127.0.0.1";
@@ -35,9 +36,11 @@ static const std::string kUserPath = "user_path";
 static const std::string kUserPathDefault = "./users.json";
 static const std::string kLogPath = "log_path";
 static const std::string kWorkingDirectory = "working_directory";
+static const std::string kWorkingDirectoryDefault = ".";
 
 static void PrintUsage() {
-  std::cout << "Usage: database.app [-v] [-d] [-c <config>]" << std::endl;
+  std::cout << "Usage: database.app [-h] [-v] [-d] [-c <config>]" << std::endl;
+  std::cout << "\t -h: help" << std::endl;
   std::cout << "\t -v: verbose" << std::endl;
   std::cout << "\t -d: daemon" << std::endl;
   std::cout << "\t -c <file>: configuration (mandatory)" << std::endl;
@@ -62,11 +65,14 @@ int main(int argc, char **argv) {
     case kOptionDaemon:
       daemonize = true;
       break;
-    case ':':
+    case kOptionHelp:
+      PrintUsage();
+      exit(0);
+    case kCharColon:
       Log::GetInstance()->Info("option needs a value");
       PrintUsage();
       exit(1);
-    case '?':
+    case kCharQuestionMark:
       Log::GetInstance()->Info("unknown option " + std::string(optopt, 1));
       PrintUsage();
       exit(1);
@@ -85,7 +91,7 @@ int main(int argc, char **argv) {
     Log::GetInstance()->SetVerbose(true);
   }
 
-  std::string working_directory = ".";
+  std::string working_directory = kWorkingDirectoryDefault;
   if (daemonize) {
     if (config.Has(kWorkingDirectory) && config.IsString(kWorkingDirectory)) {
       working_directory = config.GetAsString(kWorkingDirectory);

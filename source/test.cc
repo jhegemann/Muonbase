@@ -25,26 +25,22 @@ static const char kOptionIp = 'i';
 static const char kOptionPort = 'p';
 static const char kOptionOrder = 'o';
 static const char kOptionCycles = 'c';
-static const char *kOptionString = "ti:p:o:c:";
+static const char kOptionHelp = 'h';
+static const char *kOptionString = "hti:p:o:c:";
 
 static const std::string kIp = "ip";
 static const std::string kIpDefault = "127.0.0.1";
 static const std::string kPort = "port";
 static const std::string kPortDefault = "8260";
-static const std::string kDataPath = "data_path";
-static const std::string kDataPathDefault = "./storage.db";
-static const std::string kUserPath = "user_path";
-static const std::string kUserPathDefault = "./users.json";
-static const std::string kLogPath = "log_path";
-static const std::string kWorkingDirectory = "working_directory";
 
 static const size_t kDefaultOrder = 128;
 static const size_t kDefaultCycles = 16;
 
 static void PrintUsage() {
-  std::cout
-      << "Usage: test.app [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]"
-      << std::endl;
+  std::cout << "Usage: test.app [-h] [-t] [-i <ip>] [-p <port>] [-o <order>] "
+               "[-c <cycles>]"
+            << std::endl;
+  std::cout << "\t -h: help" << std::endl;
   std::cout << "\t -i <ip>: ip" << std::endl;
   std::cout << "\t -p <port>: port" << std::endl;
   std::cout << "\t -o <order>: order" << std::endl;
@@ -69,6 +65,9 @@ int main(int argc, char **argv) {
     case kOptionPort:
       port = optarg;
       break;
+    case kOptionHelp:
+      PrintUsage();
+      exit(0);
     case kOptionOrder:
       try {
         order = std::atoi(optarg);
@@ -85,11 +84,11 @@ int main(int argc, char **argv) {
         exit(1);
       }
       break;
-    case ':':
+    case kCharColon:
       Log::GetInstance()->Info("option needs a value");
       PrintUsage();
       exit(1);
-    case '?':
+    case kCharQuestionMark:
       Log::GetInstance()->Info("unknown option " + std::string(optopt, 1));
       PrintUsage();
       exit(1);

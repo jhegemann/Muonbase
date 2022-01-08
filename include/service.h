@@ -45,6 +45,7 @@ public:
   virtual void Initialize();
   virtual void Tick();
   virtual void Shutdown();
+  void Replay();
   void Rollover();
   std::optional<std::string> Insert(JsonObject &document);
   std::optional<std::string> Erase(std::string id);

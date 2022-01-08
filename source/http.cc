@@ -469,7 +469,7 @@ void HttpConnection::ParseMessage(HttpPacket &packet) {
   static size_t bytes_left;
   switch (stage_) {
   case HEADER:
-    while (count_headers_ < kMaxHttpHeaderCount) {
+    while (count_headers_ < kHttpMaxHeaderCount) {
       if (!reader_->Peak(kHttpLineFeed)) {
         return;
       }
@@ -490,7 +490,7 @@ void HttpConnection::ParseMessage(HttpPacket &packet) {
       packet.AddHeader(key, value);
       count_headers_++;
     }
-    if (count_headers_ > kMaxHttpHeaderCount) {
+    if (count_headers_ > kHttpMaxHeaderCount) {
       stage_ = FAILED;
       return;
     }
@@ -923,7 +923,7 @@ void HttpServer::HandleServerError(const std::string &service,
 
 void HttpServer::HandleServerEvent() {
   Log::GetInstance()->Info("event on server socket");
-  if (connections_.size() >= kMaximumEvents - kReservedSockets) {
+  if (connections_.size() >= kMaximumEvents - kHttpReservedSockets) {
     Log::GetInstance()->Info("cannot accept more connections");
     return;
   }

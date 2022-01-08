@@ -32,6 +32,15 @@ void DocumentDatabase::Initialize() {
     serializer_.Deserialize(db_, stream);
     stream.close();
   }
+  Replay();
+  Rollover();
+}
+
+void DocumentDatabase::Tick() { Rollover(); }
+
+void DocumentDatabase::Shutdown() {}
+
+void DocumentDatabase::Replay() {
   log_.Load(filepath_journal_);
   Log::GetInstance()->Info("replay write ahead log");
   for (auto it = log_.Log().begin(); it != log_.Log().end(); it++) {
@@ -47,12 +56,7 @@ void DocumentDatabase::Initialize() {
     }
   }
   log_.Unload();
-  Rollover();
 }
-
-void DocumentDatabase::Tick() { Rollover(); }
-
-void DocumentDatabase::Shutdown() {}
 
 void DocumentDatabase::Rollover() {
   if (db_.Size() == 0) {
@@ -133,7 +137,7 @@ void UserPool::Initialize() { users_.Parse(FileToString(filepath_)); }
 
 void UserPool::Tick() {}
 
-void UserPool::Shutdown() { }
+void UserPool::Shutdown() {}
 
 bool UserPool::AccessPermitted(const std::string &user,
                                const std::string &passwd) {

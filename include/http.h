@@ -39,8 +39,8 @@ const std::string kHttpProtocol1_1 = "HTTP/1.1";
 const std::string kHttpLineFeed = "\r\n";
 const std::string kHttpDoubleLineFeed = "\r\n\r\n";
 const long kHttpConnectionTimeout = 10000;
-const long kMaxHttpHeaderCount = 128;
-const unsigned int kReservedSockets = 3;
+const long kHttpMaxHeaderCount = 128;
+const unsigned int kHttpReservedSockets = 3;
 
 enum HttpMethod {
   INVALID_METHOD = 0,

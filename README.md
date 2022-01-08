@@ -1,5 +1,5 @@
-# Baseload.DB
-High Performance Schemaless In-Memory JSON Document Database Server
+# ManateeDB
+High Performance Schemaless Persistent In-Memory JSON Document Database Server - Something between Redis and MongoDB
 
 # Essential Features
 * fast lookups - usage of templated in-memory b+ tree data structure
@@ -64,12 +64,12 @@ This software supports only plain http transport and does not implement ssl. In 
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
-# Logging / Logrotate
+# Log / Logrotate
 At the current early stage, logging can only be (very) verbose or totally absent. If you
 really need the logging, either start the server in foreground and observe what happens on the standard output, 
 or make sure you use e.g. logrotate to avoid blocking your disk space with very large logfiles.
 
-# Compiling
+# Build
 As already mentioned in the disclaimer, building is currently being performed with gcc 9.3.0 and c++-20. The only
 dependency so far is openssl, which needs to be installed as well as the corresponding headers openssl-dev. To build
 the projects, simply type
@@ -83,7 +83,8 @@ Two binaries are produced by the makefile, which are (i) database.app, and (ii) 
 database server if a suitable configuration file in a json format is provided, see section configuration:
 ```
 user@linux-machine:/home/db$ ./bin/database.app
-Usage: database.app [-v] [-d] [-c <config>]
+Usage: database.app [-h] [-v] [-d] [-c <config>]
+         -h: help
          -v: verbose
          -d: daemon
          -c <file>: configuration (mandatory)
@@ -91,7 +92,8 @@ Usage: database.app [-v] [-d] [-c <config>]
 Binary (ii) runs automated tests against a running database server:
 ```
 user@linux-machine:/home/db$ ./bin/test.app
-Usage: test.app [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
+Usage: test.app [-h] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
+         -h: help
          -t: run tests
          -i <ip>: ip
          -p <port>: port

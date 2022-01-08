@@ -99,7 +99,7 @@ void Client::FindAll() {
       throw std::runtime_error("find success attribute");
     }
     if (!return_value.Has(kId) || !return_value.IsString(kId)) {
-      Log::GetInstance()->Info("test failed: finb id attribute");
+      Log::GetInstance()->Info("test failed: find id attribute");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("find id attribute");
     }
