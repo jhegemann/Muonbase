@@ -231,7 +231,7 @@ const std::string HttpRequest::AsShortString() const {
   packet << kHttpLineFeed;
   packet << body_.substr(0, std::min<size_t>(body_.length(), (size_t)1024));
   if (body_.length() > 1024) {
-    packet << "...";
+    packet << kStringDots;
   }
   return packet.str();
 }
@@ -751,7 +751,9 @@ bool HttpServer::SetupServerSocket(const std::string &service,
   if (!server_socket_.Listen(service, host)) {
     return false;
   }
-  server_socket_.Unblock();
+  if (!server_socket_.Unblock()) {
+    return false;
+  }
   return true;
 }
 
@@ -985,6 +987,11 @@ void HttpServer::HandleClientEvent(int index) {
         return;
       }
     }
+    if (connection->GetReader()->HasErrors()) {
+      Log::GetInstance()->Info("connection closed by client");
+      DeleteConnection(descriptor);
+      return;
+    }
   } else if (epoll_instance_.IsWritable(index)) {
     connection->ResetExpiry();
     connection->GetWriter()->SendSome();
@@ -1004,6 +1011,11 @@ void HttpServer::HandleClientEvent(int index) {
         Log::GetInstance()->Info("connection restart due to keep-alive header");
         return;
       }
+      DeleteConnection(descriptor);
+      return;
+    }
+    if (connection->GetWriter()->HasErrors()) {
+      Log::GetInstance()->Info("connection closed by client");
       DeleteConnection(descriptor);
       return;
     }

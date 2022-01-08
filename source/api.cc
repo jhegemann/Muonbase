@@ -41,33 +41,33 @@ HttpResponse Insert(const HttpRequest &request, ServiceMap services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
-                               APPLICATION_JSON, kNoSuccess);
+                               APPLICATION_JSON, kNoSuccessObject);
   }
   if (!AccessPermitted(request, services)) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   JsonObject object;
   try {
     object.Parse(request.GetBody());
   } catch (std::runtime_error &) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   DocumentDatabase *db =
       static_cast<DocumentDatabase *>(services[kDatabaseService]);
   auto id = db->Insert(object);
   if (!id) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
-                               APPLICATION_JSON, kNoSuccess);
+                               APPLICATION_JSON, kNoSuccessObject);
   }
-  JsonObject result(kSuccess);
+  JsonObject result(kSuccessObject);
   result.PutString(kId, *id);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              result.AsString());
@@ -77,37 +77,37 @@ HttpResponse Erase(const HttpRequest &request, ServiceMap services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
-                               APPLICATION_JSON, kNoSuccess);
+                               APPLICATION_JSON, kNoSuccessObject);
   }
   if (!AccessPermitted(request, services)) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   JsonObject object;
   try {
     object.Parse(request.GetBody());
   } catch (std::runtime_error &) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   if (!object.Has(kId) || !object.IsString(kId)) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   DocumentDatabase *db =
       static_cast<DocumentDatabase *>(services[kDatabaseService]);
   auto id = db->Erase(object.GetAsString(kId));
   if (!id) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
-  JsonObject result(kSuccess);
+  JsonObject result(kSuccessObject);
   result.PutString(kId, *id);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              result.AsString());
@@ -117,33 +117,33 @@ HttpResponse Find(const HttpRequest &request, ServiceMap services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
-                               APPLICATION_JSON, kNoSuccess);
+                               APPLICATION_JSON, kNoSuccessObject);
   }
   if (!AccessPermitted(request, services)) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   JsonObject object;
   try {
     object.Parse(request.GetBody());
   } catch (std::runtime_error &) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   if (!object.Has(kId) || !object.IsString(kId)) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   DocumentDatabase *db =
       static_cast<DocumentDatabase *>(services[kDatabaseService]);
   auto id = db->Find(object.GetAsString(kId));
-  JsonObject result(kSuccess);
+  JsonObject result(kSuccessObject);
   result.PutString(kId, object.GetAsString(kId));
   if (id) {
     result.PutObject(kDocument, *id);
@@ -159,17 +159,17 @@ HttpResponse Keys(const HttpRequest &request, ServiceMap services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
-                               APPLICATION_JSON, kNoSuccess);
+                               APPLICATION_JSON, kNoSuccessObject);
   }
   if (!AccessPermitted(request, services)) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   if (request.GetHeader(kContentType)
           .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
       0) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   JsonObject result;
   DocumentDatabase *db =
@@ -188,11 +188,11 @@ HttpResponse Image(const HttpRequest &request, ServiceMap services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
-                               APPLICATION_JSON, kNoSuccess);
+                               APPLICATION_JSON, kNoSuccessObject);
   }
   if (!AccessPermitted(request, services)) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
-                               kNoSuccess);
+                               kNoSuccessObject);
   }
   DocumentDatabase *db =
       static_cast<DocumentDatabase *>(services[kDatabaseService]);

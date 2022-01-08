@@ -24,27 +24,27 @@ void Client::RandomInsert(const size_t count) {
   JsonObject return_value;
   for (size_t i = 0; i < count; i++) {
     insert_object = RandomDocument();
-    auto response = SendRequest(ip_, port_, POST, "/insert", "root", "0000",
-                                APPLICATION_JSON, insert_object.AsString());
+    auto response =
+        SendRequest(ip_, port_, POST, db_api::kRouteInsert, "root", "0000",
+                    APPLICATION_JSON, insert_object.AsString());
     if (!response) {
       Log::GetInstance()->Info("TEST FAILED: INSERT REQUEST");
-      Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("INSERT REQUEST");
     }
     return_value.Parse((*response).GetBody());
-    if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
-        !return_value.GetAsBoolean("success")) {
+    if (!return_value.Has(kSuccess) || !return_value.IsBoolean(kSuccess) ||
+        !return_value.GetAsBoolean(kSuccess)) {
       Log::GetInstance()->Info("TEST FAILED: INSERT SUCCESS ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("INSERT SUCCESS ATTRIBUTE");
     }
-    if (!return_value.Has("id") || !return_value.IsString("id")) {
+    if (!return_value.Has(kId) || !return_value.IsString(kId)) {
       Log::GetInstance()->Info("TEST FAILED: INSERT ID ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("INSERT ID ATTRIBUTE");
     }
     internal_.insert(
-        std::make_pair(return_value.GetAsString("id"), insert_object));
+        std::make_pair(return_value.GetAsString(kId), insert_object));
   }
 }
 
@@ -56,21 +56,22 @@ void Client::RandomErase(const size_t count) {
     std::advance(it, rnd.Uint64() % internal_.size());
     std::string key = it->first;
     it = internal_.erase(it);
-    auto response = SendRequest(ip_, port_, POST, "/erase", "root", "0000",
-                                APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
+    auto response =
+        SendRequest(ip_, port_, POST, db_api::kRouteErase, "root", "0000",
+                    APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
       Log::GetInstance()->Info("TEST FAILED: ERASE REQUEST");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("ERASE REQUEST");
     }
     return_value.Parse((*response).GetBody());
-    if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
-        !return_value.GetAsBoolean("success")) {
+    if (!return_value.Has(kSuccess) || !return_value.IsBoolean(kSuccess) ||
+        !return_value.GetAsBoolean(kSuccess)) {
       Log::GetInstance()->Info("TEST FAILED: ERASE SUCCESS ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("ERASE SUCCESS ATTRIBUTE");
     }
-    if (!return_value.Has("id") || !return_value.IsString("id")) {
+    if (!return_value.Has(kId) || !return_value.IsString(kId)) {
       Log::GetInstance()->Info("TEST FAILED: ERASE ID ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("ERASE ID ATTRIBUTE");
@@ -82,32 +83,33 @@ void Client::FindAll() {
   JsonObject return_value;
   for (auto it = internal_.begin(); it != internal_.end(); it++) {
     std::string key = it->first;
-    auto response = SendRequest(ip_, port_, POST, "/find", "root", "0000",
-                                APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
+    auto response =
+        SendRequest(ip_, port_, POST, db_api::kRouteFind, "root", "0000",
+                    APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
       Log::GetInstance()->Info("TEST FAILED: FIND REQUEST");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("FIND REQUEST");
     }
     return_value.Parse((*response).GetBody());
-    if (!return_value.Has("success") || !return_value.IsBoolean("success") ||
-        !return_value.GetAsBoolean("success")) {
+    if (!return_value.Has(kSuccess) || !return_value.IsBoolean(kSuccess) ||
+        !return_value.GetAsBoolean(kSuccess)) {
       Log::GetInstance()->Info("TEST FAILED: FIND SUCCESS ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("FIND SUCCESS ATTRIBUTE");
     }
-    if (!return_value.Has("id") || !return_value.IsString("id")) {
+    if (!return_value.Has(kId) || !return_value.IsString(kId)) {
       Log::GetInstance()->Info("TEST FAILED: FIND ID ATTRIBUTE");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("FIND ID ATTRIBUTE");
     }
-    if (!return_value.Has("document") || !return_value.IsObject("document")) {
+    if (!return_value.Has(kDocument) || !return_value.IsObject(kDocument)) {
       Log::GetInstance()->Info("TEST FAILED: FIND DOCUMENT");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("FIND DOCUMENT");
     }
     if (it->second.AsString().compare(
-            return_value.GetAsObject("document").AsString()) != 0) {
+            return_value.GetAsObject(kDocument).AsString()) != 0) {
       Log::GetInstance()->Info("TEST FAILED: DOCUMENTS DIFFER");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("DOCUMENTS DIFFER");

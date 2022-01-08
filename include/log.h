@@ -22,6 +22,9 @@ limitations under the License. */
 
 #include "utils.h"
 
+const std::string kLogInfo = "info";
+const std::string kLogDatetimeFormat = "%d.%m.%Y-%H:%M:%S";
+
 class Log {
 public:
   static Log *GetInstance();

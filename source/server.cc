@@ -20,46 +20,66 @@ limitations under the License. */
 #include <iostream>
 #include <unistd.h>
 
+static const char kOptionVerbose = 'v';
+static const char kOptionConfig = 'c';
+static const char kOptionDaemon = 'd';
+static const char *kOptionString = "vdc:";
+
+static const std::string kIp = "ip";
+static const std::string kIpDefault = "127.0.0.1";
+static const std::string kPort = "port";
+static const std::string kPortDefault = "8260";
+static const std::string kDataPath = "data_path";
+static const std::string kDataPathDefault = "./storage.db";
+static const std::string kUserPath = "user_path";
+static const std::string kUserPathDefault = "./users.json";
+static const std::string kLogPath = "log_path";
+static const std::string kWorkingDirectory = "working_directory";
+
+static void PrintUsage() {
+  std::cout << "Usage: database.app [-v] [-d] [-c <config>]" << std::endl;
+  std::cout << "\t -v: verbose" << std::endl;
+  std::cout << "\t -d: daemon" << std::endl;
+  std::cout << "\t -c <file>: configuration (mandatory)" << std::endl;
+}
+
 int main(int argc, char **argv) {
   int option;
   JsonObject config;
   bool daemonize = false;
   bool config_available = false;
   bool verbose = false;
-  while ((option = getopt(argc, argv, "vdc:")) != -1) {
+  while ((option = getopt(argc, argv, kOptionString)) != -1) {
     switch (option) {
-    case 'v':
+    case kOptionVerbose:
       verbose = true;
       break;
-    case 'c':
+    case kOptionConfig:
       std::cout << optarg << std::endl;
       config.Parse(FileToString(optarg));
       config_available = true;
       break;
-    case 'd':
+    case kOptionDaemon:
       daemonize = true;
       break;
     case ':':
       Log::GetInstance()->Info("option needs a value");
+      PrintUsage();
       exit(1);
     case '?':
       Log::GetInstance()->Info("unknown option " + std::string(optopt, 1));
+      PrintUsage();
       exit(1);
     default:
-      printf("Usage: %s [-d] [-c <config>].\n", argv[0]);
+      PrintUsage();
       exit(0);
     }
   }
 
   if (!config_available) {
-    printf("Usage: %s [-v] [-d] [-c <config>].\n", argv[0]);
-    printf("\t -v : verbose\n");
-    printf("\t -d : daemon\n");
-    printf("\t -c <config> : configuration in json format\n");
+    PrintUsage();
     exit(0);
   }
-
-  std::cout << config.AsString() << std::endl;
 
   if (verbose) {
     Log::GetInstance()->SetVerbose(true);
@@ -67,25 +87,24 @@ int main(int argc, char **argv) {
 
   std::string working_directory = ".";
   if (daemonize) {
-    if (config.Has("working_directory") &&
-        config.IsString("working_directory")) {
-      working_directory = config.GetAsString("working_directory");
+    if (config.Has(kWorkingDirectory) && config.IsString(kWorkingDirectory)) {
+      working_directory = config.GetAsString(kWorkingDirectory);
     }
     Log::GetInstance()->Info("daemonize process");
     DaemonizeProcess(working_directory);
-    if (config.Has("log_path") && config.IsString("log_path")) {
-      Log::GetInstance()->SetLogfile(config.GetAsString("log_path"));
+    if (config.Has(kLogPath) && config.IsString(kLogPath)) {
+      Log::GetInstance()->SetLogfile(config.GetAsString(kLogPath));
     }
   }
 
-  std::string data_path = "core.db";
-  if (config.Has("data_path") && config.IsString("data_path")) {
-    data_path = config.GetAsString("data_path");
+  std::string data_path = kDataPathDefault;
+  if (config.Has(kDataPath) && config.IsString(kDataPath)) {
+    data_path = config.GetAsString(kDataPath);
   }
 
-  std::string user_path = "users.json";
-  if (config.Has("user_path") && config.IsString("user_path")) {
-    user_path = config.GetAsString("user_path");
+  std::string user_path = kUserPathDefault;
+  if (config.Has(kUserPath) && config.IsString(kUserPath)) {
+    user_path = config.GetAsString(kUserPath);
   }
 
   HttpServer server;
@@ -96,20 +115,21 @@ int main(int argc, char **argv) {
   server.RegisterService(db_api::kUserService, new UserPool(user_path));
 
   Log::GetInstance()->Info("set up routes");
-  server.RegisterHandler(HttpMethod::POST, "/insert", db_api::Insert);
-  server.RegisterHandler(HttpMethod::POST, "/erase", db_api::Erase);
-  server.RegisterHandler(HttpMethod::POST, "/find", db_api::Find);
-  server.RegisterHandler(HttpMethod::GET, "/keys", db_api::Keys);
-  server.RegisterHandler(HttpMethod::GET, "/image", db_api::Image);
+  server.RegisterHandler(HttpMethod::POST, db_api::kRouteInsert,
+                         db_api::Insert);
+  server.RegisterHandler(HttpMethod::POST, db_api::kRouteErase, db_api::Erase);
+  server.RegisterHandler(HttpMethod::POST, db_api::kRouteFind, db_api::Find);
+  server.RegisterHandler(HttpMethod::GET, db_api::kRouteKeys, db_api::Keys);
+  server.RegisterHandler(HttpMethod::GET, db_api::kRouteImage, db_api::Image);
 
   Log::GetInstance()->Info("start server");
-  std::string ip = "127.0.0.1";
-  if (config.Has("ip") && config.IsString("ip")) {
-    ip = config.GetAsString("ip");
+  std::string ip = kIpDefault;
+  if (config.Has(kIp) && config.IsString(kIp)) {
+    ip = config.GetAsString(kIp);
   }
-  std::string port = "8080";
-  if (config.Has("port") && config.IsString("port")) {
-    port = config.GetAsString("port");
+  std::string port = kPortDefault;
+  if (config.Has(kPort) && config.IsString(kPort)) {
+    port = config.GetAsString(kPort);
   }
 
   server.Serve(port, ip);

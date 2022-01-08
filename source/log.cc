@@ -36,11 +36,15 @@ void Log::Info(const std::string &msg) {
     return;
   }
   std::string pid = std::to_string(getpid());
-  std::string datetime = EpochToString(time(nullptr), "%d.%m.%Y-%H:%M:%S");
+  std::string datetime = EpochToString(time(nullptr), kLogDatetimeFormat);
   if (stream_.is_open()) {
-    stream_ << "[" << pid << "|" << datetime << "|Info] " << msg << std::endl;
+    stream_ << kStringSquareBracketOpen << pid << kStringPipe << datetime
+            << kStringPipe << kLogInfo << kStringSquareBracketClose << msg
+            << std::endl;
   } else {
-    std::cout << "[" << pid << "|" << datetime << "|Info] " << msg << std::endl;
+    std::cout << kStringSquareBracketOpen << pid << kStringPipe << datetime
+              << kStringPipe << kLogInfo << kStringSquareBracketClose << msg
+              << std::endl;
   }
 }
 

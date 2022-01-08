@@ -75,9 +75,7 @@ private:
 
 template <class K, class V> WriteAheadLog<K, V>::WriteAheadLog() {}
 
-template <class K, class V> WriteAheadLog<K, V>::~WriteAheadLog() {
-  stream_.close();
-}
+template <class K, class V> WriteAheadLog<K, V>::~WriteAheadLog() {}
 
 template <class K, class V>
 void WriteAheadLog<K, V>::Load(const std::string &filepath) {

@@ -20,51 +20,109 @@ limitations under the License. */
 #include <optional>
 #include <unistd.h>
 
+static const char kOptionIp = 'i';
+static const char kOptionPort = 'p';
+static const char kOptionOrder = 'o';
+static const char kOptionCycles = 'c';
+static const char *kOptionString = "i:p:o:c:";
+
+static const std::string kIp = "ip";
+static const std::string kIpDefault = "127.0.0.1";
+static const std::string kPort = "port";
+static const std::string kPortDefault = "8260";
+static const std::string kDataPath = "data_path";
+static const std::string kDataPathDefault = "./storage.db";
+static const std::string kUserPath = "user_path";
+static const std::string kUserPathDefault = "./users.json";
+static const std::string kLogPath = "log_path";
+static const std::string kWorkingDirectory = "working_directory";
+
+static const size_t kDefaultOrder = 128;
+static const size_t kDefaultCycles = 16;
+
+static void PrintUsage() {
+  std::cout
+      << "Usage: test.app [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]"
+      << std::endl;
+  std::cout << "\t -i <ip>: ip" << std::endl;
+  std::cout << "\t -p <port>: port" << std::endl;
+  std::cout << "\t -o <order>: order" << std::endl;
+  std::cout << "\t -c <cycles>: cycles" << std::endl;
+}
+
 int main(int argc, char **argv) {
   int option;
-  std::string ip = "127.0.0.1";
-  std::string port = "8260";
-  while ((option = getopt(argc, argv, "i:p:")) != -1) {
+  std::string ip = kIpDefault;
+  std::string port = kPortDefault;
+  size_t order = kDefaultOrder;
+  size_t cycles = kDefaultCycles;
+  while ((option = getopt(argc, argv, kOptionString)) != -1) {
     switch (option) {
-    case 'i':
+    case kOptionIp:
       ip = optarg;
       break;
-    case 'p':
+    case kOptionPort:
       port = optarg;
+      break;
+    case kOptionOrder:
+      try {
+        order = std::atoi(optarg);
+      } catch (std::invalid_argument &) {
+        PrintUsage();
+        exit(1);
+      }
+      break;
+    case kOptionCycles:
+      try {
+        cycles = std::atoi(optarg);
+      } catch (std::invalid_argument &) {
+        PrintUsage();
+        exit(1);
+      }
       break;
     case ':':
       Log::GetInstance()->Info("option needs a value");
-      exit(0);
+      PrintUsage();
+      exit(1);
     case '?':
       Log::GetInstance()->Info("unknown option " + std::string(optopt, 1));
-      exit(0);
+      PrintUsage();
+      exit(1);
     default:
-      printf("Usage: %s [-i <ip>] [-p <port>].\n", argv[0]);
+      PrintUsage();
       exit(0);
     }
   }
 
   Log::GetInstance()->SetVerbose(true);
 
+  TcpSocket socket;
+  if (!socket.Connect(port, ip)) {
+    Log::GetInstance()->Info("no service listening on " + ip + ":" + port);
+    exit(0);
+  }
+  if (socket.IsConnected()) {
+    Log::GetInstance()->Info("available service found on " + ip + ":" + port);
+  }
+  socket.Close();
+
   Client client(ip, port);
-  const size_t count = 128;
-  const size_t cycles = 8;
   try {
-    Log::GetInstance()->Info("TEST INIT");
-    client.RandomInsert(count);
+    Log::GetInstance()->Info("test init");
+    client.RandomInsert(order);
     client.FindAll();
     for (size_t i = 1; i <= cycles; i++) {
-      Log::GetInstance()->Info("TEST CYCLE " + std::to_string(i));
-      client.RandomInsert(count / cycles);
+      Log::GetInstance()->Info("test cycle " + std::to_string(i));
+      client.RandomInsert(order / cycles);
       client.FindAll();
-      client.RandomErase(count / cycles);
+      client.RandomErase(order / cycles);
       client.FindAll();
     }
   } catch (std::runtime_error &) {
-    Log::GetInstance()->Info("TEST FAILED!");
+    Log::GetInstance()->Info("test failed");
     exit(1);
   }
-  Log::GetInstance()->Info("ALL TESTS PASSED!");
+  Log::GetInstance()->Info("all tests passed");
 
   return 0;
 }

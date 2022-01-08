@@ -58,6 +58,8 @@ const std::string kStringSquareBracketOpen = "[";
 const std::string kStringSquareBracketClose = "]";
 const std::string kStringDoubleQuote = "\"";
 const std::string kStringSingleQuote = "'";
+const std::string kStringPipe = "|";
+
 const char kCharZero = '0';
 const char kCharNine = '9';
 const char kCharMinus = '-';

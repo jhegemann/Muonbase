@@ -162,7 +162,7 @@ std::string JsonObject::AsString() {
   ss << kStringCurlyBracketOpen;
   for (auto it = values_.begin(); it != values_.end(); it++) {
     ss << sep;
-    ss << "\"" << it->first << "\":";
+    ss << kStringDoubleQuote << it->first << kStringDoubleQuote + kStringColon;
     if (it->second.type() == typeid(void)) {
       ss << kJsonNull;
     } else if (it->second.type() == typeid(JsonBoolean)) {
@@ -176,7 +176,8 @@ std::string JsonObject::AsString() {
     } else if (it->second.type() == typeid(JsonFloat)) {
       ss << std::fixed << std::any_cast<JsonFloat>(it->second);
     } else if (it->second.type() == typeid(JsonString)) {
-      ss << "\"" << std::any_cast<JsonString>(it->second) << "\"";
+      ss << kStringDoubleQuote << std::any_cast<JsonString>(it->second)
+         << kStringDoubleQuote;
     } else if (it->second.type() == typeid(JsonObject)) {
       ss << std::any_cast<JsonObject>(it->second).AsString();
     } else if (it->second.type() == typeid(JsonArray)) {
@@ -430,7 +431,8 @@ std::string JsonArray::AsString() {
     } else if (it->type() == typeid(JsonFloat)) {
       ss << std::fixed << std::any_cast<JsonFloat>(*it);
     } else if (it->type() == typeid(JsonString)) {
-      ss << "\"" << std::any_cast<JsonString>(*it) << "\"";
+      ss << kStringDoubleQuote << std::any_cast<JsonString>(*it)
+         << kStringDoubleQuote;
     } else if (it->type() == typeid(JsonObject)) {
       ss << std::any_cast<JsonObject>(*it).AsString();
     } else if (it->type() == typeid(JsonArray)) {

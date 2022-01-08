@@ -18,6 +18,7 @@ limitations under the License. */
 #include <map>
 #include <string>
 
+#include "api.h"
 #include "http.h"
 #include "json.h"
 #include "log.h"
