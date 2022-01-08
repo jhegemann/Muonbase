@@ -133,7 +133,7 @@ void UserPool::Initialize() { users_.Parse(FileToString(filepath_)); }
 
 void UserPool::Tick() {}
 
-void UserPool::Shutdown() { StringToFile(filepath_, users_.AsString()); }
+void UserPool::Shutdown() { }
 
 bool UserPool::AccessPermitted(const std::string &user,
                                const std::string &passwd) {

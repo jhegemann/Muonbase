@@ -20,11 +20,12 @@ limitations under the License. */
 #include <optional>
 #include <unistd.h>
 
+static const char kOptionRun = 't';
 static const char kOptionIp = 'i';
 static const char kOptionPort = 'p';
 static const char kOptionOrder = 'o';
 static const char kOptionCycles = 'c';
-static const char *kOptionString = "i:p:o:c:";
+static const char *kOptionString = "ti:p:o:c:";
 
 static const std::string kIp = "ip";
 static const std::string kIpDefault = "127.0.0.1";
@@ -42,7 +43,7 @@ static const size_t kDefaultCycles = 16;
 
 static void PrintUsage() {
   std::cout
-      << "Usage: test.app [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]"
+      << "Usage: test.app [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]"
       << std::endl;
   std::cout << "\t -i <ip>: ip" << std::endl;
   std::cout << "\t -p <port>: port" << std::endl;
@@ -52,12 +53,16 @@ static void PrintUsage() {
 
 int main(int argc, char **argv) {
   int option;
+  bool run = false;
   std::string ip = kIpDefault;
   std::string port = kPortDefault;
   size_t order = kDefaultOrder;
   size_t cycles = kDefaultCycles;
   while ((option = getopt(argc, argv, kOptionString)) != -1) {
     switch (option) {
+    case kOptionRun:
+      run = true;
+      break;
     case kOptionIp:
       ip = optarg;
       break;
@@ -105,6 +110,11 @@ int main(int argc, char **argv) {
     Log::GetInstance()->Info("available service found on " + ip + ":" + port);
   }
   socket.Close();
+
+  if (!run) {
+    Log::GetInstance()->Info("dry run complete - restart with -t to run tests");
+    exit(0);
+  }
 
   Client client(ip, port);
   try {

@@ -69,25 +69,33 @@ At the current early stage, logging can only be (very) verbose or totally absent
 really need the logging, either start the server in foreground and observe what happens on the standard output, 
 or make sure you use e.g. logrotate to avoid blocking your disk space with very large logfiles.
 
-# Usage
-Database server:
-```
-root@linux-machine:/home/db$ ./bin/database.app
-Usage: ./bin/database.app [-v] [-d] [-c <config>].
-         -v : verbose - defaults to false
-         -d : daemon - defaults to false
-         -c <config> : mandatory configuration in json format
-```
+# Compiling
 
-Test client:
+
+# Usage
+Two binaries are produced by the makefile, which are (i) database.app, and (ii) test.app. Binary (i) runs the 
+database server if a suitable configuration file in a json format is provided, see section configuration:
 ```
-root@linux-machine:/home/db$ ./bin/test.app
-Usage: ./bin/database.app [-v] [-d] [-c <config>].
-         -i : ip - defaults to 127.0.0.1
-         -p : port - defaults to 8260
+user@linux-machine:/home/db$ ./bin/database.app
+Usage: database.app [-v] [-d] [-c <config>]
+         -v: verbose
+         -d: daemon
+         -c <file>: configuration (mandatory)
 ```
+Binary (ii) runs automated tests against a running database server:
+```
+jonas@DESKTOP-EE4KNAM:/mnt/c/Home/Native/Baseload.DB$ ./bin/test.app
+Usage: test.app [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
+         -t: run tests
+         -i <ip>: ip
+         -p <port>: port
+         -o <order>: order
+         -c <cycles>: cycles
+```
+For any version published in master branch one can assume that all tests are passed.
 
 # Configuration
+The following configuration file in json format is the standard configuration, 
 ```
 {
   "ip": "127.0.0.1",
@@ -98,13 +106,21 @@ Usage: ./bin/database.app [-v] [-d] [-c <config>].
   "working_directory": "."
 }
 ```
+which is mandatory for the database server. Tune the parameters as you want, but keep a few things in mind: (i) binding
+to ip 0.0.0.0 is not recommended, since the transport layer does not support ssl, (ii) do not bind to
+ports below 1024 since this requires root privileges and is therefore not secure. The data and user paths
+can be chosen freely as well as the log path. The working directory will only be used if the daemon command
+line option is activated, i.e. the server will run in background. In general absolute paths are preferred
+over relative paths in this configuration file.
 
 # User Management
+The user management is not dynamic yet, so in order to add a user you have to manually edit the users file,
 ```
 {
   "root": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"
 }
 ```
+which is in a json format. Hashes have to be sha256 and can be generated e.g. on the command line.
 
 # API
 
