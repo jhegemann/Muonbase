@@ -158,7 +158,7 @@ access-control-allow-origin: *
 content-length: 40
 content-type: application/json
 date: 20220106121227
-server: baseload/1
+server: manatee/1
 
 {"id":"dMxiajoFmCZirIiD","success":true}
 ```
@@ -182,7 +182,7 @@ access-control-allow-origin: *
 content-length: 40
 content-type: application/json
 date: 20220106121227
-server: baseload/1
+server: manatee/1
 
 {"id":"GI0xHlR9SHXpNPT9","success":true}
 ```
@@ -206,7 +206,7 @@ access-control-allow-origin: *
 content-length: 339
 content-type: application/json
 date: 20220106121227
-server: baseload/1
+server: manatee/1
 
 {"found":true,"document":{"fE40YyX8iIgaQuXV":false,"PGjfooCv98HL1dTf":0.451518,"qmirthOPG2AyuSwD":246816,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":true,"cMvIo2nbwkvcnMBe":0.663296,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":53522},"qRADfzL9qSZdWfCB":[false,0.133002,195159,null]},"id":"0jEdOcRMlgQeeuGe","success":true}
 ```
