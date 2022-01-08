@@ -36,7 +36,12 @@ void DocumentDatabase::Initialize() {
   Rollover();
 }
 
-void DocumentDatabase::Tick() { Rollover(); }
+void DocumentDatabase::Tick() {
+  if (db_.Size() > 0 && FileExists(filepath_journal_) &&
+      FileSize(filepath_journal_) > FileSize(filepath_)) {
+    Rollover();
+  }
+}
 
 void DocumentDatabase::Shutdown() {}
 
@@ -59,15 +64,6 @@ void DocumentDatabase::Replay() {
 }
 
 void DocumentDatabase::Rollover() {
-  if (db_.Size() == 0) {
-    return;
-  }
-  if (!FileExists(filepath_journal_)) {
-    return;
-  }
-  if (FileSize(filepath_journal_) < FileSize(filepath_)) {
-    return;
-  }
   Log::GetInstance()->Info("rollover database journal");
   std::fstream stream;
   stream.open(filepath_snapshot_, std::fstream::out | std::fstream::binary);

@@ -32,19 +32,20 @@ void Client::RandomInsert(const size_t count) {
       throw std::runtime_error("insert request");
     }
     return_value.Parse((*response).GetBody());
-    if (!return_value.Has(kSuccess) || !return_value.IsBoolean(kSuccess) ||
-        !return_value.GetAsBoolean(kSuccess)) {
+    if (!return_value.Has(db_api::kSuccess) ||
+        !return_value.IsBoolean(db_api::kSuccess) ||
+        !return_value.GetAsBoolean(db_api::kSuccess)) {
       Log::GetInstance()->Info("test failed: insert success attribute");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("insert success attribute");
     }
-    if (!return_value.Has(kId) || !return_value.IsString(kId)) {
+    if (!return_value.Has(db_api::kId) || !return_value.IsString(db_api::kId)) {
       Log::GetInstance()->Info("test failed: insert id attribute");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("insert id attribute");
     }
     internal_.insert(
-        std::make_pair(return_value.GetAsString(kId), insert_object));
+        std::make_pair(return_value.GetAsString(db_api::kId), insert_object));
   }
 }
 
@@ -61,17 +62,17 @@ void Client::RandomErase(const size_t count) {
                     APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
       Log::GetInstance()->Info("test failed: erase request");
-      Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("erase request");
     }
     return_value.Parse((*response).GetBody());
-    if (!return_value.Has(kSuccess) || !return_value.IsBoolean(kSuccess) ||
-        !return_value.GetAsBoolean(kSuccess)) {
+    if (!return_value.Has(db_api::kSuccess) ||
+        !return_value.IsBoolean(db_api::kSuccess) ||
+        !return_value.GetAsBoolean(db_api::kSuccess)) {
       Log::GetInstance()->Info("test failed: erase success attribute");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("erase success attribute");
     }
-    if (!return_value.Has(kId) || !return_value.IsString(kId)) {
+    if (!return_value.Has(db_api::kId) || !return_value.IsString(db_api::kId)) {
       Log::GetInstance()->Info("test failed: erase id attribute");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("erase id attribute");
@@ -88,28 +89,29 @@ void Client::FindAll() {
                     APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
       Log::GetInstance()->Info("test failed: find request");
-      Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("find request");
     }
     return_value.Parse((*response).GetBody());
-    if (!return_value.Has(kSuccess) || !return_value.IsBoolean(kSuccess) ||
-        !return_value.GetAsBoolean(kSuccess)) {
+    if (!return_value.Has(db_api::kSuccess) ||
+        !return_value.IsBoolean(db_api::kSuccess) ||
+        !return_value.GetAsBoolean(db_api::kSuccess)) {
       Log::GetInstance()->Info("test failed: find success attribute");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("find success attribute");
     }
-    if (!return_value.Has(kId) || !return_value.IsString(kId)) {
+    if (!return_value.Has(db_api::kId) || !return_value.IsString(db_api::kId)) {
       Log::GetInstance()->Info("test failed: find id attribute");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("find id attribute");
     }
-    if (!return_value.Has(kDocument) || !return_value.IsObject(kDocument)) {
+    if (!return_value.Has(db_api::kDocument) ||
+        !return_value.IsObject(db_api::kDocument)) {
       Log::GetInstance()->Info("test failed: find document");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("find document");
     }
     if (it->second.AsString().compare(
-            return_value.GetAsObject(kDocument).AsString()) != 0) {
+            return_value.GetAsObject(db_api::kDocument).AsString()) != 0) {
       Log::GetInstance()->Info("test failed: documents differ");
       Log::GetInstance()->Info((*response).AsString());
       throw std::runtime_error("documents differ");

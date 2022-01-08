@@ -19,6 +19,8 @@ limitations under the License. */
 #include "json.h"
 #include "log.h"
 
+namespace db_api {
+
 const std::string kAuthorization = "authorization";
 const std::string kBasic = "Basic";
 const std::string kSuccess = "success";
@@ -29,8 +31,6 @@ const std::string kKeys = "keys";
 const std::string kFound = "found";
 const std::string kSuccessObject = "{\"success\":true}";
 const std::string kNoSuccessObject = "{\"success\":false}";
-
-namespace db_api {
 
 const std::string kRouteInsert = "/insert";
 const std::string kRouteErase = "/erase";
