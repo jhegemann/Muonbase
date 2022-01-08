@@ -27,7 +27,7 @@ project parallel to my fulltime employments. Please understand that for that rea
 a bit slow and sluggish, I will try my very best!
 
 This software does not aim to be extremely portable, instead it is designed to run within a linux distribution.
-It can be build with gcc and C++-20 standard. The g++ version that is currently in use for development
+It can be build with gcc and c++-20 standard. The g++ version that is currently in use for development
 is g++ 9.3.0. The reason for not making it highly portable in the first place was to save development time.
 In addition, it is assumed to run on *servers* that in most cases run a linux distribution anyway. It is mandatory
 that this linux distribution (or the c library) supports the epoll system calls.
@@ -70,7 +70,13 @@ really need the logging, either start the server in foreground and observe what 
 or make sure you use e.g. logrotate to avoid blocking your disk space with very large logfiles.
 
 # Compiling
-
+As already mentioned in the disclaimer, building is currently being performed with gcc 9.3.0 and c++-20. The only
+dependency so far is openssl, which needs to be installed as well as the corresponding headers openssl-dev. To build
+the projects, simply type
+```
+make clean && make
+```
+in a login shell.
 
 # Usage
 Two binaries are produced by the makefile, which are (i) database.app, and (ii) test.app. Binary (i) runs the 
