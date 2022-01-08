@@ -84,7 +84,7 @@ Usage: database.app [-v] [-d] [-c <config>]
 ```
 Binary (ii) runs automated tests against a running database server:
 ```
-jonas@DESKTOP-EE4KNAM:/mnt/c/Home/Native/Baseload.DB$ ./bin/test.app
+user@linux-machine:/home/db$ ./bin/test.app
 Usage: test.app [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
          -t: run tests
          -i <ip>: ip
