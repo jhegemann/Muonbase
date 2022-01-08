@@ -89,16 +89,16 @@ void DocumentDatabase::Tick() {
     Log::GetInstance()->Info("defer journal rollover");
     rollover_worker_ = std::thread([this] {
       Map<std::string, JsonObject> db;
-      std::fstream stream;
       if (FileExists(filepath_)) {
-        stream.open(filepath_, std::fstream::in | std::fstream::binary);
-        serializer_.Deserialize(db, stream);
-        stream.close();
+        stream_.open(filepath_, std::fstream::in | std::fstream::binary);
+        serializer_.Deserialize(db, stream_);
+        stream_.close();
       }
       Journal::Replay(filepath_journal_closed_, db);
-      stream.open(filepath_snapshot_, std::fstream::out | std::fstream::binary);
-      serializer_.Serialize(db, stream);
-      stream.close();
+      stream_.open(filepath_snapshot_,
+                   std::fstream::out | std::fstream::binary);
+      serializer_.Serialize(db, stream_);
+      stream_.close();
       rename(filepath_snapshot_.c_str(), filepath_.c_str());
       unlink(filepath_journal_closed_.c_str());
       rollover_in_progress_ = false;
@@ -117,8 +117,7 @@ std::optional<std::string> DocumentDatabase::Insert(JsonObject &document) {
       unique = true;
     }
   }
-  WriteAheadLog<std::string, JsonObject>::Append(filepath_journal_,
-                                                 STORAGE_INSERT, id, &document);
+  Journal::Append(filepath_journal_, STORAGE_INSERT, id, &document);
   db_.Insert(id, document);
   return id;
 }
@@ -128,8 +127,7 @@ std::optional<std::string> DocumentDatabase::Erase(std::string id) {
   if (it == db_.End()) {
     return {};
   }
-  WriteAheadLog<std::string, JsonObject>::Append(filepath_journal_,
-                                                 STORAGE_ERASE, id, nullptr);
+  Journal::Append(filepath_journal_, STORAGE_ERASE, id, nullptr);
   db_.Erase(it);
   return id;
 }
