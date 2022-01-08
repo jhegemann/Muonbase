@@ -17,12 +17,14 @@ limitations under the License. */
 
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "utils.h"
 
 const std::string kLogInfo = "info";
+const std::string kLogAsync = "async";
 const std::string kLogDatetimeFormat = "%d.%m.%Y-%H:%M:%S";
 
 class Log {
@@ -38,6 +40,7 @@ private:
   static Log *instance_;
   std::fstream stream_;
   bool verbose_;
+  std::mutex mutex_;
   Log();
   virtual ~Log();
 };

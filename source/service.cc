@@ -20,58 +20,93 @@ ApiService::~ApiService() {}
 
 DocumentDatabase::DocumentDatabase(const std::string &filepath)
     : filepath_(filepath), filepath_journal_(filepath + kJournalSuffix),
-      filepath_snapshot_(filepath + kSnapshotSuffix) {}
+      filepath_journal_closed_(filepath + kJournalSuffix + kClosedSuffix),
+      filepath_snapshot_(filepath + kSnapshotSuffix),
+      rollover_in_progress_(false), wait_for_join_(false) {}
 
 DocumentDatabase::~DocumentDatabase() {}
 
 void DocumentDatabase::Initialize() {
   random_.Seed(time(nullptr));
   if (FileExists(filepath_)) {
-    std::fstream stream;
-    stream.open(filepath_, std::fstream::in | std::fstream::binary);
-    serializer_.Deserialize(db_, stream);
-    stream.close();
+    stream_.open(filepath_, std::fstream::in | std::fstream::binary);
+    serializer_.Deserialize(db_, stream_);
+    stream_.close();
   }
-  Replay();
-  Rollover();
+  bool rollover_necessary = false;
+  bool unlink_journal_closed = false;
+  bool unlink_journal = false;
+  if (FileExists(filepath_journal_closed_)) {
+    Journal::Replay(filepath_journal_closed_, db_);
+    rollover_necessary = true;
+    unlink_journal_closed = true;
+  }
+  if (FileExists(filepath_journal_)) {
+    Journal::Replay(filepath_journal_, db_);
+    rollover_necessary = true;
+    unlink_journal = true;
+  }
+  if (rollover_necessary) {
+    Log::GetInstance()->Info("complete database journal rollover at startup");
+    stream_.open(filepath_snapshot_, std::fstream::out | std::fstream::binary);
+    serializer_.Serialize(db_, stream_);
+    stream_.close();
+    rename(filepath_snapshot_.c_str(), filepath_.c_str());
+  }
+  if (unlink_journal_closed) {
+    unlink(filepath_journal_closed_.c_str());
+  }
+  if (unlink_journal) {
+    unlink(filepath_journal_.c_str());
+  }
 }
 
 void DocumentDatabase::Tick() {
-  if (db_.Size() > 0 && FileExists(filepath_journal_) &&
-      FileSize(filepath_journal_) > FileSize(filepath_)) {
-    Rollover();
+  if (rollover_in_progress_) {
+    return;
+  }
+  if (wait_for_join_) {
+    rollover_worker_.join();
+    wait_for_join_ = false;
+    Log::GetInstance()->Info("deferred journal rollover completed");
+  }
+  if (FileExists(filepath_)) {
+    if (FileExists(filepath_journal_)) {
+      if (FileSize(filepath_journal_) > FileSize(filepath_)) {
+        rename(filepath_journal_.c_str(), filepath_journal_closed_.c_str());
+      }
+    }
+  } else {
+    if (FileExists(filepath_journal_)) {
+      if (FileSize(filepath_journal_) > 4194304) {
+        rename(filepath_journal_.c_str(), filepath_journal_closed_.c_str());
+      }
+    }
+  }
+  if (FileExists(filepath_journal_closed_)) {
+    rollover_in_progress_ = true;
+    wait_for_join_ = true;
+    Log::GetInstance()->Info("defer journal rollover");
+    rollover_worker_ = std::thread([this] {
+      Map<std::string, JsonObject> db;
+      std::fstream stream;
+      if (FileExists(filepath_)) {
+        stream.open(filepath_, std::fstream::in | std::fstream::binary);
+        serializer_.Deserialize(db, stream);
+        stream.close();
+      }
+      Journal::Replay(filepath_journal_closed_, db);
+      stream.open(filepath_snapshot_, std::fstream::out | std::fstream::binary);
+      serializer_.Serialize(db, stream);
+      stream.close();
+      rename(filepath_snapshot_.c_str(), filepath_.c_str());
+      unlink(filepath_journal_closed_.c_str());
+      rollover_in_progress_ = false;
+    });
   }
 }
 
 void DocumentDatabase::Shutdown() {}
-
-void DocumentDatabase::Replay() {
-  log_.Load(filepath_journal_);
-  Log::GetInstance()->Info("replay write ahead log");
-  for (auto it = log_.Log().begin(); it != log_.Log().end(); it++) {
-    switch (it->GetOperation()) {
-    case STORAGE_INSERT:
-      db_.Insert(it->GetKey(), *it->GetValue());
-      break;
-    case STORAGE_ERASE:
-      db_.Erase(it->GetKey());
-      break;
-    default:
-      throw std::runtime_error("unknown storage operation");
-    }
-  }
-  log_.Unload();
-}
-
-void DocumentDatabase::Rollover() {
-  Log::GetInstance()->Info("rollover database journal");
-  std::fstream stream;
-  stream.open(filepath_snapshot_, std::fstream::out | std::fstream::binary);
-  serializer_.Serialize(db_, stream);
-  stream.close();
-  rename(filepath_snapshot_.c_str(), filepath_.c_str());
-  unlink(filepath_journal_.c_str());
-}
 
 std::optional<std::string> DocumentDatabase::Insert(JsonObject &document) {
   std::string id;
@@ -82,7 +117,8 @@ std::optional<std::string> DocumentDatabase::Insert(JsonObject &document) {
       unique = true;
     }
   }
-  log_.Append(filepath_journal_, STORAGE_INSERT, id, &document);
+  WriteAheadLog<std::string, JsonObject>::Append(filepath_journal_,
+                                                 STORAGE_INSERT, id, &document);
   db_.Insert(id, document);
   return id;
 }
@@ -92,7 +128,8 @@ std::optional<std::string> DocumentDatabase::Erase(std::string id) {
   if (it == db_.End()) {
     return {};
   }
-  log_.Append(filepath_journal_, STORAGE_ERASE, id, nullptr);
+  WriteAheadLog<std::string, JsonObject>::Append(filepath_journal_,
+                                                 STORAGE_ERASE, id, nullptr);
   db_.Erase(it);
   return id;
 }

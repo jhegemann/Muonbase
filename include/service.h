@@ -20,14 +20,18 @@ limitations under the License. */
 #include "rand.h"
 #include "utils.h"
 #include "wal.h"
+#include <atomic>
 #include <fstream>
-#include <map>
 #include <optional>
+#include <thread>
 
 template <class K, class V> class Map;
 
+typedef WriteAheadLog<std::string, JsonObject> Journal;
+
 const std::string kJournalSuffix = ".journal";
 const std::string kSnapshotSuffix = ".snapshot";
+const std::string kClosedSuffix = ".closed";
 
 class ApiService {
 public:
@@ -45,8 +49,6 @@ public:
   virtual void Initialize();
   virtual void Tick();
   virtual void Shutdown();
-  void Replay();
-  void Rollover();
   std::optional<std::string> Insert(JsonObject &document);
   std::optional<std::string> Erase(std::string id);
   std::optional<JsonObject> Find(std::string id);
@@ -56,11 +58,15 @@ public:
 private:
   std::string filepath_;
   std::string filepath_journal_;
+  std::string filepath_journal_closed_;
   std::string filepath_snapshot_;
+  std::fstream stream_;
   Map<std::string, JsonObject> db_;
   Serializer<Map<std::string, JsonObject>> serializer_;
   RandomGenerator random_;
-  WriteAheadLog<std::string, JsonObject> log_;
+  std::thread rollover_worker_;
+  std::atomic<bool> rollover_in_progress_;
+  std::atomic<bool> wait_for_join_;
 };
 
 class UserPool : public ApiService {

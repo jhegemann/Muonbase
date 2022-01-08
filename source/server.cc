@@ -58,7 +58,6 @@ int main(int argc, char **argv) {
       verbose = true;
       break;
     case kOptionConfig:
-      std::cout << optarg << std::endl;
       config.Parse(FileToString(optarg));
       config_available = true;
       break;

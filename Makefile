@@ -28,14 +28,15 @@ TEST_OBJECTS = $(BD)/test.o \
  $(BD)/client.o
 
 LINKING_SSL = -lssl -lcrypto
+LINKING_THREAD = -lpthread
 
 all: $(TARGETS)
 
 database: $(DATABASE_OBJECTS) Makefile
-	$(CC) $(DATABASE_OBJECTS) -o $(BN)/database.app $(LINKING_SSL)
+	$(CC) $(DATABASE_OBJECTS) -o $(BN)/database.app $(LINKING_SSL) $(LINKING_THREAD)
 
 test: $(TEST_OBJECTS) Makefile
-	$(CC) $(TEST_OBJECTS) -o $(BN)/test.app $(LINKING_SSL)
+	$(CC) $(TEST_OBJECTS) -o $(BN)/test.app $(LINKING_SSL) $(LINKING_THREAD)
 
 $(BD)/%.o: $(SD)/%.cc
 	$(CC) $(CFLAGS) -I$(ID) -I. -o $@ -c $<

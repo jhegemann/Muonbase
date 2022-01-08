@@ -15,6 +15,7 @@ limitations under the License. */
 #ifndef WAL_H
 #define WAL_H
 
+#include "map.h"
 #include <deque>
 #include <sstream>
 
@@ -57,39 +58,27 @@ template <class K, class V> const V *LogEntry<K, V>::GetValue() {
 
 template <class K, class V> class WriteAheadLog {
 public:
-  WriteAheadLog();
-  virtual ~WriteAheadLog();
-  void Load(const std::string &filepath);
-  void Unload();
-  void Append(const std::string &filepath, StorageModification operation,
-              K &key, V *value = nullptr);
-  std::deque<LogEntry<K, V>> &Log();
-  size_t Size();
-
-private:
-  std::fstream stream_;
-  std::deque<LogEntry<K, V>> log_;
-  Serializer<K> key_serializer_;
-  Serializer<V> value_serializer_;
+  static void Replay(const std::string &filepath, Map<K, V> &db);
+  static void Append(const std::string &filepath, StorageModification operation,
+                     K &key, V *value = nullptr);
 };
 
-template <class K, class V> WriteAheadLog<K, V>::WriteAheadLog() {}
-
-template <class K, class V> WriteAheadLog<K, V>::~WriteAheadLog() {}
-
 template <class K, class V>
-void WriteAheadLog<K, V>::Load(const std::string &filepath) {
-  log_.clear();
+void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
+  std::fstream stream;
+  std::deque<LogEntry<K, V>> log;
+  Serializer<K> key_serializer;
+  Serializer<V> value_serializer;
   if (FileExists(filepath)) {
     size_t size = FileSize(filepath);
-    stream_.open(filepath, std::fstream::in | std::fstream::binary);
+    stream.open(filepath, std::fstream::in | std::fstream::binary);
     uint8_t buffer;
     StorageModification operation;
     K key;
     V *value;
     size_t bytes = 0;
     while (bytes < size) {
-      stream_.read((char *)&buffer, sizeof(uint8_t));
+      stream.read((char *)&buffer, sizeof(uint8_t));
       bytes += sizeof(uint8_t);
       switch (buffer) {
       case 0:
@@ -101,58 +90,61 @@ void WriteAheadLog<K, V>::Load(const std::string &filepath) {
       default:
         throw std::runtime_error("WriteAheadLog: unknown storage operation");
       }
-      bytes += key_serializer_.Deserialize(key, stream_);
-      stream_.read((char *)&buffer, sizeof(uint8_t));
+      bytes += key_serializer.Deserialize(key, stream);
+      stream.read((char *)&buffer, sizeof(uint8_t));
       bytes += sizeof(uint8_t);
       if (buffer == 0) {
         value = nullptr;
       } else {
         value = new JsonObject();
-        bytes += value_serializer_.Deserialize((*value), stream_);
+        bytes += value_serializer.Deserialize((*value), stream);
       }
-      log_.emplace_back(operation, key, value);
+      log.emplace_back(operation, key, value);
     }
-    stream_.close();
+    stream.close();
   }
-}
-
-template <class K, class V> void WriteAheadLog<K, V>::Unload() {
-  for (auto it = log_.begin(); it != log_.end(); it++) {
+  for (auto it = log.begin(); it != log.end(); it++) {
+    switch (it->GetOperation()) {
+    case STORAGE_INSERT:
+      db.Insert(it->GetKey(), *it->GetValue());
+      break;
+    case STORAGE_ERASE:
+      db.Erase(it->GetKey());
+      break;
+    default:
+      abort();
+    }
+  }
+  for (auto it = log.begin(); it != log.end(); it++) {
     if (it->value_) {
       delete it->value_;
     }
   }
-  log_.clear();
+  log.clear();
 }
 
 template <class K, class V>
 void WriteAheadLog<K, V>::Append(const std::string &filepath,
                                  StorageModification operation, K &key,
                                  V *value) {
-  stream_.open(filepath,
-               std::fstream::out | std::fstream::binary | std::fstream::app);
+  std::fstream stream;
+  Serializer<K> key_serializer;
+  Serializer<V> value_serializer;
+  stream.open(filepath,
+              std::fstream::out | std::fstream::binary | std::fstream::app);
   uint8_t buffer = static_cast<uint8_t>(operation);
-  stream_.write((const char *)&buffer, sizeof(uint8_t));
-  key_serializer_.Serialize(key, stream_);
+  stream.write((const char *)&buffer, sizeof(uint8_t));
+  key_serializer.Serialize(key, stream);
   if (value) {
     buffer = 1;
-    stream_.write((const char *)&buffer, sizeof(uint8_t));
-    value_serializer_.Serialize((*value), stream_);
+    stream.write((const char *)&buffer, sizeof(uint8_t));
+    value_serializer.Serialize((*value), stream);
   } else {
     buffer = 0;
-    stream_.write((const char *)&buffer, sizeof(uint8_t));
+    stream.write((const char *)&buffer, sizeof(uint8_t));
   }
-  stream_.flush();
-  stream_.close();
-}
-
-template <class K, class V>
-std::deque<LogEntry<K, V>> &WriteAheadLog<K, V>::Log() {
-  return log_;
-}
-
-template <class K, class V> size_t WriteAheadLog<K, V>::Size() {
-  return log_.size();
+  stream.flush();
+  stream.close();
 }
 
 #endif

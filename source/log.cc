@@ -32,6 +32,7 @@ Log *Log::GetInstance() {
 }
 
 void Log::Info(const std::string &msg) {
+  std::lock_guard<std::mutex> guard(mutex_);
   if (!verbose_) {
     return;
   }
