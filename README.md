@@ -1,5 +1,5 @@
 # Muonbase
-General Purpose High Performance Schemaless Persistent In-Memory JSON Document Database Server
+General Purpose Schemaless Persistent In-Memory JSON Document Database Server
 
 # Essential Features
 * fast lookups - usage of templated in-memory b+ tree data structure
