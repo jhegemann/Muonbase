@@ -1,4 +1,11 @@
+
 data/*.db
+data/*.db.snapshot
+data/*.db.journal
+data/*.db.journal.closed
+
 bin/*.app
+
 build/*.o
+
 .vscode

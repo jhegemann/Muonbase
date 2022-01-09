@@ -497,14 +497,6 @@ void TcpReader::SyncRead(long timeout) {
   status_ = socket_->Receive(buffer_);
 }
 
-std::string TcpReader::PopSegment(const std::string &token) {
-  return StringPopSegment(buffer_, token);
-}
-
-std::string TcpReader::PopSegment(size_t position) {
-  return StringPopSegment(buffer_, position);
-}
-
 size_t TcpReader::GetPosition(const std::string &token) {
   return StringPosition(buffer_, token);
 }

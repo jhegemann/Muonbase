@@ -69,6 +69,7 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
   std::deque<LogEntry<K, V>> log;
   Serializer<K> key_serializer;
   Serializer<V> value_serializer;
+  size_t value_bytes = 0;
   if (FileExists(filepath)) {
     size_t size = FileSize(filepath);
     stream.open(filepath, std::fstream::in | std::fstream::binary);
@@ -79,6 +80,10 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
     size_t bytes = 0;
     while (bytes < size) {
       stream.read((char *)&buffer, sizeof(uint8_t));
+      if (!stream) {
+        Log::GetInstance()->Info("incomplete journal message - stop");
+        break;
+      }
       bytes += sizeof(uint8_t);
       switch (buffer) {
       case 0:
@@ -92,12 +97,21 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
       }
       bytes += key_serializer.Deserialize(key, stream);
       stream.read((char *)&buffer, sizeof(uint8_t));
+      if (!stream) {
+        Log::GetInstance()->Info("incomplete journal message - stop");
+        break;
+      }
       bytes += sizeof(uint8_t);
       if (buffer == 0) {
         value = nullptr;
       } else {
         value = new JsonObject();
-        bytes += value_serializer.Deserialize((*value), stream);
+        value_bytes = value_serializer.Deserialize((*value), stream);
+        if (value_bytes == std::string::npos) {
+          Log::GetInstance()->Info("incomplete journal message - stop");
+          break;
+        }
+        bytes += value_bytes;
       }
       log.emplace_back(operation, key, value);
     }
@@ -134,17 +148,24 @@ void WriteAheadLog<K, V>::Append(const std::string &filepath,
               std::fstream::out | std::fstream::binary | std::fstream::app);
   uint8_t buffer = static_cast<uint8_t>(operation);
   stream.write((const char *)&buffer, sizeof(uint8_t));
-  key_serializer.Serialize(key, stream);
+  if (key_serializer.Serialize(key, stream) == std::string::npos) {
+    Log::GetInstance()->Info("error when appending to journal via stream");
+  }
   if (value) {
     buffer = 1;
     stream.write((const char *)&buffer, sizeof(uint8_t));
-    value_serializer.Serialize((*value), stream);
+    if (value_serializer.Serialize((*value), stream) == std::string::npos) {
+      Log::GetInstance()->Info("error when appending to journal via stream");
+    }
   } else {
     buffer = 0;
     stream.write((const char *)&buffer, sizeof(uint8_t));
   }
   stream.flush();
   stream.close();
+  if (!stream) {
+    Log::GetInstance()->Info("error when appending to journal via stream");
+  }
 }
 
 #endif

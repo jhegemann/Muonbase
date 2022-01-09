@@ -32,6 +32,7 @@ typedef WriteAheadLog<std::string, JsonObject> Journal;
 const std::string kJournalSuffix = ".journal";
 const std::string kSnapshotSuffix = ".snapshot";
 const std::string kClosedSuffix = ".closed";
+const std::string kCorruptedSuffix = ".corrupted";
 
 class ApiService {
 public:
@@ -60,6 +61,7 @@ private:
   std::string filepath_journal_;
   std::string filepath_journal_closed_;
   std::string filepath_snapshot_;
+  std::string filepath_corrupted_;
   std::fstream stream_;
   Map<std::string, JsonObject> db_;
   Serializer<Map<std::string, JsonObject>> serializer_;

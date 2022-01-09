@@ -127,8 +127,6 @@ public:
   void ReadSome(long timeout = 0);
   void SyncRead(long timeout);
   IoStatusCode GetStatus();
-  std::string PopSegment(const std::string &token);
-  std::string PopSegment(size_t position);
   size_t GetPosition(const std::string &token);
   std::string PopAll();
   bool IsInBuffer(const std::string &token);

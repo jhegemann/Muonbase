@@ -1340,11 +1340,11 @@ template <class T> class Serializer {
 public:
   size_t Serialize(T &object, std::ostream &stream) {
     stream.write((const char *)&object, sizeof(T));
-    return sizeof(T);
+    return stream ? sizeof(T) : std::string::npos;
   }
   size_t Deserialize(T &object, std::istream &stream) {
     stream.read((char *)&object, sizeof(T));
-    return sizeof(T);
+    return stream ? sizeof(T) : std::string::npos;
   }
 };
 
@@ -1354,7 +1354,7 @@ public:
     size_t length = object.length();
     stream.write((const char *)&length, sizeof(size_t));
     stream.write((const char *)&object[0], length);
-    return sizeof(size_t) + length;
+    return stream ? sizeof(size_t) + length : std::string::npos;
   }
   size_t Deserialize(std::string &object, std::istream &stream) {
     object.clear();
@@ -1362,7 +1362,7 @@ public:
     stream.read((char *)&length, sizeof(size_t));
     object.resize(length);
     stream.read((char *)&object[0], length);
-    return sizeof(size_t) + length;
+    return stream ? sizeof(size_t) + length : std::string::npos;
   }
 };
 
@@ -1376,7 +1376,8 @@ public:
       stream.write((const char *)&it->first, sizeof(K));
       stream.write((const char *)&it->second, sizeof(V));
     }
-    return sizeof(size_t) + size * (sizeof(K) + sizeof(V));
+    return stream ? sizeof(size_t) + size * (sizeof(K) + sizeof(V))
+                  : std::string::npos;
   }
   size_t Deserialize(std::map<K, V> &object, std::istream &stream) {
     object.clear();
@@ -1389,7 +1390,8 @@ public:
       stream.read((char *)&value, sizeof(V));
       object.insert(key, value);
     }
-    return sizeof(size_t) + size * (sizeof(K) + sizeof(V));
+    return stream ? sizeof(size_t) + size * (sizeof(K) + sizeof(V))
+                  : std::string::npos;
   }
 };
 
@@ -1407,7 +1409,7 @@ public:
       result += sizeof(size_t) + length;
     }
     result += size * sizeof(K);
-    return result;
+    return stream ? result : std::string::npos;
   }
   size_t Deserialize(std::map<K, std::string> &object, std::istream &stream) {
     object.clear();
@@ -1425,7 +1427,7 @@ public:
       result += sizeof(size_t) + length;
     }
     result += size * sizeof(K);
-    return result;
+    return stream ? result : std::string::npos;
   }
 };
 
@@ -1443,7 +1445,7 @@ public:
       stream.write((const char *)&it->second, sizeof(V));
     }
     result += size * sizeof(V);
-    return result;
+    return stream ? result : std::string::npos;
   }
   size_t Deserialize(std::map<std::string, V> &object, std::istream &stream) {
     object.clear();
@@ -1461,7 +1463,7 @@ public:
       stream.read((char *)&value, sizeof(V));
     }
     result += size * sizeof(V);
-    return result;
+    return stream ? result : std::string::npos;
   }
 };
 
@@ -1473,7 +1475,7 @@ public:
     for (size_t i = 0; i < size; i++) {
       stream.write((const char *)&object[i], sizeof(T));
     }
-    return sizeof(size_t) + size * sizeof(T);
+    return stream ? sizeof(size_t) + size * sizeof(T) : std::string::npos;
   }
   size_t Deserialize(std::vector<T> &object, std::istream &stream) {
     object.clear();
@@ -1483,7 +1485,7 @@ public:
     for (size_t i = 0; i < size; i++) {
       stream.read((char *)&object[i], sizeof(T));
     }
-    return sizeof(size_t) + size * sizeof(T);
+    return stream ? sizeof(size_t) + size * sizeof(T) : std::string::npos;
   }
 };
 
@@ -1500,7 +1502,7 @@ public:
       stream.write((const char *)&object[i][0], length);
       result += sizeof(size_t) + length;
     }
-    return result;
+    return stream ? result : std::string::npos;
   }
   size_t Deserialize(std::vector<std::string> &object, std::istream &stream) {
     size_t result = 0;
@@ -1516,7 +1518,7 @@ public:
       stream.read((char *)&object[i][0], length);
       result += sizeof(size_t) + length;
     }
-    return result;
+    return stream ? result : std::string::npos;
   }
 };
 
@@ -1574,7 +1576,7 @@ size_t Serializer<Map<K, V>>::Serialize(Map<K, V> &map, std::ostream &stream) {
   if (counter != size) {
     throw std::runtime_error("unmatched tree size during serialization");
   }
-  return bytes;
+  return stream ? bytes : std::string::npos;
 }
 
 template <class K, class V>
@@ -1667,7 +1669,7 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
     }
     cache = cache_next;
   }
-  return bytes;
+  return stream ? bytes : std::string::npos;
 }
 
 #endif

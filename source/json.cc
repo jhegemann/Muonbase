@@ -600,7 +600,7 @@ size_t SerializeJsonObject(JsonObject &object, std::ostream &stream) {
       throw std::runtime_error("incompatible json type");
     }
   }
-  return bytes;
+  return stream ? bytes : std::string::npos;
 }
 
 size_t DeserializeJsonObject(JsonObject &object, std::istream &stream) {
@@ -662,7 +662,7 @@ size_t DeserializeJsonObject(JsonObject &object, std::istream &stream) {
       throw std::runtime_error("incompatible json type");
     }
   }
-  return bytes;
+  return stream ? bytes : std::string::npos;
 }
 
 size_t SerializeJsonArray(JsonArray &array, std::ostream &stream) {
@@ -720,7 +720,7 @@ size_t SerializeJsonArray(JsonArray &array, std::ostream &stream) {
       throw std::runtime_error("incompatible json type");
     }
   }
-  return bytes;
+  return stream ? bytes : std::string::npos;
 }
 
 size_t DeserializeJsonArray(JsonArray &array, std::istream &stream) {
@@ -777,7 +777,7 @@ size_t DeserializeJsonArray(JsonArray &array, std::istream &stream) {
       throw std::runtime_error("incompatible json type");
     }
   }
-  return bytes;
+  return stream ? bytes : std::string::npos;
 }
 
 JsonObject RandomDocument() {
