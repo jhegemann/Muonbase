@@ -126,7 +126,7 @@ The following configuration file in json format is the standard configuration,
   "dbPath": "./data/storage.db",
   "userPath": "./config/users.json",
   "logPath": "./server.log",
-  "workingDirectory": "."
+  "workingDirectory": "./"
 }
 ```
 which is mandatory for the database server. Tune the parameters as you want, but keep a few things in mind: (i) binding
