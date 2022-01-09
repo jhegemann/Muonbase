@@ -81,8 +81,7 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
     while (bytes < size) {
       stream.read((char *)&buffer, sizeof(uint8_t));
       if (!stream) {
-        Log::GetInstance()->Info("incomplete journal message - stop");
-        break;
+        throw std::runtime_error("incomplete journal message");
       }
       bytes += sizeof(uint8_t);
       switch (buffer) {
@@ -93,13 +92,12 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
         operation = STORAGE_ERASE;
         break;
       default:
-        throw std::runtime_error("WriteAheadLog: unknown storage operation");
+        throw std::runtime_error("unknown storage operation");
       }
       bytes += key_serializer.Deserialize(key, stream);
       stream.read((char *)&buffer, sizeof(uint8_t));
       if (!stream) {
-        Log::GetInstance()->Info("incomplete journal message - stop");
-        break;
+        throw std::runtime_error("incomplete journal message");
       }
       bytes += sizeof(uint8_t);
       if (buffer == 0) {
@@ -108,7 +106,7 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
         value = new JsonObject();
         value_bytes = value_serializer.Deserialize((*value), stream);
         if (value_bytes == std::string::npos) {
-          Log::GetInstance()->Info("incomplete journal message - stop");
+          throw std::runtime_error("incomplete journal message");
           break;
         }
         bytes += value_bytes;
@@ -116,6 +114,9 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
       log.emplace_back(operation, key, value);
     }
     stream.close();
+    if (!stream) {
+      throw std::runtime_error("error when loading journal");
+    }
   }
   for (auto it = log.begin(); it != log.end(); it++) {
     switch (it->GetOperation()) {
@@ -149,13 +150,13 @@ void WriteAheadLog<K, V>::Append(const std::string &filepath,
   uint8_t buffer = static_cast<uint8_t>(operation);
   stream.write((const char *)&buffer, sizeof(uint8_t));
   if (key_serializer.Serialize(key, stream) == std::string::npos) {
-    Log::GetInstance()->Info("error when appending to journal via stream");
+    throw std::runtime_error("error appending to journal");
   }
   if (value) {
     buffer = 1;
     stream.write((const char *)&buffer, sizeof(uint8_t));
     if (value_serializer.Serialize((*value), stream) == std::string::npos) {
-      Log::GetInstance()->Info("error when appending to journal via stream");
+      throw std::runtime_error("error appending to journal");
     }
   } else {
     buffer = 0;
@@ -164,7 +165,7 @@ void WriteAheadLog<K, V>::Append(const std::string &filepath,
   stream.flush();
   stream.close();
   if (!stream) {
-    Log::GetInstance()->Info("error when appending to journal via stream");
+    throw std::runtime_error("error appending to journal");
   }
 }
 

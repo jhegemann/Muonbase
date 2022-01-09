@@ -55,16 +55,14 @@ void DocumentDatabase::Initialize() {
     unlink_journal = true;
   }
   if (rollover_necessary) {
-    Log::GetInstance()->Info("complete database journal rollover");
+    Log::GetInstance()->Info("database journal rollover");
     stream_.open(filepath_snapshot_, std::fstream::out | std::fstream::binary |
                                          std::fstream::trunc);
     size_t bytes = serializer_.Serialize(db_, stream_);
     stream_.close();
     if (bytes == std::string::npos) {
-      Log::GetInstance()->Info("error when writing snapshot to disk");
       remove(filepath_snapshot_.c_str());
-      unlink_journal = false;
-      unlink_journal_closed = false;
+      throw std::runtime_error("error when writing snapshot to disk");
     } else {
       rename(filepath_snapshot_.c_str(), filepath_.c_str());
     }
@@ -110,9 +108,9 @@ void DocumentDatabase::Tick() {
         size_t bytes = serializer_.Deserialize(db, stream_);
         stream_.close();
         if (bytes == std::string::npos) {
-          Log::GetInstance()->Info(
-              "rollover worker: error when deserializing from disk");
-          return;
+          rename(filepath_.c_str(), filepath_corrupted_.c_str());
+          throw std::runtime_error(
+              "error when deserializing database from disk");
         }
       }
       Journal::Replay(filepath_journal_closed_, db);
@@ -122,9 +120,8 @@ void DocumentDatabase::Tick() {
       size_t bytes = serializer_.Serialize(db, stream_);
       stream_.close();
       if (bytes == std::string::npos) {
-        Log::GetInstance()->Info(
-            "rollover worker: error when serializing to disk");
         remove(filepath_snapshot_.c_str());
+        throw std::runtime_error("error when writing snapshot to disk");
       } else {
         rename(filepath_snapshot_.c_str(), filepath_.c_str());
         unlink(filepath_journal_closed_.c_str());
