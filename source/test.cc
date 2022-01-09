@@ -41,7 +41,7 @@ static void PrintUsage() {
                "[-c <cycles>]"
             << std::endl;
   std::cout << "\t -h: help" << std::endl;
-  std::cout << "\t -t: test " << kIpDefault << std::endl;
+  std::cout << "\t -t: test " << std::endl;
   std::cout << "\t -i <ip>: ip - default " << kIpDefault << std::endl;
   std::cout << "\t -p <port>: port - default " << kPortDefault << std::endl;
   std::cout << "\t -o <order>: order - default " << kDefaultOrder << std::endl;

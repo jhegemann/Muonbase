@@ -44,9 +44,9 @@ static const bool kVerboseDefault = false;
 static void PrintUsage() {
   std::cout << "Usage: database.app [-h] [-v] [-d] [-c <config>]" << std::endl;
   std::cout << "\t -h: help" << std::endl;
-  std::cout << "\t -v: verbose" << std::boolalpha << kVerboseDefault
+  std::cout << "\t -v: verbose - default " << std::boolalpha << kVerboseDefault
             << std::endl;
-  std::cout << "\t -d: daemonize - defaults " << std::boolalpha
+  std::cout << "\t -d: daemonize - default " << std::boolalpha
             << kDaemonizeDefault << std::endl;
   std::cout << "\t -c <file>: configuration (mandatory)" << std::endl;
 }
