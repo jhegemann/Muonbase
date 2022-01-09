@@ -226,6 +226,41 @@ server: muonbase/1
 {"found":true,"document":{"fE40YyX8iIgaQuXV":false,"PGjfooCv98HL1dTf":0.451518,"qmirthOPG2AyuSwD":246816,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":true,"cMvIo2nbwkvcnMBe":0.663296,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":53522},"qRADfzL9qSZdWfCB":[false,0.133002,195159,null]},"id":"0jEdOcRMlgQeeuGe","success":true}
 ```
 
+# Sloccount
+```
+user@linux-machine:/home/db$ sloccount source/ include/
+Creating filelist for source
+Creating filelist for include
+Categorizing files.
+Finding a working MD5 command....
+Found a working MD5 command.
+Computing results.
+
+
+SLOC    Directory       SLOC-by-Language (Sorted)
+3534    source          cpp=3534
+2400    include         cpp=2111,ansic=289
+
+
+Totals grouped by language (dominant language first):
+cpp:           5645 (95.13%)
+ansic:          289 (4.87%)
 
 
 
+
+Total Physical Source Lines of Code (SLOC)                = 5,934
+Development Effort Estimate, Person-Years (Person-Months) = 1.30 (15.57)
+ (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
+Schedule Estimate, Years (Months)                         = 0.59 (7.10)
+ (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
+Estimated Average Number of Developers (Effort/Schedule)  = 2.19
+Total Estimated Cost to Develop                           = $ 175,249
+ (average salary = $56,286/year, overhead = 2.40).
+SLOCCount, Copyright (C) 2001-2004 David A. Wheeler
+SLOCCount is Open Source Software/Free Software, licensed under the GNU GPL.
+SLOCCount comes with ABSOLUTELY NO WARRANTY, and you are welcome to
+redistribute it under certain conditions as specified by the GNU GPL license;
+see the documentation for details.
+Please credit this data as "generated using David A. Wheeler's 'SLOCCount'."
+```
