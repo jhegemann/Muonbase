@@ -30,28 +30,33 @@ static const std::string kIp = "ip";
 static const std::string kIpDefault = "127.0.0.1";
 static const std::string kPort = "port";
 static const std::string kPortDefault = "8260";
-static const std::string kDataPath = "data_path";
-static const std::string kDataPathDefault = "./storage.db";
-static const std::string kUserPath = "user_path";
+static const std::string kDbPath = "dbPath";
+static const std::string kDbPathDefault = "./storage.db";
+static const std::string kUserPath = "userPath";
 static const std::string kUserPathDefault = "./users.json";
-static const std::string kLogPath = "log_path";
-static const std::string kWorkingDirectory = "working_directory";
-static const std::string kWorkingDirectoryDefault = ".";
+static const std::string kLogPath = "logPath";
+static const std::string kWorkingDirectory = "workingDirectory";
+static const std::string kWorkingDirectoryDefault = "./";
+
+static const bool kDaemonizeDefault = false;
+static const bool kVerboseDefault = false;
 
 static void PrintUsage() {
   std::cout << "Usage: database.app [-h] [-v] [-d] [-c <config>]" << std::endl;
   std::cout << "\t -h: help" << std::endl;
-  std::cout << "\t -v: verbose" << std::endl;
-  std::cout << "\t -d: daemon" << std::endl;
+  std::cout << "\t -v: verbose" << std::boolalpha << kVerboseDefault
+            << std::endl;
+  std::cout << "\t -d: daemonize - defaults " << std::boolalpha
+            << kDaemonizeDefault << std::endl;
   std::cout << "\t -c <file>: configuration (mandatory)" << std::endl;
 }
 
 int main(int argc, char **argv) {
   int option;
   JsonObject config;
-  bool daemonize = false;
+  bool daemonize = kDaemonizeDefault;
+  bool verbose = kVerboseDefault;
   bool config_available = false;
-  bool verbose = false;
   while ((option = getopt(argc, argv, kOptionString)) != -1) {
     switch (option) {
     case kOptionVerbose:
@@ -102,9 +107,9 @@ int main(int argc, char **argv) {
     }
   }
 
-  std::string data_path = kDataPathDefault;
-  if (config.Has(kDataPath) && config.IsString(kDataPath)) {
-    data_path = config.GetAsString(kDataPath);
+  std::string data_path = kDbPathDefault;
+  if (config.Has(kDbPath) && config.IsString(kDbPath)) {
+    data_path = config.GetAsString(kDbPath);
   }
 
   std::string user_path = kUserPathDefault;

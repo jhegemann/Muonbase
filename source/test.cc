@@ -41,10 +41,11 @@ static void PrintUsage() {
                "[-c <cycles>]"
             << std::endl;
   std::cout << "\t -h: help" << std::endl;
-  std::cout << "\t -i <ip>: ip" << std::endl;
-  std::cout << "\t -p <port>: port" << std::endl;
-  std::cout << "\t -o <order>: order" << std::endl;
-  std::cout << "\t -c <cycles>: cycles" << std::endl;
+  std::cout << "\t -t: test " << kIpDefault << std::endl;
+  std::cout << "\t -i <ip>: ip - default " << kIpDefault << std::endl;
+  std::cout << "\t -p <port>: port - default " << kPortDefault << std::endl;
+  std::cout << "\t -o <order>: order - default " << kDefaultOrder << std::endl;
+  std::cout << "\t -c <cycles>: cycles - default " << kDefaultCycles << std::endl;
 }
 
 int main(int argc, char **argv) {

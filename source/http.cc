@@ -271,7 +271,7 @@ HttpResponse HttpResponse::Build(const int status) {
   response.SetStatus(status);
   response.SetMessage(HttpConstants::GetStatusString(status));
   response.AddHeader("date", EpochToString(time(nullptr), "%Y%m%d%H%M%S"));
-  response.AddHeader("server", "manatee/1");
+  response.AddHeader("server", "muonbase/1");
   response.AddHeader("access-control-allow-origin", "*");
   response.AddHeader("access-control-allow-methods", "GET, POST");
   response.AddHeader("content-length", 0);
@@ -285,7 +285,7 @@ HttpResponse HttpResponse::Build(const int status,
   response.SetStatus(status);
   response.SetMessage(HttpConstants::GetStatusString(status));
   response.AddHeader("date", EpochToString(time(nullptr), "%Y%m%d%H%M%S"));
-  response.AddHeader("server", "manatee/1");
+  response.AddHeader("server", "muonbase/1");
   response.AddHeader("access-control-allow-origin", "*");
   response.AddHeader("access-control-allow-methods", "GET, POST");
   response.AddHeader("content-type",

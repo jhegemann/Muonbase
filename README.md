@@ -1,11 +1,11 @@
-# ManateeDB
-High Performance Schemaless Persistent In-Memory JSON Document Database Server - Something between Redis and MongoDB
+# Muonbase
+General Purpose High Performance Schemaless Persistent In-Memory JSON Document Database Server
 
 # Essential Features
 * fast lookups - usage of templated in-memory b+ tree data structure
 * no special drivers - exposure of rest interface
 * small footprint - single-threaded epoll http server
-* few dependencies - coded mainly from scratch in vanilla c/c++
+* few dependencies - coded from scratch in vanilla c/c++
 * overseeable codebase - easy to understand and fully transparent
 * seamless integration - use of json as data exchange format
 * automated testing - load scenario with random inserts, lookups and removals
@@ -94,13 +94,12 @@ Binary (ii) runs automated tests against a running database server:
 user@linux-machine:/home/db$ ./bin/test.app
 Usage: test.app [-h] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
          -h: help
-         -t: run tests
+         -t: test
          -i <ip>: ip
          -p <port>: port
          -o <order>: order
          -c <cycles>: cycles
 ```
-For any version published in master branch one can assume that all tests are passed.
 
 # Configuration
 The following configuration file in json format is the standard configuration, 
@@ -108,10 +107,10 @@ The following configuration file in json format is the standard configuration,
 {
   "ip": "127.0.0.1",
   "port": "8260",
-  "data_path": "./data/storage.db",
-  "user_path": "./config/users.json",
-  "log_path": "./server.log",
-  "working_directory": "."
+  "dbPath": "./data/storage.db",
+  "userPath": "./config/users.json",
+  "logPath": "./server.log",
+  "workingDirectory": "."
 }
 ```
 which is mandatory for the database server. Tune the parameters as you want, but keep a few things in mind: (i) binding
@@ -140,7 +139,7 @@ which is in a json format. Hashes have to be sha256 and can be generated e.g. on
 * GET /image
 
 ### Insert
-Request:
+#### Request
 ```
 POST /insert HTTP/1.1
 authorization: Basic cm9vdDowMDAw
@@ -150,7 +149,7 @@ content-type: application/json
 {"qRADfzL9qSZdWfCB":[true,0.481446,319226,null],"KneSOtkMNGxvUhH1":{"BrWUguL5y0ov17n3":728229,"VeGU6JjPxbWrWe79":null,"cMvIo2nbwkvcnMBe":0.691427,"2f4e7JvjxynQnotm":false},"j8O5fgYpvwRb38hy":null,"qmirthOPG2AyuSwD":792874,"PGjfooCv98HL1dTf":0.054929,"fE40YyX8iIgaQuXV":false}
 ```
 
-Response:
+#### Response
 ```
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
@@ -158,13 +157,13 @@ access-control-allow-origin: *
 content-length: 40
 content-type: application/json
 date: 20220106121227
-server: manatee/1
+server: muonbase/1
 
 {"id":"dMxiajoFmCZirIiD","success":true}
 ```
 
 ### Erase
-Request:
+#### Request
 ```
 POST /erase HTTP/1.1
 authorization: Basic cm9vdDowMDAw
@@ -174,7 +173,7 @@ content-type: application/json
 {"id":"GI0xHlR9SHXpNPT9"}
 ```
 
-Response:
+#### Response
 ```
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
@@ -182,13 +181,13 @@ access-control-allow-origin: *
 content-length: 40
 content-type: application/json
 date: 20220106121227
-server: manatee/1
+server: muonbase/1
 
 {"id":"GI0xHlR9SHXpNPT9","success":true}
 ```
 
 ### Find
-Request:
+#### Request
 ```
 POST /find HTTP/1.1
 authorization: Basic cm9vdDowMDAw
@@ -198,7 +197,7 @@ content-type: application/json
 {"id":"0jEdOcRMlgQeeuGe"}
 ```
 
-Response:
+#### Response
 ```
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
@@ -206,7 +205,7 @@ access-control-allow-origin: *
 content-length: 339
 content-type: application/json
 date: 20220106121227
-server: manatee/1
+server: muonbase/1
 
 {"found":true,"document":{"fE40YyX8iIgaQuXV":false,"PGjfooCv98HL1dTf":0.451518,"qmirthOPG2AyuSwD":246816,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":true,"cMvIo2nbwkvcnMBe":0.663296,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":53522},"qRADfzL9qSZdWfCB":[false,0.133002,195159,null]},"id":"0jEdOcRMlgQeeuGe","success":true}
 ```
