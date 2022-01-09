@@ -19,34 +19,50 @@ General Purpose High Performance Schemaless Persistent In-Memory JSON Document D
 * Queries
 
 # Disclaimer
-This software is far from being perfect and it explicitly does not claim to be so. However, it is written
-with a decent amount of diligence and care and has been tested thoroughly as far as possible. This software contains
+Muonbase is far from being perfect and it explicitly does not claim to be so. However, it is written
+with a decent amount of diligence and care and has been tested thoroughly as far as possible. Muonbase contains
 and will contain bugs and some things might be poorly designed. Both applies (more or less) to any other software as well. 
-Though I have spent years to make this piece of software what it is, it has always been a private
+Though I have spent years to make Muonbase what it is, it has always been a private
 project parallel to my fulltime employments. Please understand that for that reason maintainance might sometimes be
 a bit slow and sluggish, I will try my very best!
 
-This software does not aim to be extremely portable, instead it is designed to run within a linux distribution.
+Muonbase does not aim to be extremely portable, instead it is designed to run within a linux distribution.
 It can be build with gcc and c++-20 standard. The g++ version that is currently in use for development
 is g++ 9.3.0. The reason for not making it highly portable in the first place was to save development time.
 In addition, it is assumed to run on *servers* that in most cases run a linux distribution anyway. It is mandatory
 that this linux distribution (or the c library) supports the epoll system calls.
 
 # Storage Engine
-As a data structure, the software implements a templated in-memory b+ tree, which serves as a key value store.
-Both variants are implemented, the unique key to value mapping (corresponding to std::map) as well as
-the one key to many values mapping (corresponding to std::multimap). In contrast to an ordinary b tree,
+As a data structure, Muonbase implements a templated in-memory b+ tree, which serves as a key value store.
+Both variants are implemented, the unique key to value mapping (corresponding to map) as well as
+the one key to many values mapping (corresponding to multimap). In contrast to an ordinary b tree,
 b+ trees hold their data exclusively in leaf nodes, which on the one hand allows for (bidirectionally) interconnecting
 the leaf nodes in order to iterate them like a linked list, and on the other hand enables what is commonly
 known as bulk loading meaning that key value pairs are read from a continuous sorted stream while the tree is
 built on top of the leaf level. This avoids costly insertions during loading and is thus very efficient.
 
-Though the implementation is templated, at the moment the software is employing only the specific mapping
-from std::string to json object as it is commonly used in document or no-sql databases. For all native
+Though the implementation is templated, at the moment Muonbase is employing only the specific mapping
+from string to json object as it is commonly used in document or no-sql databases. For all native
 types, standard library containers, and specific classes like json object and json array, 
-specialized serializers are implemented. Serialization is realized by binary reading from std::istream
-and writing to std::ostream. Though currently only the document database (unique mapping from std::string to json object) 
+specialized serializers are implemented. Serialization is realized by binary reading from istream
+and writing to ostream. Though currently only the document database (unique mapping from string to json object) 
 is implemented, the road is in principle paved for implementing key value stores allowing for common native types.
+
+# Persistence
+Muonbase keeps the whole set of json documents in-memory in a b+ tree. However, this does not mean that Muonbase
+does not persist to disk. Every insert or remove operation will be logged in a journal, which is a strictly 
+sequential binary file, on disk - before changes are applied to the in-memory structure. This way, it is guaranteed
+that changes that are visible in-memory (and therefore also to other clients) are readily persisted on disk.
+If the journal exceeds a certain size, it is rotated, i.e., it is renamed and not touched anymore. 
+Only *one* rotated journal can exist a a time. The database service checks regularly if such a closed journal exists; 
+if yes, it will start the concurrent rollover sequence.
+
+The rollover sequence is defined as follows: (i) if database file (sequence of binary key value pairs suitable for b+ tree 
+bulk loading) is present, read it into memory, (ii) if there is a rotated journal, replay it and update the b+ tree that
+has just been loaded into memory; or, if no b+ tree was present, create a new b+ tree and replay the journal into this new b+ tree.
+Persist the updated b+ tree to disk and exchange the resulting file with the last snapshot. All this can be performed
+concurrently in a separate thread, since both the b+ tree snapshot as well as the rotated journal are static during normal
+database operation.
 
 # Transport Layer
 Instead of shipping a set of drivers for several programming languages, the software relies on the unified
@@ -86,7 +102,7 @@ user@linux-machine:/home/db$ ./bin/database.app
 Usage: database.app [-h] [-v] [-d] [-c <config>]
          -h: help
          -v: verbose
-         -d: daemon
+         -d: daemonize
          -c <file>: configuration (mandatory)
 ```
 Binary (ii) runs automated tests against a running database server:
