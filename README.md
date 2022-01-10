@@ -8,12 +8,12 @@ General Purpose Schemaless Persistent In-Memory JSON Document Database Server
 * few dependencies - coded from scratch in vanilla c/c++
 * overseeable codebase - easy to understand and fully transparent
 * seamless integration - json as data exchange format
+* persistence - tree snapshot and write-ahead-log on disk
 * automated testing - load scenario with random inserts and erasures
 
 # Upcoming
 * Queries
 * Indexing
-* Persistence
 * Sharding
 * Encryption
 * Compression
@@ -24,13 +24,17 @@ with a decent amount of diligence and care and has been tested thoroughly as far
 and will contain bugs and some things might be poorly designed. Both applies (more or less) to any other software as well. 
 Though it took years to make Muonbase what it is, it has always been a private
 project parallel to fulltime employments. Please understand that for that reason maintainance might sometimes be
-a bit slow, I will try my very best!
+a bit slow.
 
 Muonbase does not aim to be extremely portable, instead it is designed to run within a common linux distribution.
 It can be build with gcc and c++-20 standard. The g++ version that is currently in use for development
 is g++ 9.3.0. The reason for not making it highly portable in the first place was to save development time.
 In addition, it is assumed to run on *servers* that in most cases run a common linux distribution anyway. 
 It is mandatory that epoll system calls are supported, but that is the normal case.
+
+Muonbase is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License. Don't use Muonbase
+as a single source of truth.
 
 # Ssl
 This software supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
@@ -79,7 +83,7 @@ Note that, when `-t` is omitted, the database client will just check if the data
 Pass `-t` to run the randomized testing procedure and feel free to adjust `-o`, which is the number of initial database inserts,
 and `-c`, which is the repetition number of a combined insert-erase operation.
 
-# Configuration
+# Config
 The json configuration file looks as follows
 ```
 {
@@ -98,7 +102,7 @@ The data and user paths can be chosen freely as well as the log path. Make sure 
 of the users file are correct, such that it can be accessed properly by the database server. 
 The working directory will only be used if the daemon command line option is activated, 
 i.e. the server runs in background. If you run the server in background, 
-you should prefer aboslute paths over relative paths in the configuration file.
+you should prefer absolute paths over relative paths in the configuration file.
 
 # Users
 The user management is not dynamic yet, so in order to add a user you have to manually edit the users file
@@ -107,9 +111,9 @@ The user management is not dynamic yet, so in order to add a user you have to ma
   "root": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"
 }
 ```
-which is, like the general configuration, in a json format. Hashed passwords are in SHA256 and can be generated 
+which is, like the general configuration, in a json format. Hashed passwords are SHA256 and can be generated 
 e.g. on the command line using `echo -n 'password' | sha256sum`. Don't forget to shred your shell history after doing that.
-Some shells don't log commands to history if it is prefix them with a space. Regarding authorization, Muonbase by now implements 
+Some shells don't log commands to history if they are prefixed with a space. Regarding authorization, Muonbase by now implements 
 only simple http basic authorization and there is no possibility to set user permissions on specific documents, 
 meaning that all users can read and modify all documents in one collection. If you need user specific collections, scale 
 horizontally and launch one new database server per user.
