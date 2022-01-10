@@ -2,14 +2,14 @@
 General Purpose Schemaless Persistent In-Memory JSON Document Database Server
 
 # Essentials
-* fast lookups - templated in-memory b+ tree data structure
-* no special drivers - http rest interface
-* small footprint - single-threaded epoll http server
-* few dependencies - coded from scratch in vanilla c/c++
-* overseeable codebase - easy to understand and fully transparent
-* seamless integration - json as data exchange format
-* persistence - tree snapshot and write-ahead-log on disk
-* automated testing - load scenario with random inserts and erasures
+* Fast lookups - templated in-memory b+ tree data structure
+* No special drivers - http rest interface
+* Small footprint - single-threaded epoll http server
+* Few dependencies - coded from scratch in vanilla c/c++
+* Overseeable codebase - easy to understand and fully transparent
+* Seamless integration - json as data exchange format
+* Persistence - tree snapshot and write-ahead-log on disk
+* Automated testing - load scenario with random inserts and erasures
 
 # Upcoming
 * Queries
@@ -71,9 +71,10 @@ The option `-d` will run the server in background; option `-v` will switch on lo
 Binary (ii) runs automated tests against a running database server and is used as follows
 ```
 user@linux-machine:/home/muonbase$ ./bin/muonbase-client.app
-Usage: muonbase-client.app [-h] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
+Usage: muonbase-client.app [-h] [-n] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
          -h: help
          -t: test
+         -n: threads
          -i <ip>: ip
          -p <port>: port
          -o <order>: order
