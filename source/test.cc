@@ -39,12 +39,14 @@ static const size_t kCyclesDefault = 16;
 static const size_t kThreadsDefault = 8;
 
 static void PrintUsage() {
-  std::cout << "Usage: test.app [-h] [-n] [-t] [-i <ip>] [-p <port>] [-o <order>] "
+  std::cout << "Usage: muonbase-client.app [-h] [-n <threads>] [-t] [-i <ip>] "
+               "[-p <port>] [-o <order>] "
                "[-c <cycles>]"
             << std::endl;
   std::cout << "\t -h: help" << std::endl;
   std::cout << "\t -t: test " << std::endl;
-  std::cout << "\t -n: threads - default " << kThreadsDefault << std::endl;
+  std::cout << "\t -n <threads>: threads - default " << kThreadsDefault
+            << std::endl;
   std::cout << "\t -i <ip>: ip - default " << kIpDefault << std::endl;
   std::cout << "\t -p <port>: port - default " << kPortDefault << std::endl;
   std::cout << "\t -o <order>: order - default " << kOrderDefault << std::endl;

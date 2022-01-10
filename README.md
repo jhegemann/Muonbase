@@ -71,10 +71,10 @@ The option `-d` will run the server in background; option `-v` will switch on lo
 Binary (ii) runs automated tests against a running database server and is used as follows
 ```
 user@linux-machine:/home/muonbase$ ./bin/muonbase-client.app
-Usage: muonbase-client.app [-h] [-n] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
+Usage: muonbase-client.app [-h] [-n <threads>] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
          -h: help
          -t: test
-         -n: threads
+         -n <threads>: threads
          -i <ip>: ip
          -p <port>: port
          -o <order>: order
