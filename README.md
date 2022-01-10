@@ -83,7 +83,7 @@ Note that, when `-t` is omitted, the database client will just check if the data
 Pass `-t` to run the randomized testing procedure and feel free to adjust `-o`, which is the number of initial database inserts,
 and `-c`, which is the repetition number of a combined insert-erase operation.
 
-# Config
+# Configuration
 The json configuration file looks as follows
 ```
 {
@@ -118,7 +118,7 @@ only simple http basic authorization and there is no possibility to set user per
 meaning that all users can read and modify all documents in one collection. If you need user specific collections, scale 
 horizontally and launch one new database server per user.
 
-# API
+# Api
 There are three POST routes, which essentially mirror the c++ map interface, where you can insert, erase and find.
 To insert, just present a plain json object in the request body, as a response you will receive the id of the inserted document.
 To erase, present an id wrapped in a json object in the request body, as a response you will receive the same id back.
