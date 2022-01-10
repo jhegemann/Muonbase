@@ -47,7 +47,7 @@ either start the server in foreground and observe what happens on the standard o
 or make sure you use e.g. logrotate to automatically rotate your logfiles.
 
 # Build
-Building is currently being performed with `g++-9.3.0` and `c++-20`. The only dependency so far is openssl, where you need
+Building is currently being performed with `g++-9.3.0` and `c++-20`. The only dependency so far is `openssl`, where you need
 both the binary package `openssl` as well as the header files in `openssl-dev`. To build, proceed as normal with
 ```
 make clean && make
