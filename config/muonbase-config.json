@@ -1,0 +1,8 @@
+{
+  "ip": "127.0.0.1",
+  "port": "8260",
+  "dbPath": "./data/muonbase-storage.db",
+  "userPath": "./config/muonbase-users.json",
+  "logPath": "./muonbase-server.log",
+  "workingDirectory": "./"
+}

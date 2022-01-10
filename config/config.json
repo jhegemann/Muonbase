@@ -1,8 +1,0 @@
-{
-  "ip": "127.0.0.1",
-  "port": "8260",
-  "dbPath": "./data/storage.db",
-  "userPath": "./config/users.json",
-  "logPath": "./server.log",
-  "workingDirectory": "./"
-}
