@@ -152,7 +152,7 @@ The user management is not dynamic yet, so in order to add a user you have to ma
 ```
 which is, like the general configuration, in a json format. Hashed passwords are in SHA256 and can be generated 
 e.g. on the command line using `echo -n 'password' | sha256sum`. Don't forget to shred your shell history after doing that.
-Some shells don't log commands to history if it is prefixed with a space. Regarding authorization, Muonbase by now implements 
+Some shells don't log commands to history if it is prefix them with a space. Regarding authorization, Muonbase by now implements 
 only simple http basic authorization and there is no possibility to set user permissions on specific documents, 
 meaning that all users can read and modify all documents in one collection. If you need user specific collections, scale 
 horizontally and launch one new database server per user.
