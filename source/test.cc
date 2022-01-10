@@ -26,15 +26,17 @@ static const char kOptionPort = 'p';
 static const char kOptionOrder = 'o';
 static const char kOptionCycles = 'c';
 static const char kOptionHelp = 'h';
-static const char *kOptionString = "hti:p:o:c:";
+static const char kOptionThreads = 'n';
+static const char *kOptionString = "htn:i:p:o:c:";
 
 static const std::string kIp = "ip";
 static const std::string kIpDefault = "127.0.0.1";
 static const std::string kPort = "port";
 static const std::string kPortDefault = "8260";
 
-static const size_t kDefaultOrder = 128;
-static const size_t kDefaultCycles = 16;
+static const size_t kOrderDefault = 128;
+static const size_t kCyclesDefault = 16;
+static const size_t kThreadsDefault = 8;
 
 static void PrintUsage() {
   std::cout << "Usage: test.app [-h] [-t] [-i <ip>] [-p <port>] [-o <order>] "
@@ -42,10 +44,12 @@ static void PrintUsage() {
             << std::endl;
   std::cout << "\t -h: help" << std::endl;
   std::cout << "\t -t: test " << std::endl;
+  std::cout << "\t -n: threads - default " << kThreadsDefault << std::endl;
   std::cout << "\t -i <ip>: ip - default " << kIpDefault << std::endl;
   std::cout << "\t -p <port>: port - default " << kPortDefault << std::endl;
-  std::cout << "\t -o <order>: order - default " << kDefaultOrder << std::endl;
-  std::cout << "\t -c <cycles>: cycles - default " << kDefaultCycles << std::endl;
+  std::cout << "\t -o <order>: order - default " << kOrderDefault << std::endl;
+  std::cout << "\t -c <cycles>: cycles - default " << kCyclesDefault
+            << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -53,8 +57,9 @@ int main(int argc, char **argv) {
   bool run = false;
   std::string ip = kIpDefault;
   std::string port = kPortDefault;
-  size_t order = kDefaultOrder;
-  size_t cycles = kDefaultCycles;
+  size_t order = kOrderDefault;
+  size_t cycles = kCyclesDefault;
+  size_t num_threads = kThreadsDefault;
   while ((option = getopt(argc, argv, kOptionString)) != -1) {
     switch (option) {
     case kOptionRun:
@@ -65,6 +70,14 @@ int main(int argc, char **argv) {
       break;
     case kOptionPort:
       port = optarg;
+      break;
+    case kOptionThreads:
+      try {
+        num_threads = std::atoi(optarg);
+      } catch (std::invalid_argument &) {
+        PrintUsage();
+        exit(1);
+      }
       break;
     case kOptionHelp:
       PrintUsage();
@@ -116,22 +129,32 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  Client client(ip, port);
-  try {
-    Log::GetInstance()->Info("test init");
-    client.RandomInsert(order);
-    client.FindAll();
-    for (size_t i = 1; i <= cycles; i++) {
-      Log::GetInstance()->Info("test cycle " + std::to_string(i));
-      client.RandomInsert(order / cycles);
-      client.FindAll();
-      client.RandomErase(order / cycles);
-      client.FindAll();
-    }
-  } catch (std::runtime_error &) {
-    Log::GetInstance()->Info("test failed");
-    exit(1);
+  std::vector<std::thread> threads(num_threads);
+  for (size_t i = 0; i < num_threads; i++) {
+    threads[i] = std::thread([i, ip, port, order, cycles] {
+      Client client(ip, port);
+      try {
+        Log::GetInstance()->Info("test init thread " + std::to_string(i));
+        client.RandomInsert(order);
+        client.FindAll();
+        for (size_t j = 1; j <= cycles; j++) {
+          Log::GetInstance()->Info("test cycle " + std::to_string(j) +
+                                   " of thread " + std::to_string(i));
+          client.RandomInsert(order / cycles);
+          client.FindAll();
+          client.RandomErase(order / cycles);
+          client.FindAll();
+        }
+      } catch (std::runtime_error &) {
+        Log::GetInstance()->Info("test failed");
+        return;
+      }
+    });
   }
+  for (size_t i = 0; i < num_threads; i++) {
+    threads[i].join();
+  }
+
   Log::GetInstance()->Info("all tests passed");
 
   return 0;

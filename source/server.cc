@@ -31,10 +31,11 @@ static const std::string kIpDefault = "127.0.0.1";
 static const std::string kPort = "port";
 static const std::string kPortDefault = "8260";
 static const std::string kDbPath = "dbPath";
-static const std::string kDbPathDefault = "./storage.db";
+static const std::string kDbPathDefault = "./muonbase-storage.db";
 static const std::string kUserPath = "userPath";
-static const std::string kUserPathDefault = "./users.json";
+static const std::string kUserPathDefault = "./muonbase-users.json";
 static const std::string kLogPath = "logPath";
+static const std::string kLogPathDefault = "./muonbase-server.log";
 static const std::string kWorkingDirectory = "workingDirectory";
 static const std::string kWorkingDirectoryDefault = "./";
 
@@ -102,6 +103,7 @@ int main(int argc, char **argv) {
     }
     Log::GetInstance()->Info("daemonize process");
     DaemonizeProcess(working_directory);
+    Log::GetInstance()->SetLogfile(kLogPathDefault);
     if (config.Has(kLogPath) && config.IsString(kLogPath)) {
       Log::GetInstance()->SetLogfile(config.GetAsString(kLogPath));
     }
