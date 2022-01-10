@@ -1,7 +1,7 @@
 # Muonbase
 General Purpose Schemaless Persistent In-Memory JSON Document Database Server
 
-# Essential Features
+# Essentials
 * fast lookups - templated in-memory b+ tree data structure
 * no special drivers - http rest interface
 * small footprint - single-threaded epoll http server
@@ -10,7 +10,7 @@ General Purpose Schemaless Persistent In-Memory JSON Document Database Server
 * seamless integration - json as data exchange format
 * automated testing - load scenario with random inserts and erasures
 
-# Upcoming Features
+# Upcoming
 * Queries
 * Indexing
 * Persistence
@@ -32,12 +32,12 @@ is g++ 9.3.0. The reason for not making it highly portable in the first place wa
 In addition, it is assumed to run on *servers* that in most cases run a common linux distribution anyway. 
 It is mandatory that epoll system calls are supported, but that is the normal case.
 
-# Ssl / Haproxy
+# Ssl
 This software supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
-# Log / Logrotate
+# Log
 Logs are either extremely verbose or totally absent. If you need logs e.g. for debugging purpose, 
 either start the server in foreground and observe what happens on the standard output, 
 or make sure you use e.g. logrotate to automatically rotate your logfiles.
@@ -100,7 +100,7 @@ The working directory will only be used if the daemon command line option is act
 i.e. the server runs in background. If you run the server in background, 
 you should prefer aboslute paths over relative paths in the configuration file.
 
-# User Management
+# Users
 The user management is not dynamic yet, so in order to add a user you have to manually edit the users file
 ```
 {
