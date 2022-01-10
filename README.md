@@ -23,7 +23,7 @@ Muonbase is far from being perfect and it explicitly does not claim to be so. Ho
 with a decent amount of diligence and care and has been tested thoroughly as far as possible. Muonbase contains
 and will contain bugs and some things might be poorly designed. Both applies (more or less) to any other software as well. 
 Though it took years to make Muonbase what it is, it has always been a private
-project parallel to fulltime employments. Please understand that for that reason maintainance might sometimes be
+project parallel to fulltime employments. Please understand that therefore maintainance might sometimes be
 a bit slow.
 
 Muonbase does not aim to be extremely portable, instead it is designed to run within a common linux distribution.
@@ -37,7 +37,7 @@ See the License for the specific language governing permissions and limitations 
 as a single source of truth.
 
 # Ssl
-This software supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
+Muonbase supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
