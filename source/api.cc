@@ -194,6 +194,12 @@ HttpResponse Image(const HttpRequest &request, ServiceMap services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED, APPLICATION_JSON,
                                kNoSuccessObject);
   }
+  if (request.GetHeader(kContentType)
+          .compare(HttpConstants::GetContentTypeString(APPLICATION_JSON)) !=
+      0) {
+    return HttpResponse::Build(HttpStatus::BAD_REQUEST, APPLICATION_JSON,
+                               kNoSuccessObject);
+  }
   DocumentDatabase *db =
       static_cast<DocumentDatabase *>(services[kDatabaseService]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,

@@ -6,9 +6,9 @@ BN = ./bin
 CC = g++
 CFLAGS = -O3 -std=c++2a -Wall -pedantic
 
-TARGETS = database test
+TARGETS = server client
 
-DATABASE_OBJECTS = $(BD)/server.o \
+SERVER_OBJECTS = $(BD)/server.o \
  $(BD)/log.o \
  $(BD)/json.o \
  $(BD)/utils.o \
@@ -18,7 +18,7 @@ DATABASE_OBJECTS = $(BD)/server.o \
  $(BD)/service.o \
  $(BD)/api.o
 
-TEST_OBJECTS = $(BD)/test.o \
+CLIENT_OBJECTS = $(BD)/test.o \
  $(BD)/log.o \
  $(BD)/json.o \
  $(BD)/utils.o \
@@ -32,11 +32,11 @@ LINKING_THREAD = -lpthread
 
 all: $(TARGETS)
 
-database: $(DATABASE_OBJECTS) Makefile
-	$(CC) $(DATABASE_OBJECTS) -o $(BN)/database.app $(LINKING_SSL) $(LINKING_THREAD)
+server: $(SERVER_OBJECTS) Makefile
+	$(CC) $(SERVER_OBJECTS) -o $(BN)/muonbase-server.app $(LINKING_SSL) $(LINKING_THREAD)
 
-test: $(TEST_OBJECTS) Makefile
-	$(CC) $(TEST_OBJECTS) -o $(BN)/test.app $(LINKING_SSL) $(LINKING_THREAD)
+client: $(CLIENT_OBJECTS) Makefile
+	$(CC) $(CLIENT_OBJECTS) -o $(BN)/muonbase-client.app $(LINKING_SSL) $(LINKING_THREAD)
 
 $(BD)/%.o: $(SD)/%.cc
 	$(CC) $(CFLAGS) -I$(ID) -I. -o $@ -c $<
