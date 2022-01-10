@@ -2,14 +2,14 @@
 General Purpose Schemaless Persistent In-Memory JSON Document Database Server
 
 # Essentials
-* Fast lookups - templated in-memory b+ tree data structure
-* No special drivers - http rest interface
-* Small footprint - single-threaded epoll http server
-* Few dependencies - coded from scratch in vanilla c/c++
-* Overseeable codebase - easy to understand and fully transparent
-* Seamless integration - json as data exchange format
-* Persistence - tree snapshot and write-ahead-log on disk
-* Automated testing - load scenario with random inserts and erasures
+* Fast lookups - Templated in-memory b+ tree data structure
+* No special drivers - Http rest interface
+* Small footprint - Single-threaded epoll http server
+* Few dependencies - Coded from scratch in vanilla c/c++
+* Overseeable codebase - Easy to understand and fully transparent
+* Seamless integration - Json as data exchange format
+* Persistence - Tree snapshot and write-ahead-log on disk
+* Automated testing - Load scenario with random inserts and erasures
 
 # Upcoming
 * Queries
@@ -36,7 +36,7 @@ Muonbase is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 See the License for the specific language governing permissions and limitations under the License. Don't use Muonbase
 as a single source of truth.
 
-# Ssl
+# SSL
 Muonbase supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
@@ -119,7 +119,7 @@ only simple http basic authorization and there is no possibility to set user per
 meaning that all users can read and modify all documents in one collection. If you need user specific collections, scale 
 horizontally and launch one new database server per user.
 
-# Api
+# API
 There are three POST routes, which essentially mirror the c++ map interface, where you can insert, erase and find.
 To insert, just present a plain json object in the request body, as a response you will receive the id of the inserted document.
 To erase, present an id wrapped in a json object in the request body, as a response you will receive the same id back.
