@@ -761,7 +761,7 @@ size_t DeserializeJsonArray(JsonArray &array, std::istream &stream) {
       JsonString value;
       size_t length;
       stream.read((char *)&length, sizeof(size_t));
-      value.resize(2);
+      value.resize(length);
       stream.read((char *)&value[0], length);
       array.PutString(value);
       bytes += sizeof(size_t) + length;
