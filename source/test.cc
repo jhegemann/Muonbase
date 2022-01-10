@@ -39,7 +39,7 @@ static const size_t kCyclesDefault = 16;
 static const size_t kThreadsDefault = 8;
 
 static void PrintUsage() {
-  std::cout << "Usage: test.app [-h] [-t] [-i <ip>] [-p <port>] [-o <order>] "
+  std::cout << "Usage: test.app [-h] [-n] [-t] [-i <ip>] [-p <port>] [-o <order>] "
                "[-c <cycles>]"
             << std::endl;
   std::cout << "\t -h: help" << std::endl;
