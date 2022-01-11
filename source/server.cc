@@ -107,8 +107,8 @@ int main(int argc, char **argv) {
     if (config.Has(kWorkingDirectory) && config.IsString(kWorkingDirectory)) {
       working_directory = config.GetAsString(kWorkingDirectory);
     } else {
-      Log::GetInstance()->Info("no workingDirectory found, fallback: " +
-                               kWorkingDirectoryDefault);
+      Log::GetInstance()->Info("no " + kWorkingDirectory +
+                               " found, fallback: " + kWorkingDirectoryDefault);
     }
     Log::GetInstance()->Info("daemonize process");
     DaemonizeProcess(working_directory);
@@ -116,7 +116,8 @@ int main(int argc, char **argv) {
     if (config.Has(kLogPath) && config.IsString(kLogPath)) {
       Log::GetInstance()->SetLogfile(config.GetAsString(kLogPath));
     } else {
-      Log::GetInstance()->Info("no dbLog found, fallback: " + kLogPathDefault);
+      Log::GetInstance()->Info("no " + kLogPath +
+                               " found, fallback: " + kLogPathDefault);
     }
   }
 
@@ -124,14 +125,16 @@ int main(int argc, char **argv) {
   if (config.Has(kDbPath) && config.IsString(kDbPath)) {
     data_path = config.GetAsString(kDbPath);
   } else {
-    Log::GetInstance()->Info("no dbPath found, fallback: " + kDbPathDefault);
+    Log::GetInstance()->Info("no " + kDbPath +
+                             " found, fallback: " + kDbPathDefault);
   }
 
   std::string user_path = kUserPathDefault;
   if (config.Has(kUserPath) && config.IsString(kUserPath)) {
     user_path = config.GetAsString(kUserPath);
   } else {
-    Log::GetInstance()->Info("no dbUser found, fallback: " + kUserPathDefault);
+    Log::GetInstance()->Info("no " + kUserPath +
+                             " found, fallback: " + kUserPathDefault);
   }
 
   HttpServer server;
@@ -154,13 +157,14 @@ int main(int argc, char **argv) {
   if (config.Has(kIp) && config.IsString(kIp)) {
     ip = config.GetAsString(kIp);
   } else {
-    Log::GetInstance()->Info("no ip found, fallback: " + kIpDefault);
+    Log::GetInstance()->Info("no " + kIp + " found, fallback: " + kIpDefault);
   }
   std::string port = kPortDefault;
   if (config.Has(kPort) && config.IsString(kPort)) {
     port = config.GetAsString(kPort);
   } else {
-    Log::GetInstance()->Info("no port found, fallback: " + kPortDefault);
+    Log::GetInstance()->Info("no " + kPort +
+                             " found, fallback: " + kPortDefault);
   }
 
   server.Serve(port, ip);
