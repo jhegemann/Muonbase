@@ -467,14 +467,17 @@ void HttpConnection::ParseMessage(HttpPacket &packet) {
   static std::string content_length_string;
   static size_t content_length;
   static size_t bytes_left;
+  static bool headers_complete;
   switch (stage_) {
   case HEADER:
-    while (count_headers_ < kHttpMaxHeaderCount) {
+    headers_complete = false;
+    while (count_headers_ <= kHttpMaxHeaderCount) {
       if (!reader_->Peak(kHttpLineFeed)) {
         return;
       }
       token = reader_->Tok();
       if (token.empty()) {
+        headers_complete = true;
         break;
       }
       key = StringPopSegment(token, kStringColon + kStringSpace);
@@ -490,7 +493,7 @@ void HttpConnection::ParseMessage(HttpPacket &packet) {
       packet.AddHeader(key, value);
       count_headers_++;
     }
-    if (count_headers_ > kHttpMaxHeaderCount) {
+    if (!headers_complete) {
       stage_ = FAILED;
       return;
     }
