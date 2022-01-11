@@ -65,7 +65,12 @@ int main(int argc, char **argv) {
       verbose = true;
       break;
     case kOptionConfig:
-      config.Parse(FileToString(optarg));
+      try {
+        config.Parse(FileToString(optarg));
+      } catch (std::runtime_error &) {
+        Log::GetInstance()->Info("error parsing configuration");
+        exit(1);
+      }
       config_available = true;
       break;
     case kOptionDaemon:
@@ -101,23 +106,32 @@ int main(int argc, char **argv) {
   if (daemonize) {
     if (config.Has(kWorkingDirectory) && config.IsString(kWorkingDirectory)) {
       working_directory = config.GetAsString(kWorkingDirectory);
+    } else {
+      Log::GetInstance()->Info("no workingDirectory found, fallback: " +
+                               kWorkingDirectoryDefault);
     }
     Log::GetInstance()->Info("daemonize process");
     DaemonizeProcess(working_directory);
     Log::GetInstance()->SetLogfile(kLogPathDefault);
     if (config.Has(kLogPath) && config.IsString(kLogPath)) {
       Log::GetInstance()->SetLogfile(config.GetAsString(kLogPath));
+    } else {
+      Log::GetInstance()->Info("no dbLog found, fallback: " + kLogPathDefault);
     }
   }
 
   std::string data_path = kDbPathDefault;
   if (config.Has(kDbPath) && config.IsString(kDbPath)) {
     data_path = config.GetAsString(kDbPath);
+  } else {
+    Log::GetInstance()->Info("no dbPath found, fallback: " + kDbPathDefault);
   }
 
   std::string user_path = kUserPathDefault;
   if (config.Has(kUserPath) && config.IsString(kUserPath)) {
     user_path = config.GetAsString(kUserPath);
+  } else {
+    Log::GetInstance()->Info("no dbUser found, fallback: " + kUserPathDefault);
   }
 
   HttpServer server;
@@ -139,10 +153,14 @@ int main(int argc, char **argv) {
   std::string ip = kIpDefault;
   if (config.Has(kIp) && config.IsString(kIp)) {
     ip = config.GetAsString(kIp);
+  } else {
+    Log::GetInstance()->Info("no ip found, fallback: " + kIpDefault);
   }
   std::string port = kPortDefault;
   if (config.Has(kPort) && config.IsString(kPort)) {
     port = config.GetAsString(kPort);
+  } else {
+    Log::GetInstance()->Info("no port found, fallback: " + kPortDefault);
   }
 
   server.Serve(port, ip);
