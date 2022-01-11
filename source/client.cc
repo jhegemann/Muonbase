@@ -31,6 +31,10 @@ void Client::RandomInsert(const size_t count) {
       Log::GetInstance()->Info("test failed: insert request");
       throw std::runtime_error("insert request");
     }
+    if (response->GetStatus() != OK) {
+      Log::GetInstance()->Info("test failed: insert response status");
+      throw std::runtime_error("insert request");
+    }
     return_value.Parse((*response).GetBody());
     if (!return_value.Has(db_api::kSuccess) ||
         !return_value.IsBoolean(db_api::kSuccess) ||
@@ -64,6 +68,10 @@ void Client::RandomErase(const size_t count) {
       Log::GetInstance()->Info("test failed: erase request");
       throw std::runtime_error("erase request");
     }
+    if (response->GetStatus() != OK) {
+      Log::GetInstance()->Info("test failed: erase response status");
+      throw std::runtime_error("erase request");
+    }
     return_value.Parse((*response).GetBody());
     if (!return_value.Has(db_api::kSuccess) ||
         !return_value.IsBoolean(db_api::kSuccess) ||
@@ -89,6 +97,10 @@ void Client::FindAll() {
                     APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
     if (!response) {
       Log::GetInstance()->Info("test failed: find request");
+      throw std::runtime_error("find request");
+    }
+    if (response->GetStatus() != OK) {
+      Log::GetInstance()->Info("test failed: find response status");
       throw std::runtime_error("find request");
     }
     return_value.Parse((*response).GetBody());

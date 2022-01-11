@@ -52,7 +52,7 @@ std::string Sha256Hash(const std::string &to_hash) {
   SHA256_Final(hash, &sha256);
   std::stringstream ss;
   for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-    ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    ss << std::hex << std::setw(2) << std::setfill(kCharZero) << (int)hash[i];
   }
   return ss.str();
 }
@@ -70,7 +70,7 @@ bool ExpectString(const std::string &text, const std::string &what,
                   size_t &off) {
   size_t pos = off;
   while (pos < text.length()) {
-    if (CharIsAnyOf(text[pos], "\b\t\n\a\r ")) {
+    if (CharIsAnyOf(text[pos], kStringWss)) {
       pos++;
       continue;
     }
@@ -127,7 +127,7 @@ double StringToDouble(const char *text) {
     result = 10.0 * result + (character - kCharZero);
   }
   if (character == kCharDot) {
-    while ((character = *text++) != '\0' &&
+    while ((character = *text++) != kCharNullTerminator &&
            (character >= kCharZero && character <= kCharNine)) {
       result = 10.0 * result + (character - kCharZero);
       exponent--;
@@ -368,7 +368,7 @@ std::string FileToString(const std::string &filename) {
   const size_t chunk_size = 4096;
   char buffer[chunk_size];
   std::string content;
-  FILE *stream = fopen(filename.c_str(), "r");
+  FILE *stream = fopen(filename.c_str(), kReadMode.c_str());
   if (!stream) {
     return kStringEmpty;
   }
@@ -382,7 +382,7 @@ std::string FileToString(const std::string &filename) {
 
 void StringToFile(const std::string &filename, const std::string &content) {
   const size_t chunk_size = 4096;
-  FILE *stream = fopen(filename.c_str(), "w");
+  FILE *stream = fopen(filename.c_str(), kWriteMode.c_str());
   if (!stream) {
     return;
   }
@@ -423,7 +423,7 @@ long TimeEpochMilliseconds() {
 }
 
 std::string StripFileExtension(const std::string &filename) {
-  size_t position = filename.find_last_of(".");
+  size_t position = filename.find_last_of(kStringDot);
   if (position == std::string::npos) {
     return kStringEmpty;
   }
@@ -474,8 +474,8 @@ void CopyFile(const std::string &from, const std::string &to) {
   char buffer[chunk_size];
   ssize_t bytes_read;
   ssize_t bytes_written;
-  FILE *source = fopen(from.c_str(), "r");
-  FILE *destination = fopen(to.c_str(), "w");
+  FILE *source = fopen(from.c_str(), kReadMode.c_str());
+  FILE *destination = fopen(to.c_str(), kWriteMode.c_str());
   while ((bytes_read = fread(buffer, sizeof(char), chunk_size, source)) > 0) {
     bytes_written = fwrite(buffer, sizeof(char), bytes_read, destination);
     if (bytes_written == -1) {
@@ -557,7 +557,7 @@ std::string ExecuteProcess(const std::string &command) {
   const size_t chunk_size = 4096;
   char buffer[chunk_size];
   std::string output;
-  FILE *stream = popen(command.c_str(), "r");
+  FILE *stream = popen(command.c_str(), kReadMode.c_str());
   if (!stream) {
     return kStringEmpty;
   }

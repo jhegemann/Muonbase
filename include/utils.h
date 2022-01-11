@@ -59,6 +59,7 @@ const std::string kStringSquareBracketClose = "]";
 const std::string kStringDoubleQuote = "\"";
 const std::string kStringSingleQuote = "'";
 const std::string kStringPipe = "|";
+const std::string kStringWss = "\b\t\n\a\r ";
 
 const char kCharZero = '0';
 const char kCharNine = '9';
@@ -77,6 +78,9 @@ const char kCharCurlyBracketOpen = '{';
 const char kCharCurlyBracketClose = '}';
 const char kCharSquareBracketOpen = '[';
 const char kCharSquareBracketClose = ']';
+
+const std::string kReadMode = "r";
+const std::string kWriteMode = "w";
 
 const std::string kNullDevice = "/dev/null";
 
