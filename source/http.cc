@@ -1054,7 +1054,9 @@ SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
   if (!socket->Connect(port, ip)) {
     return {};
   }
-  socket->Unblock();
+  if (!socket->Unblock()) {
+    return {};
+  }
   HttpConnection connection(socket);
   connection.GetWriter()->Write(request.AsString());
   connection.GetWriter()->Send();

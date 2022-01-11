@@ -35,11 +35,12 @@ void DocumentDatabase::Initialize() {
   random_.Seed(time(nullptr));
   if (FileExists(filepath_)) {
     stream_.open(filepath_, std::fstream::in | std::fstream::binary);
-    if (serializer_.Deserialize(db_, stream_) == std::string::npos) {
+    size_t bytes = serializer_.Deserialize(db_, stream_);
+    stream_.close();
+    if (bytes == std::string::npos) {
       rename(filepath_.c_str(), filepath_corrupted_.c_str());
       throw std::runtime_error("error when deserializing database from disk");
     }
-    stream_.close();
   }
   bool rollover_necessary = false;
   bool unlink_journal_closed = false;
