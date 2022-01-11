@@ -41,11 +41,11 @@ const std::string kRouteImage = "/image";
 const std::string kDatabaseService = "db";
 const std::string kUserService = "user";
 
-HttpResponse Insert(const HttpRequest &request, ServiceMap services);
-HttpResponse Erase(const HttpRequest &request, ServiceMap services);
-HttpResponse Find(const HttpRequest &request, ServiceMap services);
-HttpResponse Keys(const HttpRequest &request, ServiceMap services);
-HttpResponse Image(const HttpRequest &request, ServiceMap services);
+HttpResponse Insert(const HttpRequest &request, ServiceMap &services);
+HttpResponse Erase(const HttpRequest &request, ServiceMap &services);
+HttpResponse Find(const HttpRequest &request, ServiceMap &services);
+HttpResponse Keys(const HttpRequest &request, ServiceMap &services);
+HttpResponse Image(const HttpRequest &request, ServiceMap &services);
 
 } // namespace db_api
 

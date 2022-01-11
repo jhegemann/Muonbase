@@ -16,7 +16,7 @@ limitations under the License. */
 
 namespace db_api {
 
-static bool AccessPermitted(const HttpRequest &request, ServiceMap services) {
+static bool AccessPermitted(const HttpRequest &request, ServiceMap &services) {
   UserPool *user = static_cast<UserPool *>(services[kUserService]);
   std::string auth = request.GetHeader(kAuthorization);
   if (auth.empty()) {
@@ -37,7 +37,7 @@ static bool AccessPermitted(const HttpRequest &request, ServiceMap services) {
   return true;
 }
 
-HttpResponse Insert(const HttpRequest &request, ServiceMap services) {
+HttpResponse Insert(const HttpRequest &request, ServiceMap &services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
@@ -73,7 +73,7 @@ HttpResponse Insert(const HttpRequest &request, ServiceMap services) {
                              result.AsString());
 }
 
-HttpResponse Erase(const HttpRequest &request, ServiceMap services) {
+HttpResponse Erase(const HttpRequest &request, ServiceMap &services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
@@ -113,7 +113,7 @@ HttpResponse Erase(const HttpRequest &request, ServiceMap services) {
                              result.AsString());
 }
 
-HttpResponse Find(const HttpRequest &request, ServiceMap services) {
+HttpResponse Find(const HttpRequest &request, ServiceMap &services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
@@ -155,7 +155,7 @@ HttpResponse Find(const HttpRequest &request, ServiceMap services) {
                              result.AsString());
 }
 
-HttpResponse Keys(const HttpRequest &request, ServiceMap services) {
+HttpResponse Keys(const HttpRequest &request, ServiceMap &services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,
@@ -184,7 +184,7 @@ HttpResponse Keys(const HttpRequest &request, ServiceMap services) {
                              result.AsString());
 }
 
-HttpResponse Image(const HttpRequest &request, ServiceMap services) {
+HttpResponse Image(const HttpRequest &request, ServiceMap &services) {
   if (services.find(kUserService) == services.end() ||
       services.find(kDatabaseService) == services.end()) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR,

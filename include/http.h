@@ -218,7 +218,7 @@ private:
 };
 
 typedef std::map<std::string, ApiService *> ServiceMap;
-typedef std::function<HttpResponse(const HttpRequest &, ServiceMap services)>
+typedef std::function<HttpResponse(const HttpRequest &, ServiceMap &services)>
     HttpCallback;
 
 class HttpServer {
@@ -231,7 +231,7 @@ public:
   void Serve(const std::string &service, const std::string &host);
 
 private:
-  HttpResponse ExecuteHandler(const HttpRequest &request, ServiceMap services);
+  HttpResponse ExecuteHandler(const HttpRequest &request, ServiceMap &services);
   bool SetupTimerDescriptor();
   bool SetupSignalDescriptor();
   bool SetupServerSocket(const std::string &service, const std::string &host);

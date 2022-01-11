@@ -561,7 +561,7 @@ void HttpServer::RegisterService(const std::string &name, ApiService *service) {
 }
 
 HttpResponse HttpServer::ExecuteHandler(const HttpRequest &request,
-                                        ServiceMap services) {
+                                        ServiceMap &services) {
   HttpResponse response = HttpResponse::Build(NOT_FOUND);
   std::string handler_id(HttpConstants::GetMethodString(request.GetMethod()) +
                          request.GetUrl());

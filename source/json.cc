@@ -782,7 +782,7 @@ size_t DeserializeJsonArray(JsonArray &array, std::istream &stream) {
 
 JsonObject RandomDocument() {
   static RandomGenerator rnd;
-  static const std::vector<std::string> keys = {
+  const std::vector<std::string> keys = {
       rnd.Uuid(), rnd.Uuid(), rnd.Uuid(), rnd.Uuid(), rnd.Uuid(),
       rnd.Uuid(), rnd.Uuid(), rnd.Uuid(), rnd.Uuid(), rnd.Uuid()};
   JsonObject result;
