@@ -91,7 +91,7 @@ The json configuration file looks as follows
   "ip": "127.0.0.1",
   "port": "8260",
   "dbPath": "./data/muonbase-storage.db",
-  "userPath": "./config/muonbase-users.json",
+  "userPath": "./config/muonbase-user.json",
   "logPath": "./muonbase-server.log",
   "workingDirectory": "./"
 }
