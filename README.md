@@ -1,5 +1,4 @@
-# Muonbase
-<p align="left">                                    
+<p align="center">                                    
          <img src="https://user-images.githubusercontent.com/27009499/149123099-31945306-df89-46eb-8ba2-c69ee5c31a67.png" />
 </p>
 
