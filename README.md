@@ -45,7 +45,7 @@ Muonbase supports only plain http transport and does not implement ssl. In order
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
-# Log
+# LOG
 Logs are either extremely verbose or totally absent. If you need logs e.g. for debugging purpose, 
 either start the server in foreground and observe what happens on the standard output, 
 or make sure you use e.g. logrotate to automatically rotate your logfiles.
@@ -89,7 +89,6 @@ Pass `-t` to run the randomized testing procedure and feel free to adjust `-o`, 
 and `-c`, which is the repetition number of a combined insert-erase operation.
 
 # Configuration
-The json configuration file looks as follows
 ```
 {
   "ip": "127.0.0.1",
@@ -100,7 +99,8 @@ The json configuration file looks as follows
   "workingDirectory": "./"
 }
 ```
-and is mandatory for the database server to run. Tune the parameters as you want, but keep a few things in mind: (i) binding
+The configuration file is in a json format and it is mandatory for the database server to run. 
+Tune the parameters as you want, but keep a few things in mind: (i) binding
 to ip 0.0.0.0 is not recommended, since the transport layer does not support ssl, (ii) binding to
 ports below 1024 is not recommended since this requires root privileges and is therefore by design not secure. 
 The data and user paths can be chosen freely as well as the log path. Make sure permissions in particular 
