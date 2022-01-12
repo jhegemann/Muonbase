@@ -45,11 +45,6 @@ Muonbase supports only plain http transport and does not implement ssl. In order
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
-# Logging
-Logs are either extremely verbose or totally absent. If you need logs e.g. for debugging purpose, 
-either start the server in foreground and observe what happens on the standard output, 
-or make sure you use e.g. logrotate to automatically rotate your logfiles.
-
 # Build
 Building is currently being performed with `g++-9.3.0` and `c++-20`. The only dependency so far is `openssl`, where you need
 both the binary package `openssl` as well as the header files in `openssl-dev`. To build, proceed as normal with
@@ -87,6 +82,11 @@ Usage: muonbase-client.app [-h] [-n <threads>] [-t] [-i <ip>] [-p <port>] [-o <o
 Note that, when `-t` is omitted, the database client will just check if the database server is available on the specified ip and port.
 Pass `-t` to run the randomized testing procedure and feel free to adjust `-o`, which is the number of initial database inserts,
 and `-c`, which is the repetition number of a combined insert-erase operation.
+
+# Logs
+Logs are either extremely verbose or totally absent. If you need logs e.g. for debugging purpose, 
+either start the server in foreground and observe what happens on the standard output, 
+or make sure you use e.g. logrotate to automatically rotate your logfiles.
 
 # Configuration
 ```
