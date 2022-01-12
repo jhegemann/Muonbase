@@ -45,7 +45,7 @@ Muonbase supports only plain http transport and does not implement ssl. In order
 is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
-# LOG
+# Logging
 Logs are either extremely verbose or totally absent. If you need logs e.g. for debugging purpose, 
 either start the server in foreground and observe what happens on the standard output, 
 or make sure you use e.g. logrotate to automatically rotate your logfiles.
