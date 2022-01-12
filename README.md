@@ -110,13 +110,13 @@ i.e. the server runs in background. If you run the server in background,
 you should prefer absolute paths over relative paths in the configuration file.
 
 # Users
-The user management is not dynamic yet, so in order to add a user you have to manually edit the users file
 ```
 {
   "root": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"
 }
 ```
-which is, like the general configuration, in a json format. Hashed passwords are SHA256 and can be generated 
+The user management is not dynamic, so in order to add a user you have to manually edit the users file, which is, 
+like the general configuration, in a json format. Hashed passwords are SHA256 and can be generated 
 e.g. on the command line using `echo -n 'password' | sha256sum`. Don't forget to shred your shell history after doing that.
 Some shells don't log commands to history if they are prefixed with a space. Regarding authorization, Muonbase by now implements 
 only simple http basic authorization and there is no possibility to set user permissions on specific documents, 
