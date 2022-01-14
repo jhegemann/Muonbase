@@ -24,11 +24,11 @@ JsonArray Client::Insert(const JsonArray &values) {
   auto response = SendRequest(ip_, port_, POST, db_api::kRouteInsert, user_,
                               password_, APPLICATION_JSON, values.String());
   if (!response) {
-    Log::GetInstance()->Info("test failed: insert request");
+    Log::GetInstance()->Info("failed: insert request");
     throw std::runtime_error("insert request");
   }
   if (response->GetStatus() != OK) {
-    Log::GetInstance()->Info("test failed: insert response status");
+    Log::GetInstance()->Info("failed: insert response status");
     throw std::runtime_error("insert request");
   }
   return JsonArray((*response).GetBody());
