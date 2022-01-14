@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 #include "client.h"
+#include "clock.h"
 #include "http.h"
 #include "log.h"
 #include "utils.h"
@@ -33,6 +34,8 @@ static const std::string kIp = "ip";
 static const std::string kIpDefault = "127.0.0.1";
 static const std::string kPort = "port";
 static const std::string kPortDefault = "8260";
+static const std::string kUserDefault = "root";
+static const std::string kPasswordDefault = "0000";
 
 static const size_t kOrderDefault = 128;
 static const size_t kCyclesDefault = 16;
@@ -132,20 +135,69 @@ int main(int argc, char **argv) {
   }
 
   std::vector<std::thread> threads(num_threads);
-  for (size_t i = 0; i < num_threads; i++) {
-    threads[i] = std::thread([i, ip, port, order, cycles] {
-      Client client(ip, port);
+  for (size_t index = 0; index < num_threads; index++) {
+    threads[index] = std::thread([index, ip, port, order, cycles] {
+      RandomGenerator random(index);
+      std::map<std::string, JsonObject> mirrored_state;
+      Client client(ip, port, kUserDefault, kPasswordDefault);
+      Clock clock;
+      size_t count;
       try {
-        Log::GetInstance()->Info("test init thread " + std::to_string(i));
-        client.RandomInsert(order);
-        client.FindAll();
-        for (size_t j = 1; j <= cycles; j++) {
-          Log::GetInstance()->Info("test cycle " + std::to_string(j) +
-                                   " of thread " + std::to_string(i));
-          client.RandomInsert(order / cycles);
-          client.FindAll();
-          client.RandomErase(order / cycles);
-          client.FindAll();
+        Log::GetInstance()->Info("thread" + kStringSpace +
+                                 std::to_string(index) + kStringSpace +
+                                 "fill db");
+        clock.Start();
+        count = 0;
+        for (size_t i = 0; i < order; i++) {
+          JsonArray values = RandomDocumentArray();
+          JsonArray keys = client.Insert(values);
+          for (size_t j = 0; j < keys.Size(); j++) {
+            mirrored_state.insert(
+                std::make_pair(keys.GetString(j), values.GetObject(j)));
+          }
+          count += keys.Size();
+        }
+        clock.Stop();
+        Log::GetInstance()->Info(
+            "thread" + kStringSpace + std::to_string(index) + kStringSpace +
+            "took" + kStringSpace + std::to_string(clock.Time() / count) +
+            "ms" + kStringSpace + "per insertion");
+
+        for (size_t i = 1; i <= cycles; i++) {
+          clock.Start();
+          size_t count = 0;
+          for (size_t j = 0; j < order; j++) {
+            JsonArray values = RandomDocumentArray();
+            JsonArray keys = client.Insert(values);
+            for (size_t k = 0; k < keys.Size(); k++) {
+              mirrored_state.insert(
+                  std::make_pair(keys.GetString(k), values.GetObject(k)));
+            }
+            count += keys.Size();
+          }
+          clock.Stop();
+          Log::GetInstance()->Info(
+              "thread" + kStringSpace + std::to_string(index) + kStringSpace +
+              "cycle" + kStringSpace + std::to_string(i) + kStringSpace +
+              "took" + kStringSpace + std::to_string(clock.Time() / count) +
+              "ms" + kStringSpace + "per insertion");
+
+          clock.Start();
+          for (size_t j = 0; j < count; j++) {
+            auto it = mirrored_state.begin();
+            std::advance(it, random.Uint64() % mirrored_state.size());
+            std::string key = it->first;
+            it = mirrored_state.erase(it);
+            JsonArray keys;
+            keys.PutString(key);
+            client.Erase(keys);
+          }
+          clock.Stop();
+          Log::GetInstance()->Info(
+              "thread" + kStringSpace + std::to_string(index) + kStringSpace +
+              "cycle" + kStringSpace + std::to_string(i) + kStringSpace +
+              "took" + kStringSpace + std::to_string(clock.Time() / count) +
+              "ms" + kStringSpace + "per erasure");
         }
       } catch (std::runtime_error &) {
         Log::GetInstance()->Info("test failed");
@@ -156,6 +208,14 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < num_threads; i++) {
     threads[i].join();
   }
+
+  Client client(ip, port, kUserDefault, kPasswordDefault);
+  JsonArray keys = client.Keys();
+  JsonArray values = client.Values();
+  JsonObject image = client.Image();
+  JsonArray added_keys = client.Insert(RandomDocumentArray());
+  client.Erase(added_keys);
+  client.Find(keys);
 
   Log::GetInstance()->Info("all tests passed");
 

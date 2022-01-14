@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
   std::string working_directory = kWorkingDirectoryDefault;
   if (daemonize) {
     if (config.Has(kWorkingDirectory) && config.IsString(kWorkingDirectory)) {
-      working_directory = config.GetAsString(kWorkingDirectory);
+      working_directory = config.GetString(kWorkingDirectory);
     } else {
       Log::GetInstance()->Info("no " + kWorkingDirectory +
                                " found, fallback: " + kWorkingDirectoryDefault);
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     DaemonizeProcess(working_directory);
     Log::GetInstance()->SetLogfile(kLogPathDefault);
     if (config.Has(kLogPath) && config.IsString(kLogPath)) {
-      Log::GetInstance()->SetLogfile(config.GetAsString(kLogPath));
+      Log::GetInstance()->SetLogfile(config.GetString(kLogPath));
     } else {
       Log::GetInstance()->Info("no " + kLogPath +
                                " found, fallback: " + kLogPathDefault);
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 
   std::string data_path = kDbPathDefault;
   if (config.Has(kDbPath) && config.IsString(kDbPath)) {
-    data_path = config.GetAsString(kDbPath);
+    data_path = config.GetString(kDbPath);
   } else {
     Log::GetInstance()->Info("no " + kDbPath +
                              " found, fallback: " + kDbPathDefault);
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
 
   std::string user_path = kUserPathDefault;
   if (config.Has(kUserPath) && config.IsString(kUserPath)) {
-    user_path = config.GetAsString(kUserPath);
+    user_path = config.GetString(kUserPath);
   } else {
     Log::GetInstance()->Info("no " + kUserPath +
                              " found, fallback: " + kUserPathDefault);
@@ -150,18 +150,19 @@ int main(int argc, char **argv) {
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteErase, db_api::Erase);
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteFind, db_api::Find);
   server.RegisterHandler(HttpMethod::GET, db_api::kRouteKeys, db_api::Keys);
+  server.RegisterHandler(HttpMethod::GET, db_api::kRouteValues, db_api::Values);
   server.RegisterHandler(HttpMethod::GET, db_api::kRouteImage, db_api::Image);
 
   Log::GetInstance()->Info("start server");
   std::string ip = kIpDefault;
   if (config.Has(kIp) && config.IsString(kIp)) {
-    ip = config.GetAsString(kIp);
+    ip = config.GetString(kIp);
   } else {
     Log::GetInstance()->Info("no " + kIp + " found, fallback: " + kIpDefault);
   }
   std::string port = kPortDefault;
   if (config.Has(kPort) && config.IsString(kPort)) {
-    port = config.GetAsString(kPort);
+    port = config.GetString(kPort);
   } else {
     Log::GetInstance()->Info("no " + kPort +
                              " found, fallback: " + kPortDefault);

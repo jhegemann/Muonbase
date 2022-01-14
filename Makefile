@@ -16,7 +16,8 @@ SERVER_OBJECTS = $(BD)/server.o \
  $(BD)/tcp.o \
  $(BD)/http.o \
  $(BD)/service.o \
- $(BD)/api.o
+ $(BD)/api.o \
+ $(BD)/clock.o
 
 CLIENT_OBJECTS = $(BD)/test.o \
  $(BD)/log.o \
@@ -25,7 +26,8 @@ CLIENT_OBJECTS = $(BD)/test.o \
  $(BD)/rand.o \
  $(BD)/tcp.o \
  $(BD)/http.o \
- $(BD)/client.o
+ $(BD)/client.o \
+ $(BD)/clock.o
 
 LINKING_SSL = -lssl -lcrypto
 LINKING_THREAD = -lpthread

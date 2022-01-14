@@ -16,6 +16,7 @@ limitations under the License. */
 #define WAL_H
 
 #include "map.h"
+#include "json.h"
 #include <deque>
 #include <sstream>
 

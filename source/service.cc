@@ -134,51 +134,80 @@ void DocumentDatabase::Tick() {
 
 void DocumentDatabase::Shutdown() {}
 
-std::optional<std::string> DocumentDatabase::Insert(JsonObject &document) {
-  std::string id;
+JsonArray DocumentDatabase::Insert(const JsonArray &values) {
+  JsonArray result;
+  std::string key;
   bool unique = false;
-  while (!unique) {
-    id = random_.Uuid();
-    if (db_.Find(id) == db_.End()) {
-      unique = true;
+  JsonObject value;
+  for (size_t i = 0; i < values.Size(); i++) {
+    value = values.GetObject(i);
+    unique = false;
+    while (!unique) {
+      key = random_.Uuid();
+      if (db_.Find(key) == db_.End()) {
+        unique = true;
+      }
     }
+    result.PutString(key);
+    Journal::Append(filepath_journal_, STORAGE_INSERT, key, &value);
+    db_.Insert(key, value);
   }
-  Journal::Append(filepath_journal_, STORAGE_INSERT, id, &document);
-  db_.Insert(id, document);
-  return id;
+  return result;
 }
 
-std::optional<std::string> DocumentDatabase::Erase(std::string id) {
-  MapIterator<std::string, JsonObject> it = db_.Find(id);
-  if (it == db_.End()) {
-    return {};
+JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
+  JsonArray result;
+  std::string key;
+  for (size_t i = 0; i < keys.Size(); i++) {
+    key = keys.GetString(i);
+    auto it = db_.Find(key);
+    if (it == db_.End()) {
+      result.PutNull();
+      continue;
+    }
+    result.PutString(key);
+    Journal::Append(filepath_journal_, STORAGE_ERASE, key, nullptr);
+    db_.Erase(it);
   }
-  Journal::Append(filepath_journal_, STORAGE_ERASE, id, nullptr);
-  db_.Erase(it);
-  return id;
+  return result;
 }
 
-std::optional<JsonObject> DocumentDatabase::Find(std::string id) {
-  MapIterator<std::string, JsonObject> it = db_.Find(id);
-  if (it == db_.End()) {
-    return {};
+JsonArray DocumentDatabase::Find(const JsonArray &keys) {
+  JsonArray result;
+  for (size_t i = 0; i < keys.Size(); i++) {
+    auto it = db_.Find(keys.GetString(i));
+    if (it == db_.End()) {
+      result.PutNull();
+      continue;
+    }
+    result.PutObject(it.GetValue());
   }
-  return it.GetValue();
+  return result;
 }
 
-std::vector<std::string> DocumentDatabase::Keys() {
+JsonArray DocumentDatabase::Keys() {
   MapIterator<std::string, JsonObject> it = db_.Begin();
-  std::vector<std::string> keys;
+  JsonArray keys;
   while (it != db_.End()) {
-    keys.emplace_back(it.GetKey());
+    keys.PutString(it.GetKey());
     it++;
   }
   return keys;
 }
 
-JsonObject DocumentDatabase::Image() {
-  JsonObject image;
+JsonArray DocumentDatabase::Values() {
   MapIterator<std::string, JsonObject> it = db_.Begin();
+  JsonArray values;
+  while (it != db_.End()) {
+    values.PutObject(it.GetValue());
+    it++;
+  }
+  return values;
+}
+
+JsonObject DocumentDatabase::Image() {
+  MapIterator<std::string, JsonObject> it = db_.Begin();
+  JsonObject image;
   while (it != db_.End()) {
     image.PutObject(it.GetKey(), it.GetValue());
     it++;
@@ -197,9 +226,9 @@ void UserPool::Tick() {}
 void UserPool::Shutdown() {}
 
 bool UserPool::AccessPermitted(const std::string &user,
-                               const std::string &passwd) {
+                               const std::string &password) {
   if (users_.Has(user) && users_.IsString(user)) {
-    if (Sha256Hash(passwd).compare(users_.GetAsString(user)) == 0) {
+    if (Sha256Hash(password).compare(users_.GetString(user)) == 0) {
       return true;
     }
   }

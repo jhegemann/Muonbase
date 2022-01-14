@@ -14,119 +14,92 @@ limitations under the License. */
 
 #include "client.h"
 
-Client::Client(const std::string &ip, const std::string &port)
-    : ip_(ip), port_(port) {}
+Client::Client(const std::string &ip, const std::string &port,
+               const std::string &user, const std::string &password)
+    : ip_(ip), port_(port), user_(user), password_(password) {}
 
 Client::~Client() {}
 
-void Client::RandomInsert(const size_t count) {
-  JsonObject insert_object;
-  JsonObject return_value;
-  for (size_t i = 0; i < count; i++) {
-    insert_object = RandomDocument();
-    auto response =
-        SendRequest(ip_, port_, POST, db_api::kRouteInsert, "root", "0000",
-                    APPLICATION_JSON, insert_object.AsString());
-    if (!response) {
-      Log::GetInstance()->Info("test failed: insert request");
-      throw std::runtime_error("insert request");
-    }
-    if (response->GetStatus() != OK) {
-      Log::GetInstance()->Info("test failed: insert response status");
-      throw std::runtime_error("insert request");
-    }
-    return_value.Parse((*response).GetBody());
-    if (!return_value.Has(db_api::kSuccess) ||
-        !return_value.IsBoolean(db_api::kSuccess) ||
-        !return_value.GetAsBoolean(db_api::kSuccess)) {
-      Log::GetInstance()->Info("test failed: insert success attribute");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("insert success attribute");
-    }
-    if (!return_value.Has(db_api::kId) || !return_value.IsString(db_api::kId)) {
-      Log::GetInstance()->Info("test failed: insert id attribute");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("insert id attribute");
-    }
-    internal_.insert(
-        std::make_pair(return_value.GetAsString(db_api::kId), insert_object));
+JsonArray Client::Insert(const JsonArray &values) {
+  auto response = SendRequest(ip_, port_, POST, db_api::kRouteInsert, user_,
+                              password_, APPLICATION_JSON, values.String());
+  if (!response) {
+    Log::GetInstance()->Info("test failed: insert request");
+    throw std::runtime_error("insert request");
   }
+  if (response->GetStatus() != OK) {
+    Log::GetInstance()->Info("test failed: insert response status");
+    throw std::runtime_error("insert request");
+  }
+  return JsonArray((*response).GetBody());
 }
 
-void Client::RandomErase(const size_t count) {
-  RandomGenerator rnd(time(nullptr));
-  JsonObject return_value;
-  for (size_t i = 0; i < count; i++) {
-    auto it = internal_.begin();
-    std::advance(it, rnd.Uint64() % internal_.size());
-    std::string key = it->first;
-    it = internal_.erase(it);
-    auto response =
-        SendRequest(ip_, port_, POST, db_api::kRouteErase, "root", "0000",
-                    APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
-    if (!response) {
-      Log::GetInstance()->Info("test failed: erase request");
-      throw std::runtime_error("erase request");
-    }
-    if (response->GetStatus() != OK) {
-      Log::GetInstance()->Info("test failed: erase response status");
-      throw std::runtime_error("erase request");
-    }
-    return_value.Parse((*response).GetBody());
-    if (!return_value.Has(db_api::kSuccess) ||
-        !return_value.IsBoolean(db_api::kSuccess) ||
-        !return_value.GetAsBoolean(db_api::kSuccess)) {
-      Log::GetInstance()->Info("test failed: erase success attribute");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("erase success attribute");
-    }
-    if (!return_value.Has(db_api::kId) || !return_value.IsString(db_api::kId)) {
-      Log::GetInstance()->Info("test failed: erase id attribute");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("erase id attribute");
-    }
+JsonArray Client::Erase(const JsonArray &keys) {
+  auto response = SendRequest(ip_, port_, POST, db_api::kRouteErase, user_,
+                              password_, APPLICATION_JSON, keys.String());
+  if (!response) {
+    Log::GetInstance()->Info("failed: erase request");
+    throw std::runtime_error("erase request");
   }
+  if (response->GetStatus() != OK) {
+    Log::GetInstance()->Info("failed: erase response status");
+    throw std::runtime_error("erase request");
+  }
+  return JsonArray((*response).GetBody());
 }
 
-void Client::FindAll() {
-  JsonObject return_value;
-  for (auto it = internal_.begin(); it != internal_.end(); it++) {
-    std::string key = it->first;
-    auto response =
-        SendRequest(ip_, port_, POST, db_api::kRouteFind, "root", "0000",
-                    APPLICATION_JSON, "{\"id\":\"" + key + "\"}");
-    if (!response) {
-      Log::GetInstance()->Info("test failed: find request");
-      throw std::runtime_error("find request");
-    }
-    if (response->GetStatus() != OK) {
-      Log::GetInstance()->Info("test failed: find response status");
-      throw std::runtime_error("find request");
-    }
-    return_value.Parse((*response).GetBody());
-    if (!return_value.Has(db_api::kSuccess) ||
-        !return_value.IsBoolean(db_api::kSuccess) ||
-        !return_value.GetAsBoolean(db_api::kSuccess)) {
-      Log::GetInstance()->Info("test failed: find success attribute");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("find success attribute");
-    }
-    if (!return_value.Has(db_api::kId) || !return_value.IsString(db_api::kId)) {
-      Log::GetInstance()->Info("test failed: find id attribute");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("find id attribute");
-    }
-    if (!return_value.Has(db_api::kDocument) ||
-        !return_value.IsObject(db_api::kDocument)) {
-      Log::GetInstance()->Info("test failed: find document");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("find document");
-    }
-    if (it->second.AsString().compare(
-            return_value.GetAsObject(db_api::kDocument).AsString()) != 0) {
-      Log::GetInstance()->Info("test failed: documents differ");
-      Log::GetInstance()->Info((*response).AsString());
-      throw std::runtime_error("documents differ");
-    }
+JsonArray Client::Find(const JsonArray &keys) {
+  auto response = SendRequest(ip_, port_, POST, db_api::kRouteFind, user_,
+                              password_, APPLICATION_JSON, keys.String());
+  if (!response) {
+    Log::GetInstance()->Info("failed: find request");
+    throw std::runtime_error("find request");
   }
+  if (response->GetStatus() != OK) {
+    Log::GetInstance()->Info("failed: find response status");
+    throw std::runtime_error("find request");
+  }
+  return JsonArray((*response).GetBody());
+}
+
+JsonArray Client::Keys() {
+  auto response =
+      SendRequest(ip_, port_, GET, db_api::kRouteKeys, user_, password_);
+  if (!response) {
+    Log::GetInstance()->Info("failed: keys request");
+    throw std::runtime_error("keys request");
+  }
+  if (response->GetStatus() != OK) {
+    Log::GetInstance()->Info("failed: keys response status");
+    throw std::runtime_error("keys request");
+  }
+  return JsonArray((*response).GetBody());
+}
+
+JsonArray Client::Values() {
+  auto response =
+      SendRequest(ip_, port_, GET, db_api::kRouteValues, user_, password_);
+  if (!response) {
+    Log::GetInstance()->Info("failed: values request");
+    throw std::runtime_error("values request");
+  }
+  if (response->GetStatus() != OK) {
+    Log::GetInstance()->Info("failed: values response status");
+    throw std::runtime_error("values request");
+  }
+  return JsonArray((*response).GetBody());
+}
+
+JsonObject Client::Image() {
+  auto response =
+      SendRequest(ip_, port_, GET, db_api::kRouteImage, user_, password_);
+  if (!response) {
+    Log::GetInstance()->Info("failed: image request");
+    throw std::runtime_error("image request");
+  }
+  if (response->GetStatus() != OK) {
+    Log::GetInstance()->Info("failed: image response status");
+    throw std::runtime_error("image request");
+  }
+  return JsonObject((*response).GetBody());
 }

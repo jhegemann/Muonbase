@@ -21,9 +21,9 @@ limitations under the License. */
 #include <cstdio>
 #include <cstdlib>
 #include <iomanip>
+#include <map>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -48,9 +48,10 @@ class JsonArray {
 public:
   friend class JsonObject;
   JsonArray();
+  JsonArray(const JsonArray &array);
   JsonArray(const std::string &source);
   virtual ~JsonArray();
-  size_t Size();
+  size_t Size() const;
   void PutNull();
   void PutBoolean(JsonBoolean value);
   void PutInteger(JsonInteger value);
@@ -58,21 +59,21 @@ public:
   void PutString(JsonString value);
   void PutObject(JsonObject value);
   void PutArray(JsonArray value);
-  JsonBoolean GetAsBoolean(size_t index);
-  JsonInteger GetAsInteger(size_t index);
-  JsonFloat GetAsFloat(size_t index);
-  JsonString GetAsString(size_t index);
-  JsonObject GetAsObject(size_t index);
-  JsonArray GetAsArray(size_t index);
-  bool IsNull(size_t index);
-  bool IsBoolean(size_t index);
-  bool IsInteger(size_t index);
-  bool IsFloat(size_t index);
-  bool IsString(size_t index);
-  bool IsObject(size_t index);
-  bool IsArray(size_t index);
+  JsonBoolean GetBoolean(size_t index) const;
+  JsonInteger GetAsInteger(size_t index) const;
+  JsonFloat GetFloat(size_t index) const;
+  JsonString GetString(size_t index) const;
+  JsonObject GetObject(size_t index) const;
+  JsonArray GetArray(size_t index) const;
+  bool IsNull(size_t index) const;
+  bool IsBoolean(size_t index) const;
+  bool IsInteger(size_t index) const;
+  bool IsFloat(size_t index) const;
+  bool IsString(size_t index) const;
+  bool IsObject(size_t index) const;
+  bool IsArray(size_t index) const;
   void Clear();
-  std::string AsString();
+  std::string String() const;
   void Parse(const std::string &source);
 
 private:
@@ -84,6 +85,7 @@ class JsonObject {
 public:
   friend class JsonArray;
   JsonObject();
+  JsonObject(const JsonObject &object);
   JsonObject(const std::string &source);
   virtual ~JsonObject();
   bool Has(const std::string &key);
@@ -94,22 +96,22 @@ public:
   void PutString(const std::string &key, JsonString value);
   void PutObject(const std::string &key, JsonObject value);
   void PutArray(const std::string &key, JsonArray value);
-  JsonBoolean GetAsBoolean(const std::string &key);
-  JsonInteger GetAsInteger(const std::string &key);
-  JsonFloat GetAsFloat(const std::string &key);
-  JsonString GetAsString(const std::string &key);
-  JsonObject GetAsObject(const std::string &key);
-  JsonArray GetAsArray(const std::string &key);
-  bool IsNull(const std::string &key);
-  bool IsBoolean(const std::string &key);
-  bool IsInteger(const std::string &key);
-  bool IsFloat(const std::string &key);
-  bool IsString(const std::string &key);
-  bool IsObject(const std::string &key);
-  bool IsArray(const std::string &key);
-  std::vector<std::string> GetKeys();
+  JsonBoolean GetBoolean(const std::string &key) const;
+  JsonInteger GetAsInteger(const std::string &key) const;
+  JsonFloat GetFloat(const std::string &key) const;
+  JsonString GetString(const std::string &key) const;
+  JsonObject GetObject(const std::string &key) const;
+  JsonArray GetArray(const std::string &key) const;
+  bool IsNull(const std::string &key) const;
+  bool IsBoolean(const std::string &key) const;
+  bool IsInteger(const std::string &key) const;
+  bool IsFloat(const std::string &key) const;
+  bool IsString(const std::string &key) const;
+  bool IsObject(const std::string &key) const;
+  bool IsArray(const std::string &key) const;
+  std::vector<std::string> Keys() const;
   void Clear();
-  std::string AsString();
+  std::string String() const;
   void Parse(const std::string &source);
 
 private:
@@ -123,5 +125,6 @@ size_t SerializeJsonArray(JsonArray &array, std::ostream &stream);
 size_t DeserializeJsonArray(JsonArray &array, std::istream &stream);
 
 JsonObject RandomDocument();
+JsonArray RandomDocumentArray();
 
 #endif

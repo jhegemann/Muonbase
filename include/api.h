@@ -21,21 +21,11 @@ limitations under the License. */
 
 namespace db_api {
 
-const std::string kAuthorization = "authorization";
-const std::string kBasic = "Basic";
-const std::string kSuccess = "success";
-const std::string kDocument = "document";
-const std::string kId = "id";
-const std::string kContentType = "content-type";
-const std::string kKeys = "keys";
-const std::string kFound = "found";
-const std::string kSuccessObject = "{\"success\":true}";
-const std::string kNoSuccessObject = "{\"success\":false}";
-
 const std::string kRouteInsert = "/insert";
 const std::string kRouteErase = "/erase";
 const std::string kRouteFind = "/find";
 const std::string kRouteKeys = "/keys";
+const std::string kRouteValues = "/values";
 const std::string kRouteImage = "/image";
 
 const std::string kDatabaseService = "db";
@@ -45,6 +35,7 @@ HttpResponse Insert(const HttpRequest &request, ServiceMap &services);
 HttpResponse Erase(const HttpRequest &request, ServiceMap &services);
 HttpResponse Find(const HttpRequest &request, ServiceMap &services);
 HttpResponse Keys(const HttpRequest &request, ServiceMap &services);
+HttpResponse Values(const HttpRequest &request, ServiceMap &services);
 HttpResponse Image(const HttpRequest &request, ServiceMap &services);
 
 } // namespace db_api

@@ -124,11 +124,7 @@ meaning that all users can read and modify all documents in one collection. If y
 horizontally and launch one new database server per user.
 
 # API
-There are three POST routes, which essentially mirror the c++ map interface, where you can insert, erase and find.
-To insert, just present a plain json object in the request body, as a response you will receive the id of the inserted document.
-To erase, present an id wrapped in a json object in the request body, as a response you will receive the same id back.
-To find a document, do the same as for erasure, just change the route. You can also just GET an array with all keys or even
-GET a complete json image.
+
 
 
 ## Routes
@@ -136,17 +132,19 @@ GET a complete json image.
 * POST /erase
 * POST /find
 * GET /keys
+* GET /values
 * GET /image
 
 ### Insert
+
 #### Request
 ```
 POST /insert HTTP/1.1
 authorization: Basic cm9vdDowMDAw
-content-length: 275
+content-length: 1003
 content-type: application/json
 
-{"qRADfzL9qSZdWfCB":[true,0.481446,319226,null],"KneSOtkMNGxvUhH1":{"BrWUguL5y0ov17n3":728229,"VeGU6JjPxbWrWe79":null,"cMvIo2nbwkvcnMBe":0.691427,"2f4e7JvjxynQnotm":false},"j8O5fgYpvwRb38hy":null,"qmirthOPG2AyuSwD":792874,"PGjfooCv98HL1dTf":0.054929,"fE40YyX8iIgaQuXV":false}
+[{"guNloO9A":[true,0.561933,901188,"8NGbsNfc",null],"OrJxzNTq":{"RV6fLLMW":false,"tC3TF09H":0.358690,"zfKtUEbG":607057,"rOv9Tq5u":"lKKdJAFt","fsm9iOxx":null},"BiyEstkf":null,"c8EwQ9n9":"9IKxj6Qw","8G1CM6i9":639241,"wAmM4BsW":0.820225,"QwH0ksWj":true},{"fYzO9Yhz":{"yDIo1eVG":true,"F0P054A9":0.181838,"XFtqAxGv":986763,"uaBJRTal":"2KFMjDGa","rJmFQ0Kf":null},"N1yBKo1R":null,"iAE4GJOw":"jViv0Xy2","t6MnkZkA":364141,"hCnj2vpX":0.602900,"DuJSNbBv":[false,0.663713,287146,"voLwZrgz",null],"k1hYxghN":false},{"wOyqExt2":[false,0.924033,829322,"JJZIHgDT",null],"nZqI4xBq":{"I7oiOonw":false,"2oONVCI6":"KNA1MfiU","3Bxa3YxI":null,"hd3fC765":0.113570,"yMwH1Xpy":389680},"S6LcNwfV":null,"sV1JmMYm":"HaHmT8n0","4HQBiBNc":77599,"nSIv4pr2":0.369883,"8GtXcBJk":false},{"vwY9jRg9":[false,0.127580,521125,"agFetsyc",null],"xBYeX6MS":{"2g6rv0CL":false,"Le6kdwmh":0.755341,"zUCBsAZC":59639,"w0cTZh0S":"0zb86b3B","RzDAGnmL":null},"wb5UrJbR":null,"PTb9WVh3":"tprSwcCQ","KQQoyujm":403777,"Ty7aChNj":0.032886,"GxcMsJMA":true}]
 ```
 
 #### Response
@@ -154,23 +152,24 @@ content-type: application/json
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
 access-control-allow-origin: *
-content-length: 40
+content-length: 45
 content-type: application/json
-date: 20220106121227
+date: 20220114155834
 server: muonbase/1
 
-{"id":"dMxiajoFmCZirIiD","success":true}
+["yiIcR6RF","SUGVhqpD","wCynAboQ","WQW2wN1s"]
 ```
 
 ### Erase
+
 #### Request
 ```
 POST /erase HTTP/1.1
 authorization: Basic cm9vdDowMDAw
-content-length: 25
+content-length: 45
 content-type: application/json
 
-{"id":"GI0xHlR9SHXpNPT9"}
+["yiIcR6RF","SUGVhqpD","wCynAboQ","WQW2wN1s"]
 ```
 
 #### Response
@@ -178,23 +177,24 @@ content-type: application/json
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
 access-control-allow-origin: *
-content-length: 40
+content-length: 45
 content-type: application/json
-date: 20220106121227
+date: 20220114155834
 server: muonbase/1
 
-{"id":"GI0xHlR9SHXpNPT9","success":true}
+["yiIcR6RF","SUGVhqpD","wCynAboQ","WQW2wN1s"]
 ```
 
 ### Find
+
 #### Request
 ```
 POST /find HTTP/1.1
 authorization: Basic cm9vdDowMDAw
-content-length: 25
+content-length: 104853
 content-type: application/json
 
-{"id":"0jEdOcRMlgQeeuGe"}
+["04DUt7AN","04NCCAiC","04hCtVO5","050gz87F","05nuxJV1","060rL8qh","06DgimZJ","07rohPGa","08BEJKdS","09GlGW46","0ARfA0JA","0CIXsxF5","0D029FxG","0F4IMoRq","0FJv69S1","0H3BLalf","0HGXfexv","0J45THh4","0K5nSDWO","0MLjP1mW","0Meq8jWO","0NbxbX61","0NpW0uAq","0OOXf31b","0P1ExUcs","0QCaJFnt","0QHizo6E","0QnjPHH0","0QvKH3en","0R1U1wC6","0U4JtwmY","0VFgQJ9N","0Vh1km08","0ViAMRr9","0WQYsVZd","0XYt7Vrh","0XgMRpnQ","0YItWhmR","0YOnnH83","0Z06MCIh","0Z7RZSo9","0ZygF5nm","0a1DCX1m","0a6efeLX","0a6gkhy9","0aZuwKu6","0bPcn4vp","0beEm45p","0bwjzxy4","0c7hefIA","0cLLQZfZ","0cqX2LGR","0dEjT74Q","0iUnyIGj","0iZg0N6S","0jAdG4VG","0ja1hlt9","0kAn0hbw","0kN0E2y1","0kkLQ7CV","0krCH2cV","0krZSUir","0l0pMqbp","0lJczQtt","0lXaMpBE","0o6ta9mh","0p5MFxN4","0p7vpAML","0qhFHxOJ","0r4M1zzr","0sKwTwbU","0sq7Ht8e","0tj2dQKa","0vCBXxsJ","0vJ7A9Wy","0wbXkvhG","0xFS2uKR","0xOk3BXb","0xoE0pM2","0z5Q8pG9","0zhRXqOK","11x35Xgh","12PMAk5M","12iGbWIF","12zx7MOF","13wXYVnM","14CQqhJR","15rEOveW","16CzxSH6","16J26d1m","16Sw3GKn","171a5Dty","17Q30LDw",...
 ```
 
 #### Response
@@ -202,58 +202,72 @@ content-type: application/json
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
 access-control-allow-origin: *
-content-length: 339
+content-length: 2032984
 content-type: application/json
-date: 20220106121227
+date: 20220114155835
 server: muonbase/1
 
-{"found":true,"document":{"fE40YyX8iIgaQuXV":false,"PGjfooCv98HL1dTf":0.451518,"qmirthOPG2AyuSwD":246816,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":true,"cMvIo2nbwkvcnMBe":0.663296,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":53522},"qRADfzL9qSZdWfCB":[false,0.133002,195159,null]},"id":"0jEdOcRMlgQeeuGe","success":true}
+[{"vpEtmw5b":false,"Pzi21R0c":0.567430,"VAVcaonJ":558932,"aXFpa1kF":"0qSBqeyJ","6fkCdRxb":{"5xrdWFgC":null,"b3FmfObr":824061,"hNFHhPve":0.166583,"xp2PPSe2":"qfwcMDQf","TIUvh2yD":false},"91wjBIim":null,"EakrhjKH":[true,0.239117,869812,"jZRMK7nc",null]},{"UW0z1zgo":false,"WQInIWHK":0.240893,"16zYHPhs":869889,"aDeUTiOA":"XYXp66rn","3ZNgyfOK":null,"5KJiLNtD":{"wnEqPApd":false,"uEdqDliF":0.146820,"685pIiYE":"xJsQd9Cx","SneZUuUj":860294,"sLzxPOn7":null},"RRAGk1gP":[false,0.952779,890675,"RI1gHSYD",null]},{"UlJcektq":false,"82WSCLq7":0.235730,"8J4st4dN":null,"EXtrcoYo":479940,"S5jJS32d":"xrpUsgmM","iEWueo2j":{"515ubRmD":true,"zluEN1GC":0.033444,"txB8vGPb":954753,"3YRe1zIC":"KDycqOfX","FzZgXXhE":null},"R1nL5bF4":[false,0.909517,14295,"Qg7EiQFj",null]},{"H36kaeWc":false,"2BWo3yzy":1005188,"iP6oSk5T":0.918809,"FoZtMxb0":"7NEes002","EHlVYpN4":null,"BeuFuH20":{"98SrriHR":null,"pIZL7Btr":"XU6wT7JZ","yu2gJYTi":662960,"kJdUgpiE":0.231272,"a48xtotL":true},"eZFkQnCU":[true,0.125975,781211,"GB0sN1pX",null]},{"8i17IApQ":true,"6...
 ```
 ### Keys
+
 #### Request
 ```
 GET /keys HTTP/1.1
-accept: */*
 authorization: Basic cm9vdDowMDAw
-content-type: application/json
-host: 127.0.0.1:8260
-user-agent: curl/7.68.0
-
-
 ```
+
 #### Response
 ```
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
 access-control-allow-origin: *
-content-length: 2442
+content-length: 104853
 content-type: application/json
-date: 20220110111045
+date: 20220114155828
 server: muonbase/1
 
-{"keys":["0Uewy0VVq6iB6y6I","0WHjlUmQhGhDLJPa","0wBJ6tQqPPUmXQ12","124XEm2anguibxga","15MYuTCMN8bXH7fp","1qyVnKQWEBY9WYEz","4A56V27ovdvv9DOL","4Qdm5s8YsDZ9xyoS","5JRezsZAkCoPLFqV","5M9sSU7ksSzDelc9","6ecdEW01tzMWcBjH","707vMvcIkyLJqrkw","8705l1lYdJh4yNim","8CjPDS3hp7mnWLo9","8lffbuONUD520F4h","93KRBeiTXZYK6kpv","99jBoewiuMFyGcoP","9GWYbHM6JBTh2Zad","9kzOUGIC8leQSFcc","9tkUOCZQgfC16bjL","B3HukI72ojwsOhsB","B5el4SfLrv1UcGya","BazZGJ7VTi6lIE3j","BisFkgC0UIeDxxcG","BkXJk6Kcr0JGSZjI","BpHAsh55EM6yytqL","C2qEC0JbmTN0s1dc","DUxZC8fGvZbKfPwp","DpGqm0bQGGXUSgQ7","Ex6dapfK2jDttghY","FANs6OBa1pUTBQyO","FjPSf65MMEWT1o1u","FxKMzB3cDrRwi4Z5","HQ3riVxmcvwn9mWD","IWXjFkG5mU1csmq4","Ipepw456mgzsrH2S","IpzGjPoankgTCXGj","Isp1qawK9QMdWIzt","JI4kq9doPcZl8k5h","JSI8V9f1C3v1Yvru","K4BKOyJ7c2tJTEb8","KY1YfnKGBQ4dastv","KYJnEmB1L2CCvWRj","Kuhu1BSILze0yVOS","M2ZuPoWCqHL6GAfI","MXftdUipCT3XJWge","N1NvyI59Vfa3bAdh","NBDIgecdAqX4xPb0","NCBsawgooQ9CVIBR","NgJdiH04AkeYuCvj","NvgAZN8njpOMJjj8","O5cSKez2n9BvCOZ2","OZDwswTxtc2cDahM","PAf2sRe...
+["04DUt7AN","04NCCAiC","04hCtVO5","050gz87F","05nuxJV1","060rL8qh","06DgimZJ","07rohPGa","08BEJKdS","09GlGW46","0ARfA0JA","0CIXsxF5","0D029FxG","0F4IMoRq","0FJv69S1","0H3BLalf","0HGXfexv","0J45THh4","0K5nSDWO","0MLjP1mW","0Meq8jWO","0NbxbX61","0NpW0uAq","0OOXf31b","0P1ExUcs","0QCaJFnt","0QHizo6E","0QnjPHH0","0QvKH3en","0R1U1wC6","0U4JtwmY","0VFgQJ9N","0Vh1km08","0ViAMRr9","0WQYsVZd","0XYt7Vrh","0XgMRpnQ","0YItWhmR","0YOnnH83","0Z06MCIh","0Z7RZSo9","0ZygF5nm","0a1DCX1m","0a6efeLX","0a6gkhy9","0aZuwKu6","0bPcn4vp","0beEm45p","0bwjzxy4","0c7hefIA","0cLLQZfZ","0cqX2LGR","0dEjT74Q","0iUnyIGj","0iZg0N6S","0jAdG4VG","0ja1hlt9","0kAn0hbw","0kN0E2y1","0kkLQ7CV","0krCH2cV","0krZSUir","0l0pMqbp","0lJczQtt","0lXaMpBE","0o6ta9mh","0p5MFxN4","0p7vpAML","0qhFHxOJ","0r4M1zzr","0sKwTwbU","0sq7Ht8e","0tj2dQKa","0vCBXxsJ","0vJ7A9Wy","0wbXkvhG","0xFS2uKR","0xOk3BXb","0xoE0pM2","0z5Q8pG9","0zhRXqOK","11x35Xgh","12PMAk5M","12iGbWIF","12zx7MOF","13wXYVnM","14CQqhJR","15rEOveW","16CzxSH6","16J26d1m","16Sw3GKn","171a5Dty","17Q30LDw",...
 ```
+
+### Values
+
+#### Request
+```
+GET /values HTTP/1.1
+authorization: Basic cm9vdDowMDAw
+```
+
+#### Response
+```
+HTTP/1.1 200 OK
+access-control-allow-methods: GET, POST
+access-control-allow-origin: *
+content-length: 2386040
+content-type: application/json
+date: 20220114155830
+server: muonbase/1
+
+[{"vpEtmw5b":false,"Pzi21R0c":0.567430,"VAVcaonJ":558932,"aXFpa1kF":"0qSBqeyJ","6fkCdRxb":{"5xrdWFgC":null,"b3FmfObr":824061,"hNFHhPve":0.166583,"xp2PPSe2":"qfwcMDQf","TIUvh2yD":false},"91wjBIim":null,"EakrhjKH":[true,0.239117,869812,"jZRMK7nc",null]},{"UW0z1zgo":false,"WQInIWHK":0.240893,"16zYHPhs":869889,"aDeUTiOA":"XYXp66rn","3ZNgyfOK":null,"5KJiLNtD":{"wnEqPApd":false,"uEdqDliF":0.146820,"685pIiYE":"xJsQd9Cx","SneZUuUj":860294,"sLzxPOn7":null},"RRAGk1gP":[false,0.952779,890675,"RI1gHSYD",null]},{"UlJcektq":false,"82WSCLq7":0.235730,"8J4st4dN":null,"EXtrcoYo":479940,"S5jJS32d":"xrpUsgmM","iEWueo2j":{"515ubRmD":true,"zluEN1GC":0.033444,"txB8vGPb":954753,"3YRe1zIC":"KDycqOfX","FzZgXXhE":null},"R1nL5bF4":[false,0.909517,14295,"Qg7EiQFj",null]},{"H36kaeWc":false,"2BWo3yzy":1005188,"iP6oSk5T":0.918809,"FoZtMxb0":"7NEes002","EHlVYpN4":null,"BeuFuH20":{"98SrriHR":null,"pIZL7Btr":"XU6wT7JZ","yu2gJYTi":662960,"kJdUgpiE":0.231272,"a48xtotL":true},"eZFkQnCU":[true,0.125975,781211,"GB0sN1pX",null]},{"8i17IApQ":true,"6...
+```
+
 ### Image
+
 #### Request
 ```
 GET /image HTTP/1.1
-accept: */*
 authorization: Basic cm9vdDowMDAw
-content-type: application/json
-host: 127.0.0.1:8260
-user-agent: curl/7.68.0
-
-
 ```
+
 #### Response
 ```
 HTTP/1.1 200 OK
 access-control-allow-methods: GET, POST
 access-control-allow-origin: *
-content-length: 37683
+content-length: 2490892
 content-type: application/json
-date: 20220110110834
+date: 20220114155833
 server: muonbase/1
 
-{"PfeXz4v8sN1yw2h3":{"fE40YyX8iIgaQuXV":true,"PGjfooCv98HL1dTf":0.959832,"qmirthOPG2AyuSwD":427611,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":true,"cMvIo2nbwkvcnMBe":0.614108,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":92236},"qRADfzL9qSZdWfCB":[false,0.180922,89376,null]},"NvgAZN8njpOMJjj8":{"fE40YyX8iIgaQuXV":false,"PGjfooCv98HL1dTf":0.848913,"qmirthOPG2AyuSwD":694597,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":true,"cMvIo2nbwkvcnMBe":0.726031,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":959787},"qRADfzL9qSZdWfCB":[true,0.487173,571937,null]},"NgJdiH04AkeYuCvj":{"fE40YyX8iIgaQuXV":true,"PGjfooCv98HL1dTf":0.842632,"qmirthOPG2AyuSwD":444383,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"2f4e7JvjxynQnotm":false,"cMvIo2nbwkvcnMBe":0.449838,"VeGU6JjPxbWrWe79":null,"BrWUguL5y0ov17n3":916759},"qRADfzL9qSZdWfCB":[true,0.594556,67590,null]},"N1NvyI59Vfa3bAdh":{"fE40YyX8iIgaQuXV":true,"PGjfooCv98HL1dTf":0.196309,"qmirthOPG2AyuSwD":1027343,"j8O5fgYpvwRb38hy":null,"KneSOtkMNGxvUhH1":{"...
+{"zzr5LnsH":{"ncbUwsBQ":[false,0.265096,193415,"C3aQQq9L",null],"Vr9rB8SU":null,"TtjcoESY":"TJOu4tze","BdMPeHbn":{"QACpIKkd":null,"fr8cN7U4":"6epwVv6A","cHa0o7j9":197795,"2LwRv8bE":0.787538,"kWC23Hsc":true},"ryP6MUmU":769357,"fqzTlMKm":0.705919,"9YHE3L5T":false},"zzqau98i":{"c5bQscHb":{"n2kVFSgo":true,"4u5kfjRA":0.872484,"HkygXUsT":4699,"HrpFZZzc":"fEqYtimw","LP9Pwzjy":null},"JhTwN8zs":null,"5iJbIcmn":"2oMkBFlD","rOsyzNI4":444145,"yhbY7qvg":[false,0.584231,419467,"k9L85xyW",null],"FEoxZw84":0.468937,"mT0Xnvbr":false},"zzfetCp7":{"aRA48kWl":false,"3wzBxhMx":"nj02dxuc","k01ULZXC":0.630318,"xkiVNGVK":231285,"pTw5bfkn":null,"OCWNH9JX":{"8rbCQVFw":false,"SvEwWves":0.629154,"06Nt7tOF":73181,"GNdDZ4rF":"qZh2e4W7","QB5I3aUy":null},"1XfxXPKx":[false,0.574921,388153,"DcwFXjW6",null]},"zzQKc0J5":{"Fktc0mne":[false,0.614807,791088,"EY446uHW",null],"XbhaefQR":{"hciZceOp":true,"rajn9Vyx":0.675364,"0WhH3dCT":532056,"45Va45N5":null,"0f5x8n7k":"2imFMQTK"},"gtZz0NMd":null,"uqD6SV2R":0.969152,"v1CmX7g8":"RPW0Eh63","g3KBDOAk":33...
 ```

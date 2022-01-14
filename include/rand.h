@@ -27,7 +27,7 @@ public:
   uint64_t Uint64();
   double Double();
   double Uniform();
-  std::string Uuid(size_t length = 16);
+  std::string Uuid(size_t length = 8);
 
 private:
   uint64_t state_;

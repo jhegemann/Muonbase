@@ -207,7 +207,7 @@ void HttpRequest::SetProtocol(const std::string &protocol) {
 
 const std::string &HttpRequest::GetProtocol() const { return protocol_; }
 
-const std::string HttpRequest::AsString() const {
+const std::string HttpRequest::String() const {
   std::stringstream packet;
   packet << HttpConstants::GetMethodString(method_) << kStringSpace << url_
          << kStringSpace << protocol_ << kHttpLineFeed;
@@ -295,7 +295,7 @@ HttpResponse HttpResponse::Build(const int status,
   return response;
 }
 
-const std::string HttpResponse::AsString() const {
+const std::string HttpResponse::String() const {
   std::stringstream packet;
   packet << protocol_ << kStringSpace << status_ << kStringSpace << message_
          << kHttpLineFeed;
@@ -983,7 +983,7 @@ void HttpServer::HandleClientEvent(int index) {
       HttpResponse response =
           ExecuteHandler(connection->GetRequest(), services_);
       Log::GetInstance()->Info("response: " + response.AsShortString());
-      connection->GetWriter()->Write(response.AsString());
+      connection->GetWriter()->Write(response.String());
       if (!epoll_instance_.SetWriteable(index)) {
         Log::GetInstance()->Info("could not set descriptor to write mode");
         DeleteConnection(descriptor);
@@ -1058,7 +1058,7 @@ SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
     return {};
   }
   HttpConnection connection(socket);
-  connection.GetWriter()->Write(request.AsString());
+  connection.GetWriter()->Write(request.String());
   connection.GetWriter()->Send();
   while (connection.GetStage() != END) {
     connection.GetReader()->SyncRead(kTcpTimeout);

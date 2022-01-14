@@ -30,8 +30,8 @@ limitations under the License. */
 #include <tuple>
 #include <vector>
 
-#include "json.h"
 #include "log.h"
+#include "json.h"
 
 #undef INNER_BINARY_SEARCH
 #undef OUTER_BINARY_SEARCH
@@ -554,15 +554,15 @@ public:
   Map();
   virtual ~Map();
   void Clear();
-  size_t Size();
+  size_t Size() const;
   void Insert(const K &key, const V &value);
   void Insert(MapIterator<K, V> &iter, const V &value);
   const V &operator[](const K &key) const;
   V &operator[](const K &key);
   bool Erase(const K &key);
   bool Erase(MapIterator<K, V> iter);
-  bool Contains(const K &key);
-  MapIterator<K, V> Find(const K &key);
+  bool Contains(const K &key) const;
+  MapIterator<K, V> Find(const K &key) const;
   MapIterator<K, V> Begin();
   const MapIterator<K, V> Begin() const;
   MapIterator<K, V> End();
@@ -571,6 +571,7 @@ public:
 protected:
   Node *root_;
   size_t size_;
+  const V &Get(const K &key) const;
   V &Get(const K &key);
   bool Erase(OuterNode<K, V> *outer, const K &key);
   Node *LeftNode(Node *node);
@@ -578,10 +579,9 @@ protected:
   size_t SeparatorIndex(Node *node, Node *sibling);
   K SeparatorKey(Node *node, Node *sibling);
   void PropagateUpwards(Node *origin, K &up_key, Node *sibling);
-  std::tuple<size_t, OuterNode<K, V> *> Locate(const K &key);
-  MapIterator<K, V> BeginIterator();
-  OuterNode<K, V> *FirstLeaf();
-  OuterNode<K, V> *LastLeaf();
+  std::tuple<size_t, OuterNode<K, V> *> Locate(const K &key) const;
+  OuterNode<K, V> *FirstLeaf() const;
+  OuterNode<K, V> *LastLeaf() const;
 };
 
 template <class K, class V> Map<K, V>::Map() : root_(nullptr), size_(0) {}
@@ -611,7 +611,7 @@ template <class K, class V> void Map<K, V>::Clear() {
   size_ = 0;
 }
 
-template <class K, class V> size_t Map<K, V>::Size() { return size_; }
+template <class K, class V> size_t Map<K, V>::Size() const { return size_; }
 
 template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) {
   if (node == root_) {
@@ -678,7 +678,7 @@ void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *sibling) {
 }
 
 template <class K, class V>
-std::tuple<size_t, OuterNode<K, V> *> Map<K, V>::Locate(const K &key) {
+std::tuple<size_t, OuterNode<K, V> *> Map<K, V>::Locate(const K &key) const {
   Node *current = root_;
   if (current == nullptr) {
     return std::make_tuple(std::string::npos,
@@ -707,7 +707,7 @@ std::tuple<size_t, OuterNode<K, V> *> Map<K, V>::Locate(const K &key) {
   return std::make_tuple(key_position, outer_node);
 }
 
-template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() {
+template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
   if (root_ == nullptr) {
     return nullptr;
   }
@@ -718,7 +718,7 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() {
   return static_cast<OuterNode<K, V> *>(current);
 }
 
-template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() {
+template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() const {
   if (root_ == nullptr) {
     return nullptr;
   }
@@ -728,6 +728,13 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() {
     current = inner_node->children_.back();
   }
   return static_cast<OuterNode<K, V> *>(current);
+}
+
+template <class K, class V> const V &Map<K, V>::Get(const K &key) const {
+  size_t position;
+  OuterNode<K, V> *outer_node;
+  std::tie(position, outer_node) = Locate(key);
+  return outer_node->values_[position];
 }
 
 template <class K, class V> V &Map<K, V>::Get(const K &key) {
@@ -852,7 +859,7 @@ template <class K, class V> bool Map<K, V>::Erase(MapIterator<K, V> iter) {
   return Erase(iter.GetNode(), iter.GetKey());
 }
 
-template <class K, class V> bool Map<K, V>::Contains(const K &key) {
+template <class K, class V> bool Map<K, V>::Contains(const K &key) const {
   size_t position;
   OuterNode<K, V> *outer_node;
   std::tie(position, outer_node) = Locate(key);
@@ -862,7 +869,8 @@ template <class K, class V> bool Map<K, V>::Contains(const K &key) {
   return true;
 }
 
-template <class K, class V> MapIterator<K, V> Map<K, V>::Find(const K &key) {
+template <class K, class V>
+MapIterator<K, V> Map<K, V>::Find(const K &key) const {
   MapIterator<K, V> iter;
   size_t index = std::string::npos;
   OuterNode<K, V> *outer_node = nullptr;
@@ -874,7 +882,7 @@ template <class K, class V> MapIterator<K, V> Map<K, V>::Find(const K &key) {
   return iter;
 }
 
-template <class K, class V> MapIterator<K, V> Map<K, V>::BeginIterator() {
+template <class K, class V> MapIterator<K, V> Map<K, V>::Begin() {
   if (root_ == nullptr) {
     return End();
   }
@@ -884,12 +892,14 @@ template <class K, class V> MapIterator<K, V> Map<K, V>::BeginIterator() {
   return iter;
 }
 
-template <class K, class V> MapIterator<K, V> Map<K, V>::Begin() {
-  return BeginIterator();
-}
-
 template <class K, class V> const MapIterator<K, V> Map<K, V>::Begin() const {
-  return BeginIterator();
+  if (root_ == nullptr) {
+    return End();
+  }
+  MapIterator<K, V> iter;
+  iter.node_ = FirstLeaf();
+  iter.index_ = 0;
+  return iter;
 }
 
 template <class K, class V> MapIterator<K, V> Map<K, V>::End() {
@@ -1037,6 +1047,7 @@ template <class K, class V> class Multimap {
 public:
   Multimap();
   virtual ~Multimap();
+  size_t Size() const;
   void Insert(const K &key, const V &value);
   void Insert(MultimapIterator<K, V> &iter, const V &value);
   const std::vector<V> &operator[](const K &key) const;
@@ -1045,8 +1056,8 @@ public:
   bool Erase(const K &key);
   bool Erase(const K &key, const V &value);
   bool Erase(MultimapIterator<K, V> iter);
-  bool Contains(const K &key);
-  MultimapIterator<K, V> Find(const K &key);
+  bool Contains(const K &key) const;
+  MultimapIterator<K, V> Find(const K &key) const;
   MultimapIterator<K, V> Begin();
   const MultimapIterator<K, V> Begin() const;
   MultimapIterator<K, V> End();
@@ -1054,6 +1065,7 @@ public:
 
 protected:
   Map<K, std::vector<V>> tree_;
+  const std::vector<V> &Get(const K &key) const;
   std::vector<V> &Get(const K &key);
   MultimapIterator<K, V> BeginIterator();
 };
@@ -1061,6 +1073,10 @@ protected:
 template <class K, class V> Multimap<K, V>::Multimap() {}
 
 template <class K, class V> Multimap<K, V>::~Multimap() {}
+
+template <class K, class V> size_t Multimap<K, V>::Size() const {
+  return tree_.Size();
+}
 
 template <class K, class V>
 void Multimap<K, V>::Insert(const K &key, const V &value) {
@@ -1081,6 +1097,11 @@ void Multimap<K, V>::Insert(MultimapIterator<K, V> &iter, const V &value) {
   single_iter.index_ = iter.index_;
   std::vector<V> &multi_value = single_iter.Value();
   multi_value[iter.multi_index_] = value;
+}
+
+template <class K, class V>
+inline const std::vector<V> &Multimap<K, V>::Get(const K &key) const {
+  return tree_.Get(key);
 }
 
 template <class K, class V>
@@ -1130,12 +1151,13 @@ inline bool Multimap<K, V>::Erase(MultimapIterator<K, V> iter) {
   return Erase(iter.GetKey(), iter.GetValue());
 }
 
-template <class K, class V> inline bool Multimap<K, V>::Contains(const K &key) {
+template <class K, class V>
+inline bool Multimap<K, V>::Contains(const K &key) const {
   return tree_.Contains(key);
 }
 
 template <class K, class V>
-MultimapIterator<K, V> Multimap<K, V>::Find(const K &key) {
+MultimapIterator<K, V> Multimap<K, V>::Find(const K &key) const {
   MapIterator<K, std::vector<V>> iter = tree_.Find(key);
   MultimapIterator<K, V> multi_iter;
   if (iter != tree_.End()) {
@@ -1522,6 +1544,12 @@ public:
   }
 };
 
+template <class K, class V> class Serializer<Map<K, V>> {
+public:
+  size_t Serialize(Map<K, V> &map, std::ostream &stream);
+  size_t Deserialize(Map<K, V> &map, std::istream &stream);
+};
+
 template <> class Serializer<JsonArray> {
 public:
   size_t Serialize(JsonArray &array, std::ostream &stream) {
@@ -1540,12 +1568,6 @@ public:
   size_t Deserialize(JsonObject &object, std::istream &stream) {
     return DeserializeJsonObject(object, stream);
   }
-};
-
-template <class K, class V> class Serializer<Map<K, V>> {
-public:
-  size_t Serialize(Map<K, V> &map, std::ostream &stream);
-  size_t Deserialize(Map<K, V> &map, std::istream &stream);
 };
 
 template <class K, class V>

@@ -42,6 +42,10 @@ const long kHttpConnectionTimeout = 10000;
 const long kHttpMaxHeaderCount = 128;
 const unsigned int kHttpReservedSockets = 3;
 
+const std::string kHttpAuthorization = "authorization";
+const std::string kHttpBasic = "Basic";
+const std::string kHttpContentType = "content-type";
+
 enum HttpMethod {
   INVALID_METHOD = 0,
   POST,
@@ -143,7 +147,7 @@ public:
   const std::string &GetUrl() const;
   void SetProtocol(const std::string &protocol);
   const std::string &GetProtocol() const;
-  const std::string AsString() const;
+  const std::string String() const;
   const std::string AsShortString() const;
 
 private:
@@ -167,7 +171,7 @@ public:
   static HttpResponse Build(const int status,
                             const HttpContentType content_type,
                             const std::string &body);
-  const std::string AsString() const;
+  const std::string String() const;
   const std::string AsShortString() const;
 
 private:
