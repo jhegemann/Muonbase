@@ -111,7 +111,10 @@ int main(int argc, char **argv) {
                                " found, fallback: " + kWorkingDirectoryDefault);
     }
     Log::GetInstance()->Info("daemonize process");
-    DaemonizeProcess(working_directory);
+    if (DaemonizeProcess(working_directory) == -1) {
+      Log::GetInstance()->Info("could not daemonize process");
+      exit(1);
+    }
     Log::GetInstance()->SetLogfile(kLogPathDefault);
     if (config.Has(kLogPath) && config.IsString(kLogPath)) {
       Log::GetInstance()->SetLogfile(config.GetString(kLogPath));

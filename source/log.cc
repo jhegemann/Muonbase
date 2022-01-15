@@ -50,12 +50,12 @@ void Log::Info(const std::string &msg) {
 }
 
 void Log::SetLogfile(const std::string &filepath) {
+  if (stream_.is_open()) {
+    stream_.close();
+  }
   if (!filepath.empty()) {
     stream_.open(filepath, std::fstream::out | std::fstream::app);
     return;
-  }
-  if (stream_.is_open()) {
-    stream_.close();
   }
 }
 

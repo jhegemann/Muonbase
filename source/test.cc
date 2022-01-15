@@ -37,9 +37,9 @@ static const std::string kPortDefault = "8260";
 static const std::string kUserDefault = "root";
 static const std::string kPasswordDefault = "0000";
 
-static const size_t kOrderDefault = 128;
-static const size_t kCyclesDefault = 16;
-static const size_t kThreadsDefault = 8;
+static const size_t kOrderDefault = 32;
+static const size_t kCyclesDefault = 8;
+static const size_t kThreadsDefault = 4;
 
 static void PrintUsage() {
   std::cout << "Usage: muonbase-client.app [-h] [-n <threads>] [-t] [-i <ip>] "

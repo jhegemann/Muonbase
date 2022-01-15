@@ -30,8 +30,8 @@ limitations under the License. */
 #include <tuple>
 #include <vector>
 
-#include "log.h"
 #include "json.h"
+#include "log.h"
 
 #undef INNER_BINARY_SEARCH
 #undef OUTER_BINARY_SEARCH
@@ -162,7 +162,7 @@ inline const Node *InnerNode<K, V>::GetChild(size_t index) const {
 }
 
 template <class K, class V>
-size_t InnerNode<K, V>::ChildIndex(const Node *child) {
+inline size_t InnerNode<K, V>::ChildIndex(const Node *child) {
   if (children_.empty()) {
     return std::string::npos;
   }
@@ -177,7 +177,8 @@ size_t InnerNode<K, V>::ChildIndex(const Node *child) {
   return std::string::npos;
 }
 
-template <class K, class V> size_t InnerNode<K, V>::KeyIndex(const K &key) {
+template <class K, class V>
+inline size_t InnerNode<K, V>::KeyIndex(const K &key) {
 #ifdef INNER_BINARY_SEARCH
   typename std::vector<K>::iterator it =
       lower_bound(keys_.begin(), keys_.end(), key);
@@ -203,9 +204,9 @@ template <class K, class V> size_t InnerNode<K, V>::KeyIndex(const K &key) {
 
 template <class K, class V>
 void InnerNode<K, V>::Insert(Node *left, K &separator, Node *right) {
-  left->SetParent(this);
-  right->SetParent(this);
   if (keys_.empty()) {
+    left->SetParent(this);
+    right->SetParent(this);
     children_.push_back(left);
     children_.push_back(right);
     keys_.push_back(separator);
@@ -213,8 +214,9 @@ void InnerNode<K, V>::Insert(Node *left, K &separator, Node *right) {
   }
   const size_t position = ChildIndex(left);
   if (position == std::string::npos) {
-    abort();
+    throw std::runtime_error("tree: inner node insert");
   }
+  right->SetParent(this);
   keys_.insert(keys_.begin() + position, separator);
   children_.insert(children_.begin() + position + 1, right);
 }
@@ -223,11 +225,11 @@ template <class K, class V>
 void InnerNode<K, V>::Erase(const K &key, Node *child) {
   const size_t key_position = KeyIndex(key);
   if (key_position == std::string::npos) {
-    return;
+    throw std::runtime_error("tree: inner node erase");
   }
   const size_t child_position = ChildIndex(child);
   if (child_position == std::string::npos) {
-    return;
+    throw std::runtime_error("tree: inner node erase");
   }
   keys_.erase(keys_.begin() + key_position);
   children_.erase(children_.begin() + child_position);
@@ -235,6 +237,9 @@ void InnerNode<K, V>::Erase(const K &key, Node *child) {
 
 template <class K, class V>
 std::tuple<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
+  if (!IsFull()) {
+    throw std::runtime_error("tree: inner node split");
+  }
   const size_t size = keys_.size();
   const size_t keys_left = size / 2;
   const size_t children_left = keys_left + 1;

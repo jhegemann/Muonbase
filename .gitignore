@@ -8,4 +8,6 @@ bin/*.app
 
 build/*.o
 
+muonbase-server.log
+
 .vscode
