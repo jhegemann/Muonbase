@@ -62,13 +62,13 @@ class Node {
 public:
   Node() {}
   virtual ~Node() {}
-  virtual bool IsOuter() = 0;
-  virtual bool IsSparse() = 0;
-  virtual bool IsFull() = 0;
+  virtual bool IsOuter() const = 0;
+  virtual bool IsSparse() const = 0;
+  virtual bool IsFull() const = 0;
+  virtual Node *GetParent() const = 0;
+  virtual void SetParent(Node *node) = 0;
   virtual bool Redistribute(Node *node) = 0;
   virtual bool Coalesce(Node *node) = 0;
-  virtual void SetParent(Node *node) = 0;
-  virtual Node *GetParent() = 0;
 };
 
 template <class K, class V> class InnerNode : public Node {
@@ -82,23 +82,23 @@ template <class K, class V> class InnerNode : public Node {
 public:
   InnerNode();
   virtual ~InnerNode();
-  Node *GetParent();
+  Node *GetParent() const;
   void SetParent(Node *node);
-  bool IsOuter();
-  bool IsSparse();
-  bool IsFull();
-  size_t CountKeys();
-  size_t CountChildren();
+  bool IsOuter() const;
+  bool IsSparse() const;
+  bool IsFull() const;
+  size_t CountKeys() const;
+  size_t CountChildren() const;
   K &Key(size_t index);
   const K &GetKey(size_t index) const;
   Node *Child(size_t index);
   const Node *GetChild(size_t index) const;
-  size_t ChildIndex(const Node *child);
-  size_t KeyIndex(const K &key);
+  size_t ChildIndex(const Node *child) const;
+  size_t KeyIndex(const K &key) const;
   void Insert(Node *left, K &separator, Node *right);
   void Erase(const K &key, Node *child);
   std::tuple<InnerNode<K, V> *, K> Split();
-  size_t SeparatorIndex(InnerNode<K, V> *sibling);
+  size_t SeparatorIndex(InnerNode<K, V> *kin);
   bool Redistribute(Node *node);
   bool Coalesce(Node *node);
 
@@ -115,7 +115,7 @@ template <class K, class V> InnerNode<K, V>::InnerNode() {
 
 template <class K, class V> InnerNode<K, V>::~InnerNode() {}
 
-template <class K, class V> inline Node *InnerNode<K, V>::GetParent() {
+template <class K, class V> inline Node *InnerNode<K, V>::GetParent() const {
   return parent_;
 }
 
@@ -123,23 +123,24 @@ template <class K, class V> inline void InnerNode<K, V>::SetParent(Node *node) {
   parent_ = node;
 }
 
-template <class K, class V> inline bool InnerNode<K, V>::IsOuter() {
+template <class K, class V> inline bool InnerNode<K, V>::IsOuter() const {
   return false;
 }
 
-template <class K, class V> inline bool InnerNode<K, V>::IsSparse() {
+template <class K, class V> inline bool InnerNode<K, V>::IsSparse() const {
   return keys_.size() < INNER_FANOUT / 2;
 }
 
-template <class K, class V> inline bool InnerNode<K, V>::IsFull() {
+template <class K, class V> inline bool InnerNode<K, V>::IsFull() const {
   return keys_.size() > INNER_FANOUT;
 }
 
-template <class K, class V> inline size_t InnerNode<K, V>::CountKeys() {
+template <class K, class V> inline size_t InnerNode<K, V>::CountKeys() const {
   return keys_.size();
 }
 
-template <class K, class V> inline size_t InnerNode<K, V>::CountChildren() {
+template <class K, class V>
+inline size_t InnerNode<K, V>::CountChildren() const {
   return children_.size();
 }
 
@@ -162,23 +163,22 @@ inline const Node *InnerNode<K, V>::GetChild(size_t index) const {
 }
 
 template <class K, class V>
-inline size_t InnerNode<K, V>::ChildIndex(const Node *child) {
+inline size_t InnerNode<K, V>::ChildIndex(const Node *child) const {
   if (children_.empty()) {
     return std::string::npos;
   }
-  const size_t size = children_.size();
   size_t position = 0;
-  while (position < size && children_[position] != child) {
+  while (position < children_.size() && children_[position] != child) {
     position++;
   }
-  if (position < size) {
-    return position;
+  if (position >= children_.size()) {
+    return std::string::npos;
   }
-  return std::string::npos;
+  return position;
 }
 
 template <class K, class V>
-inline size_t InnerNode<K, V>::KeyIndex(const K &key) {
+inline size_t InnerNode<K, V>::KeyIndex(const K &key) const {
 #ifdef INNER_BINARY_SEARCH
   typename std::vector<K>::iterator it =
       lower_bound(keys_.begin(), keys_.end(), key);
@@ -190,15 +190,14 @@ inline size_t InnerNode<K, V>::KeyIndex(const K &key) {
   if (keys_.empty()) {
     return std::string::npos;
   }
-  const size_t size = keys_.size();
   size_t position = 0;
-  while (position < size && keys_[position] != key) {
+  while (position < keys_.size() && keys_[position] != key) {
     position++;
   }
-  if (position < size) {
-    return position;
+  if (position >= keys_.size()) {
+    return std::string::npos;
   }
-  return std::string::npos;
+  return position;
 #endif
 }
 
@@ -214,7 +213,7 @@ void InnerNode<K, V>::Insert(Node *left, K &separator, Node *right) {
   }
   const size_t position = ChildIndex(left);
   if (position == std::string::npos) {
-    throw std::runtime_error("tree: inner node insert");
+    throw std::runtime_error("tree: inner insert");
   }
   right->SetParent(this);
   keys_.insert(keys_.begin() + position, separator);
@@ -223,70 +222,78 @@ void InnerNode<K, V>::Insert(Node *left, K &separator, Node *right) {
 
 template <class K, class V>
 void InnerNode<K, V>::Erase(const K &key, Node *child) {
-  const size_t key_position = KeyIndex(key);
+  size_t key_position = KeyIndex(key);
   if (key_position == std::string::npos) {
-    throw std::runtime_error("tree: inner node erase");
+    return;
   }
-  const size_t child_position = ChildIndex(child);
+  size_t child_position = ChildIndex(child);
   if (child_position == std::string::npos) {
-    throw std::runtime_error("tree: inner node erase");
+    return;
   }
   keys_.erase(keys_.begin() + key_position);
-  children_.erase(children_.begin() + child_position);
+  children_.erase(children_.begin() + ChildIndex(child));
 }
 
 template <class K, class V>
 std::tuple<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
-  if (!IsFull()) {
-    throw std::runtime_error("tree: inner node split");
-  }
   const size_t size = keys_.size();
-  const size_t keys_left = size / 2;
+  const size_t keys_left = (size % 2 == 0) ? size / 2 : size / 2 + 1;
   const size_t children_left = keys_left + 1;
-  InnerNode<K, V> *sibling = new InnerNode<K, V>();
+  InnerNode<K, V> *kin = new InnerNode<K, V>();
   const K up_key = keys_[keys_left];
   std::move(keys_.begin() + keys_left + 1, keys_.end(),
-            std::back_inserter(sibling->keys_));
+            std::back_inserter(kin->keys_));
   std::move(children_.begin() + children_left, children_.end(),
-            std::back_inserter(sibling->children_));
+            std::back_inserter(kin->children_));
   keys_.erase(keys_.begin() + keys_left, keys_.end());
   children_.erase(children_.begin() + children_left, children_.end());
-  for (auto it = sibling->children_.begin(); it != sibling->children_.end();
-       ++it) {
-    (*it)->SetParent(sibling);
+  for (auto it = kin->children_.begin(); it != kin->children_.end(); ++it) {
+    (*it)->SetParent(kin);
   }
-  sibling->SetParent(parent_);
-  return std::make_tuple(sibling, up_key);
+  kin->SetParent(parent_);
+  return std::make_tuple(kin, up_key);
 }
 
 template <class K, class V>
-size_t InnerNode<K, V>::SeparatorIndex(InnerNode<K, V> *sibling) {
+size_t InnerNode<K, V>::SeparatorIndex(InnerNode<K, V> *kin) {
   const size_t self_index =
       static_cast<InnerNode<K, V> *>(parent_)->ChildIndex(this);
-  const size_t sibling_index =
-      static_cast<InnerNode<K, V> *>(parent_)->ChildIndex(sibling);
-  return std::min(self_index, sibling_index);
+  if (self_index == std::string::npos) {
+    return std::string::npos;
+  }
+  const size_t kin_index =
+      static_cast<InnerNode<K, V> *>(parent_)->ChildIndex(kin);
+  if (kin_index == std::string::npos) {
+    return std::string::npos;
+  }
+  if (abs((int)(self_index) - (int)(kin_index)) != 1) {
+    return std::string::npos;
+  }
+  return std::min(self_index, kin_index);
 }
 
 template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
-  InnerNode<K, V> *sibling = static_cast<InnerNode<K, V> *>(node);
-  const size_t separator_index = SeparatorIndex(sibling);
+  InnerNode<K, V> *kin = static_cast<InnerNode<K, V> *>(node);
+  const size_t separator_index = SeparatorIndex(kin);
+  if (separator_index == std::string::npos) {
+    throw std::runtime_error("tree: inner redistribute");
+  }
   K up_key = static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index];
-  if (sibling->keys_.size() >= keys_.size() + 2) {
+  if (kin->keys_.size() >= keys_.size() + 2) {
     keys_.push_back(up_key);
-    children_.push_back(sibling->children_.front());
-    sibling->children_.erase(sibling->children_.begin());
+    children_.push_back(kin->children_.front());
+    kin->children_.erase(kin->children_.begin());
     children_.back()->SetParent(this);
     static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index] =
-        sibling->keys_[0];
-    sibling->keys_.erase(sibling->keys_.begin());
+        kin->keys_[0];
+    kin->keys_.erase(kin->keys_.begin());
     return true;
   }
-  if (keys_.size() >= sibling->keys_.size() + 2) {
-    sibling->keys_.insert(sibling->keys_.begin(), up_key);
-    sibling->children_.insert(sibling->children_.begin(), children_.back());
+  if (keys_.size() >= kin->keys_.size() + 2) {
+    kin->keys_.insert(kin->keys_.begin(), up_key);
+    kin->children_.insert(kin->children_.begin(), children_.back());
     children_.pop_back();
-    sibling->children_.front()->SetParent(sibling);
+    kin->children_.front()->SetParent(kin);
     static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index] =
         keys_.back();
     keys_.pop_back();
@@ -296,24 +303,25 @@ template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
 }
 
 template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
-  InnerNode<K, V> *sibling = static_cast<InnerNode<K, V> *>(node);
-  if (keys_.size() + sibling->keys_.size() > INNER_FANOUT) {
+  InnerNode<K, V> *kin = static_cast<InnerNode<K, V> *>(node);
+  if (keys_.size() + kin->keys_.size() > INNER_FANOUT) {
     return false;
   }
-  const size_t separator_index = SeparatorIndex(sibling);
+  const size_t separator_index = SeparatorIndex(kin);
+  if (separator_index == std::string::npos) {
+    throw std::runtime_error("tree: inner coalesce separator");
+  }
   const K up_key =
       static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index];
   keys_.push_back(up_key);
-  std::move(sibling->keys_.begin(), sibling->keys_.end(),
-            std::back_inserter(keys_));
-  sibling->keys_.clear();
-  for (auto it = sibling->children_.begin(); it != sibling->children_.end();
-       ++it) {
+  std::move(kin->keys_.begin(), kin->keys_.end(), std::back_inserter(keys_));
+  kin->keys_.clear();
+  for (auto it = kin->children_.begin(); it != kin->children_.end(); ++it) {
     (*it)->SetParent(this);
   }
-  std::move(sibling->children_.begin(), sibling->children_.end(),
+  std::move(kin->children_.begin(), kin->children_.end(),
             std::back_inserter(children_));
-  sibling->children_.clear();
+  kin->children_.clear();
   return true;
 }
 
@@ -328,26 +336,26 @@ template <class K, class V> class OuterNode : public Node {
 public:
   OuterNode();
   virtual ~OuterNode();
-  Node *GetParent();
+  Node *GetParent() const;
   void SetParent(Node *node);
-  bool IsOuter();
-  bool IsSparse();
-  bool IsFull();
-  size_t CountKeys();
-  size_t CountValues();
+  bool IsOuter() const;
+  bool IsSparse() const;
+  bool IsFull() const;
+  size_t CountKeys() const;
+  size_t CountValues() const;
   K &Key(size_t index);
   const K &GetKey(size_t index) const;
   V &Value(size_t index);
   const V &GetValue(size_t index) const;
-  size_t ValueIndex(const V &value);
-  size_t KeyIndex(const K &key);
+  size_t ValueIndex(const V &value) const;
+  size_t KeyIndex(const K &key) const;
   void Insert(const K &key, const V &value);
   void Erase(const K &key);
   std::tuple<OuterNode<K, V> *, K> Split();
   bool Redistribute(Node *node);
   bool Coalesce(Node *node);
-  OuterNode<K, V> *GetNext();
-  OuterNode<K, V> *GetPrevious();
+  OuterNode<K, V> *GetNext() const;
+  OuterNode<K, V> *GetPrevious() const;
 
 protected:
   std::vector<K> keys_;
@@ -365,7 +373,7 @@ OuterNode<K, V>::OuterNode() : next_(nullptr), previous_(nullptr) {
 
 template <class K, class V> OuterNode<K, V>::~OuterNode() {}
 
-template <class K, class V> inline Node *OuterNode<K, V>::GetParent() {
+template <class K, class V> inline Node *OuterNode<K, V>::GetParent() const {
   return parent_;
 }
 
@@ -373,23 +381,23 @@ template <class K, class V> inline void OuterNode<K, V>::SetParent(Node *node) {
   parent_ = node;
 }
 
-template <class K, class V> inline bool OuterNode<K, V>::IsOuter() {
+template <class K, class V> inline bool OuterNode<K, V>::IsOuter() const {
   return true;
 }
 
-template <class K, class V> inline bool OuterNode<K, V>::IsSparse() {
+template <class K, class V> inline bool OuterNode<K, V>::IsSparse() const {
   return keys_.size() < OUTER_FANOUT / 2;
 }
 
-template <class K, class V> inline bool OuterNode<K, V>::IsFull() {
+template <class K, class V> inline bool OuterNode<K, V>::IsFull() const {
   return keys_.size() > OUTER_FANOUT;
 }
 
-template <class K, class V> inline size_t OuterNode<K, V>::CountKeys() {
+template <class K, class V> inline size_t OuterNode<K, V>::CountKeys() const {
   return keys_.size();
 }
 
-template <class K, class V> inline size_t OuterNode<K, V>::CountValues() {
+template <class K, class V> inline size_t OuterNode<K, V>::CountValues() const {
   return values_.size();
 }
 
@@ -411,22 +419,23 @@ inline const V &OuterNode<K, V>::GetValue(size_t index) const {
   return values_[index];
 }
 
-template <class K, class V> size_t OuterNode<K, V>::ValueIndex(const V &value) {
+template <class K, class V>
+size_t OuterNode<K, V>::ValueIndex(const V &value) const {
   if (values_.empty()) {
     return std::string::npos;
   }
-  const size_t size = values_.size();
   size_t position = 0;
-  while (position < size && values_[position] != value) {
+  while (position < values_.size() && values_[position] != value) {
     position++;
   }
-  if (position < size) {
-    return position;
+  if (position >= values_.size()) {
+    return std::string::npos;
   }
-  return std::string::npos;
+  return position;
 }
 
-template <class K, class V> size_t OuterNode<K, V>::KeyIndex(const K &key) {
+template <class K, class V>
+size_t OuterNode<K, V>::KeyIndex(const K &key) const {
 #ifdef OUTER_BINARY_SEARCH
   typename std::vector<K>::iterator it =
       lower_bound(keys_.begin(), keys_.end(), key);
@@ -438,28 +447,29 @@ template <class K, class V> size_t OuterNode<K, V>::KeyIndex(const K &key) {
   if (keys_.empty()) {
     return std::string::npos;
   }
-  const size_t size = keys_.size();
   size_t position = 0;
-  while (position < size && keys_[position] != key) {
+  while (position < keys_.size() && keys_[position] != key) {
     position++;
   }
-  if (position < size) {
-    return position;
+  if (position >= keys_.size()) {
+    return std::string::npos;
   }
-  return std::string::npos;
+  return position;
 #endif
 }
 
 template <class K, class V>
 void OuterNode<K, V>::Insert(const K &key, const V &value) {
   if (keys_.empty()) {
+    if (!values_.empty()) {
+      throw std::runtime_error("tree: outer insert");
+    }
     keys_.push_back(key);
     values_.push_back(value);
     return;
   }
-  const size_t size = keys_.size();
   size_t position = 0;
-  while (position < size && keys_[position] < key) {
+  while (position < keys_.size() && keys_[position] < key) {
     position++;
   }
   keys_.insert(keys_.begin() + position, key);
@@ -471,79 +481,81 @@ template <class K, class V> void OuterNode<K, V>::Erase(const K &key) {
   if (key_position == std::string::npos) {
     return;
   }
-  size_t value_position = key_position;
   keys_.erase(keys_.begin() + key_position);
-  values_.erase(values_.begin() + value_position);
+  values_.erase(values_.begin() + key_position);
 }
 
 template <class K, class V>
 std::tuple<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
   const size_t size = keys_.size();
   const size_t keys_left = (size % 2 == 0) ? size / 2 : size / 2 + 1;
-  OuterNode<K, V> *sibling = new OuterNode<K, V>();
+  OuterNode<K, V> *kin = new OuterNode<K, V>();
   std::move(keys_.begin() + keys_left, keys_.end(),
-            std::back_inserter(sibling->keys_));
+            std::back_inserter(kin->keys_));
   std::move(values_.begin() + keys_left, values_.end(),
-            std::back_inserter(sibling->values_));
+            std::back_inserter(kin->values_));
   keys_.erase(keys_.begin() + keys_left, keys_.end());
   values_.erase(values_.begin() + keys_left, values_.end());
-  const K up_key = sibling->keys_.front();
-  sibling->next_ = next_;
-  sibling->previous_ = this;
+  const K up_key = kin->keys_.front();
+  kin->next_ = next_;
+  kin->previous_ = this;
   if (next_ != nullptr) {
-    next_->previous_ = sibling;
+    next_->previous_ = kin;
   }
-  next_ = sibling;
-  sibling->parent_ = parent_;
-  return std::make_tuple(sibling, up_key);
+  next_ = kin;
+  kin->parent_ = parent_;
+  return std::make_tuple(kin, up_key);
 }
 
 template <class K, class V> bool OuterNode<K, V>::Redistribute(Node *node) {
-  OuterNode<K, V> *sibling = static_cast<OuterNode<K, V> *>(node);
-  if (sibling->keys_.size() >= keys_.size() + 2) {
-    keys_.push_back(sibling->keys_.front());
-    values_.push_back(sibling->values_.front());
-    sibling->keys_.erase(sibling->keys_.begin());
-    sibling->values_.erase(sibling->values_.begin());
-  } else if (keys_.size() >= sibling->keys_.size() + 2) {
-    sibling->keys_.insert(sibling->keys_.begin(), keys_.back());
-    sibling->values_.insert(sibling->values_.begin(), values_.back());
+  OuterNode<K, V> *kin = static_cast<OuterNode<K, V> *>(node);
+  if (kin->keys_.size() >= keys_.size() + 2) {
+    keys_.push_back(kin->keys_.front());
+    values_.push_back(kin->values_.front());
+    kin->keys_.erase(kin->keys_.begin());
+    kin->values_.erase(kin->values_.begin());
+  } else if (keys_.size() >= kin->keys_.size() + 2) {
+    kin->keys_.insert(kin->keys_.begin(), keys_.back());
+    kin->values_.insert(kin->values_.begin(), values_.back());
     keys_.pop_back();
     values_.pop_back();
   } else {
     return false;
   }
-  const K up_key = sibling->keys_.front();
+  const K up_key = kin->keys_.front();
   const size_t up_key_index =
       static_cast<InnerNode<K, V> *>(parent_)->ChildIndex(this);
+  if (up_key_index == std::string::npos) {
+    throw std::runtime_error("tree: outer redistribute");
+  }
   static_cast<InnerNode<K, V> *>(parent_)->keys_[up_key_index] = up_key;
   return true;
 }
 
 template <class K, class V> bool OuterNode<K, V>::Coalesce(Node *node) {
-  OuterNode<K, V> *sibling = static_cast<OuterNode<K, V> *>(node);
-  if (sibling->keys_.size() + keys_.size() > OUTER_FANOUT) {
+  OuterNode<K, V> *kin = static_cast<OuterNode<K, V> *>(node);
+  if (kin->keys_.size() + keys_.size() > OUTER_FANOUT) {
     return false;
   }
-  std::move(sibling->keys_.begin(), sibling->keys_.end(),
-            std::back_inserter(keys_));
-  std::move(sibling->values_.begin(), sibling->values_.end(),
+  std::move(kin->keys_.begin(), kin->keys_.end(), std::back_inserter(keys_));
+  std::move(kin->values_.begin(), kin->values_.end(),
             std::back_inserter(values_));
-  sibling->keys_.clear();
-  sibling->values_.clear();
-  next_ = sibling->next_;
+  kin->keys_.clear();
+  kin->values_.clear();
+  next_ = kin->next_;
   if (next_ != nullptr) {
     next_->previous_ = this;
   }
   return true;
 }
 
-template <class K, class V> inline OuterNode<K, V> *OuterNode<K, V>::GetNext() {
+template <class K, class V>
+inline OuterNode<K, V> *OuterNode<K, V>::GetNext() const {
   return next_;
 }
 
 template <class K, class V>
-inline OuterNode<K, V> *OuterNode<K, V>::GetPrevious() {
+inline OuterNode<K, V> *OuterNode<K, V>::GetPrevious() const {
   return previous_;
 }
 
@@ -581,9 +593,9 @@ protected:
   bool Erase(OuterNode<K, V> *outer, const K &key);
   Node *LeftNode(Node *node);
   Node *RightNode(Node *node);
-  size_t SeparatorIndex(Node *node, Node *sibling);
-  K SeparatorKey(Node *node, Node *sibling);
-  void PropagateUpwards(Node *origin, K &up_key, Node *sibling);
+  size_t SeparatorIndex(Node *node, Node *kin);
+  K SeparatorKey(Node *node, Node *kin);
+  void PropagateUpwards(Node *origin, K &up_key, Node *kin);
   std::tuple<size_t, OuterNode<K, V> *> Locate(const K &key) const;
   OuterNode<K, V> *FirstLeaf() const;
   OuterNode<K, V> *LastLeaf() const;
@@ -625,11 +637,10 @@ template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) {
   InnerNode<K, V> *node_parent =
       static_cast<InnerNode<K, V> *>(node->GetParent());
   const size_t position = node_parent->ChildIndex(node);
-  const size_t left_index = (position == 0) ? std::string::npos : position - 1;
-  if (left_index != std::string::npos) {
-    return node_parent->children_[left_index];
+  if (position == std::string::npos || position == 0) {
+    return nullptr;
   }
-  return nullptr;
+  return node_parent->children_[position - 1];
 }
 
 template <class K, class V> Node *Map<K, V>::RightNode(Node *node) {
@@ -639,46 +650,55 @@ template <class K, class V> Node *Map<K, V>::RightNode(Node *node) {
   InnerNode<K, V> *node_parent =
       static_cast<InnerNode<K, V> *>(node->GetParent());
   const size_t position = node_parent->ChildIndex(node);
-  const size_t right_index = (position == node_parent->children_.size() - 1)
-                                 ? std::string::npos
-                                 : position + 1;
-  if (right_index != std::string::npos) {
-    return node_parent->children_[right_index];
+  if (position == std::string::npos ||
+      position == node_parent->children_.size() - 1) {
+    return nullptr;
   }
-  return nullptr;
+  return node_parent->children_[position + 1];
 }
 
 template <class K, class V>
-size_t Map<K, V>::SeparatorIndex(Node *node, Node *sibling) {
+size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) {
   InnerNode<K, V> *parent = static_cast<InnerNode<K, V> *>(node->GetParent());
   const size_t node_position = parent->ChildIndex(node);
-  const size_t sibling_position = parent->ChildIndex(sibling);
-  return std::min(node_position, sibling_position);
+  if (node_position == std::string::npos) {
+    return std::string::npos;
+  }
+  const size_t kin_position = parent->ChildIndex(kin);
+  if (kin_position == std::string::npos) {
+    return std::string::npos;
+  }
+  if (abs((int)(node_position) - (int)(kin_position)) != 1) {
+    throw std::runtime_error("tree: map separator index");
+  }
+  return std::min(node_position, kin_position);
 }
 
-template <class K, class V>
-K Map<K, V>::SeparatorKey(Node *node, Node *sibling) {
-  const size_t index = SeparatorIndex(node, sibling);
+template <class K, class V> K Map<K, V>::SeparatorKey(Node *node, Node *kin) {
+  const size_t index = SeparatorIndex(node, kin);
+  if (index == std::string::npos) {
+    throw std::runtime_error("tree: map separator key");
+  }
   InnerNode<K, V> *parent = static_cast<InnerNode<K, V> *>(node->GetParent());
   return parent->keys_[index];
 }
 
 template <class K, class V>
-void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *sibling) {
+void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *kin) {
   if (origin == root_) {
     InnerNode<K, V> *inner_node = new InnerNode<K, V>();
-    inner_node->Insert(origin, up_key, sibling);
+    inner_node->Insert(origin, up_key, kin);
     root_ = inner_node;
     return;
   }
   InnerNode<K, V> *next_origin =
       static_cast<InnerNode<K, V> *>(origin->GetParent());
-  next_origin->Insert(origin, up_key, sibling);
+  next_origin->Insert(origin, up_key, kin);
   if (next_origin->IsFull()) {
-    Node *next_sibling;
+    Node *next_kin;
     K next_key;
-    std::tie(next_sibling, next_key) = next_origin->Split();
-    PropagateUpwards(next_origin, next_key, next_sibling);
+    std::tie(next_kin, next_key) = next_origin->Split();
+    PropagateUpwards(next_origin, next_key, next_kin);
   }
 }
 
@@ -783,10 +803,10 @@ void Map<K, V>::Insert(const K &key, const V &value) {
   }
   outer_node->Insert(key, value);
   if (outer_node->IsFull()) {
-    OuterNode<K, V> *sibling;
+    OuterNode<K, V> *kin;
     K up_key;
-    std::tie(sibling, up_key) = outer_node->Split();
-    PropagateUpwards(outer_node, up_key, sibling);
+    std::tie(kin, up_key) = outer_node->Split();
+    PropagateUpwards(outer_node, up_key, kin);
   }
   size_++;
   return;
@@ -839,7 +859,7 @@ bool Map<K, V>::Erase(OuterNode<K, V> *outer_node, const K &key) {
     }
   }
   InnerNode<K, V> *inner_node = static_cast<InnerNode<K, V> *>(current);
-  if (inner_node->keys_.size() == 0) {
+  if (inner_node->keys_.empty()) {
     Node *backup = root_;
     root_ = inner_node->children_.front();
     root_->SetParent(nullptr);
@@ -1681,10 +1701,12 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
       inner->children_[0] = cache[cache_index++];
       for (size_t i = 0; i < fanout - 1; i++) {
         if (cache[cache_index]->IsOuter()) {
-          OuterNode<K, V> *node = (OuterNode<K, V> *)(cache[cache_index]);
+          OuterNode<K, V> *node =
+              static_cast<OuterNode<K, V> *>(cache[cache_index]);
           inner->keys_[i] = node->keys_.front();
         } else {
-          InnerNode<K, V> *node = (InnerNode<K, V> *)(cache[cache_index]);
+          InnerNode<K, V> *node =
+              static_cast<InnerNode<K, V> *>(cache[cache_index]);
           inner->keys_[i] = node->keys_.front();
         }
         inner->children_[i + 1] = cache[cache_index++];
