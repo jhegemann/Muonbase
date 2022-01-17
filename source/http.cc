@@ -359,6 +359,7 @@ void HttpConnection::ParseRequest() {
   static HttpMethod method;
   switch (stage_) {
   case START:
+    [[fallthrough]];
   case METHOD:
     if (!reader_->Peak(kStringSpace)) {
       return;
@@ -375,6 +376,7 @@ void HttpConnection::ParseRequest() {
     }
     request_.SetMethod(method);
     stage_ = URL;
+    [[fallthrough]];
   case URL:
     if (!reader_->Peak(kStringSpace)) {
       return;
@@ -387,6 +389,7 @@ void HttpConnection::ParseRequest() {
     }
     request_.SetUrl(token);
     stage_ = PROTOCOL;
+    [[fallthrough]];
   case PROTOCOL:
     if (!reader_->Peak(kHttpLineFeed)) {
       return;
@@ -398,7 +401,9 @@ void HttpConnection::ParseRequest() {
     }
     request_.SetProtocol(kHttpProtocol1_1);
     stage_ = HEADER;
+    [[fallthrough]];
   case HEADER:
+    [[fallthrough]];
   case BODY:
     ParseMessage(request_);
     break;
@@ -412,6 +417,7 @@ void HttpConnection::ParseResponse() {
   static HttpStatus status;
   switch (stage_) {
   case START:
+    [[fallthrough]];
   case PROTOCOL:
     if (!reader_->Peak(kStringSpace)) {
       return;
@@ -423,6 +429,7 @@ void HttpConnection::ParseResponse() {
     }
     response_.SetProtocol(kHttpProtocol1_1);
     stage_ = STATUS;
+    [[fallthrough]];
   case STATUS:
     if (!reader_->Peak(kStringSpace)) {
       return;
@@ -440,6 +447,7 @@ void HttpConnection::ParseResponse() {
     }
     response_.SetStatus(status);
     stage_ = MESSAGE;
+    [[fallthrough]];
   case MESSAGE:
     if (!reader_->Peak(kHttpLineFeed)) {
       return;
@@ -451,7 +459,9 @@ void HttpConnection::ParseResponse() {
     }
     response_.SetMessage(token);
     stage_ = HEADER;
+    [[fallthrough]];
   case HEADER:
+    [[fallthrough]];
   case BODY:
     ParseMessage(response_);
     break;
@@ -498,6 +508,7 @@ void HttpConnection::ParseMessage(HttpPacket &packet) {
       return;
     }
     stage_ = BODY;
+    [[fallthrough]];
   case BODY:
     content_length_string = packet.GetHeader("content-length");
     content_length = 0;
@@ -519,6 +530,7 @@ void HttpConnection::ParseMessage(HttpPacket &packet) {
       return;
     }
     stage_ = END;
+    [[fallthrough]];
   case END:
     return;
   default:

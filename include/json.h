@@ -33,8 +33,6 @@ limitations under the License. */
 const std::string kJsonNull = "null";
 const std::string kJsonFalse = "false";
 const std::string kJsonTrue = "true";
-const std::string kJsonNumberCharset = "0123456789+-";
-const std::string kJsonWssCharset = "\b\t\n\a\r ";
 
 typedef bool JsonBoolean;
 typedef int64_t JsonInteger;
@@ -78,7 +76,7 @@ public:
 
 private:
   std::vector<std::any> values_;
-  void Parse(const std::string &source, size_t &offset);
+  void Parse(const std::string &source, size_t &source_offset);
 };
 
 class JsonObject {
@@ -116,7 +114,7 @@ public:
 
 private:
   std::unordered_map<std::string, std::any> values_;
-  void Parse(const std::string &source, size_t &offset);
+  void Parse(const std::string &source, size_t &source_offset);
 };
 
 size_t SerializeJsonObject(JsonObject &object, std::ostream &stream);

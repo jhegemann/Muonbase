@@ -199,109 +199,158 @@ std::string JsonObject::String() const {
 }
 
 void JsonObject::Parse(const std::string &source) {
-  size_t off = 0;
-  Parse(source, off);
+  size_t offset = 0;
+  Parse(source, offset);
 }
 
-void JsonObject::Parse(const std::string &source, size_t &offset) {
+void JsonObject::Parse(const std::string &source, size_t &source_offset) {
   values_.clear();
-  size_t off = offset;
-  size_t pos;
+  size_t offset = source_offset;
+  size_t position;
+  const std::string kValueBorder =
+      kStringWss + kStringComma + kStringCurlyBracketClose;
   std::string key;
   std::string value;
-  if (!ExpectString(source, kStringCurlyBracketOpen, off)) {
+  JsonObject object;
+  JsonArray array;
+  bool dot;
+  std::string text;
+  char border;
+  if (!ExpectString(source, kStringCurlyBracketOpen, offset)) {
     throw std::runtime_error("invalid json object");
   }
   for (;;) {
-    if (!ExpectString(source, kStringDoubleQuote, off)) {
+    if (!ExpectString(source, kStringDoubleQuote, offset)) {
       throw std::runtime_error("invalid json object");
     }
-    pos = source.find(kStringDoubleQuote, off);
-    if (pos == std::string::npos) {
+    position = source.find(kStringDoubleQuote, offset);
+    if (position == std::string::npos) {
       throw std::runtime_error("invalid json object");
     }
-    key = source.substr(off, pos - off);
-    off = pos + 1;
-    if (!ExpectString(source, kStringColon, off)) {
+    key = source.substr(offset, position - offset);
+    offset = position + 1;
+    if (!ExpectString(source, kStringColon, offset)) {
       throw std::runtime_error("invalid json object");
     }
-    if (!ExpectString(source, kStringEmpty, off)) {
+    if (!ExpectString(source, kStringEmpty, offset)) {
       throw std::runtime_error("invalid json object");
     }
-    if (source.substr(off, 4).compare(kJsonNull) == 0 &&
-        CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
-                                         kStringCurlyBracketClose)) {
-      PutNull(key);
-      off += 4;
-    } else if (source.substr(off, 4).compare(kJsonTrue) == 0 &&
-               CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
-                                                kStringCurlyBracketClose)) {
-      PutBoolean(key, true);
-      off += 4;
-    } else if (source.substr(off, 5).compare(kJsonFalse) == 0 &&
-               CharIsAnyOf(source[off + 5], kJsonWssCharset + kStringComma +
-                                                kStringCurlyBracketClose)) {
-      PutBoolean(key, false);
-      off += 5;
-    } else if (source[off] == kCharDoubleQuote) {
-      pos = source.find(kStringDoubleQuote, off + 1);
-      if (pos == std::string::npos) {
-        throw std::runtime_error("invalid json object");
+    switch (source[offset]) {
+    case kCharN:
+      if (source.substr(offset, 4).compare(kJsonNull)) {
+        throw std::runtime_error("json: parse null value");
       }
-      PutString(key, source.substr(off + 1, pos - off - 1));
-      off = pos + 1;
-    } else if (CharIsAnyOf(source[off], kJsonNumberCharset)) {
-      size_t pos = off + 1;
-      bool dot_found = false;
-      while (pos < source.length()) {
-        if (CharIsAnyOf(source[pos], kJsonWssCharset + kStringComma +
-                                         kStringCurlyBracketClose)) {
+      border = source[offset + 4];
+      if (!CharIsAnyOf(border, kValueBorder)) {
+        throw std::runtime_error("json: parse null value");
+      }
+      PutNull(key);
+      offset += 4;
+      break;
+    case kCharT:
+      if (source.substr(offset, 4).compare(kJsonTrue)) {
+        throw std::runtime_error("json: parse true value");
+      }
+      border = source[offset + 4];
+      if (!CharIsAnyOf(border, kValueBorder)) {
+        throw std::runtime_error("json: parse true value");
+      }
+      PutBoolean(key, true);
+      offset += 4;
+      break;
+    case kCharF:
+      if (source.substr(offset, 5).compare(kJsonFalse)) {
+        throw std::runtime_error("json: parse false value");
+      }
+      border = source[offset + 5];
+      if (!CharIsAnyOf(border, kValueBorder)) {
+        throw std::runtime_error("json: parse false value");
+      }
+      PutBoolean(key, false);
+      offset += 5;
+      break;
+    case kCharDoubleQuote:
+      position = source.find(kStringDoubleQuote, offset + 1);
+      if (position == std::string::npos) {
+        throw std::runtime_error("json: parse string value");
+      }
+      PutString(key, source.substr(offset + 1, position - offset - 1));
+      offset = position + 1;
+      break;
+    case kCharZero:
+      [[fallthrough]];
+    case kCharOne:
+      [[fallthrough]];
+    case kCharTwo:
+      [[fallthrough]];
+    case kCharThree:
+      [[fallthrough]];
+    case kCharFour:
+      [[fallthrough]];
+    case kCharFive:
+      [[fallthrough]];
+    case kCharSix:
+      [[fallthrough]];
+    case kCharSeven:
+      [[fallthrough]];
+    case kCharEight:
+      [[fallthrough]];
+    case kCharNine:
+      [[fallthrough]];
+    case kCharPlus:
+      [[fallthrough]];
+    case kCharMinus:
+      position = offset + 1;
+      dot = false;
+      while (position < source.length()) {
+        if (CharIsAnyOf(source[position], kValueBorder)) {
           break;
         }
-        if (source[pos] == kCharDot) {
-          dot_found = true;
+        if (source[position] == kCharDot) {
+          dot = true;
         }
-        pos++;
+        position++;
       }
-      if (pos == source.length()) {
-        throw std::runtime_error("invalid json object");
+      if (position == source.length()) {
+        throw std::runtime_error("json: parse number value");
       }
-      std::string num_string = source.substr(off, pos - off);
+      text = source.substr(offset, position - offset);
       try {
-        if (dot_found) {
-          PutFloat(key, std::atof(num_string.c_str()));
+        if (dot) {
+          PutFloat(key, std::atof(text.c_str()));
         } else {
-          PutInteger(key, std::atoi(num_string.c_str()));
+          PutInteger(key, std::atoi(text.c_str()));
         }
       } catch (std::invalid_argument &) {
-        throw std::runtime_error("invalid number format");
+        throw std::runtime_error("json: parse number value");
       }
-      off = pos;
-    } else if (source[off] == kCharCurlyBracketOpen) {
-      JsonObject obj;
-      obj.Parse(source, off);
-      PutObject(key, obj);
-    } else if (source[off] == kCharSquareBracketOpen) {
-      JsonArray arr;
-      arr.Parse(source, off);
-      PutArray(key, arr);
-    } else {
+      offset = position;
+      break;
+    case kCharCurlyBracketOpen:
+      object.Parse(source, offset);
+      PutObject(key, object);
+      break;
+    case kCharSquareBracketOpen:
+      array.Parse(source, offset);
+      PutArray(key, array);
+      break;
+    default:
+      throw std::runtime_error("json: invalid value");
+    }
+    if (!ExpectString(source, kStringEmpty, offset)) {
       throw std::runtime_error("invalid json object");
     }
-    if (!ExpectString(source, kStringEmpty, off)) {
-      throw std::runtime_error("invalid json object");
-    }
-    if (source[off] == kCharComma) {
-      off++;
+    if (source[offset] == kCharComma) {
+      offset++;
       continue;
-    } else if (source[off] == kCharCurlyBracketClose) {
-      off++;
+    } else if (source[offset] == kCharCurlyBracketClose) {
+      offset++;
       break;
     } else {
       throw std::runtime_error("invalid json object");
     }
   }
-  offset = off;
+  source_offset = offset;
 }
 
 JsonArray::JsonArray() {}
@@ -457,96 +506,145 @@ std::string JsonArray::String() const {
 }
 
 void JsonArray::Parse(const std::string &source) {
-  size_t off = 0;
-  Parse(source, off);
+  size_t offset = 0;
+  Parse(source, offset);
 }
 
-void JsonArray::Parse(const std::string &source, size_t &offset) {
+void JsonArray::Parse(const std::string &source, size_t &source_offset) {
   values_.clear();
-  size_t off = offset;
-  size_t pos;
+  const std::string kValueBorder =
+      kStringWss + kStringComma + kStringSquareBracketClose;
+  size_t offset = source_offset;
+  size_t position;
   std::string value;
-  if (!ExpectString(source, kStringSquareBracketOpen, off)) {
+  JsonObject object;
+  JsonArray array;
+  char border;
+  bool dot;
+  std::string text;
+  if (!ExpectString(source, kStringSquareBracketOpen, offset)) {
     throw std::runtime_error("invalid json object:");
   }
   for (;;) {
-    if (!ExpectString(source, kStringEmpty, off)) {
+    if (!ExpectString(source, kStringEmpty, offset)) {
       throw std::runtime_error("invalid json object");
     }
-    if (source.substr(off, 4).compare(kJsonNull) == 0 &&
-        CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
-                                         kStringSquareBracketClose)) {
-      PutNull();
-      off += 4;
-    } else if (source.substr(off, 4).compare(kJsonTrue) == 0 &&
-               CharIsAnyOf(source[off + 4], kJsonWssCharset + kStringComma +
-                                                kStringSquareBracketClose)) {
-      PutBoolean(true);
-      off += 4;
-    } else if (source.substr(off, 5).compare(kJsonFalse) == 0 &&
-               CharIsAnyOf(source[off + 5], kJsonWssCharset + kStringComma +
-                                                kStringSquareBracketClose)) {
-      PutBoolean(false);
-      off += 5;
-    } else if (source[off] == kCharDoubleQuote) {
-      pos = source.find(kStringDoubleQuote, off + 1);
-      if (pos == std::string::npos) {
-        throw std::runtime_error("invalid json object");
+    switch (source[offset]) {
+    case kCharN:
+      if (source.substr(offset, 4).compare(kJsonNull)) {
+        throw std::runtime_error("json: parse null value");
       }
-      PutString(source.substr(off + 1, pos - off - 1));
-      off = pos + 1;
-    } else if (CharIsAnyOf(source[off], kJsonNumberCharset)) {
-      size_t pos = off + 1;
-      bool dot_found = false;
-      while (pos < source.length()) {
-        if (CharIsAnyOf(source[pos], kJsonWssCharset + kStringComma +
-                                         kStringSquareBracketClose)) {
+      border = source[offset + 4];
+      if (!CharIsAnyOf(border, kValueBorder)) {
+        throw std::runtime_error("json: parse null value");
+      }
+      PutNull();
+      offset += 4;
+      break;
+    case kCharT:
+      if (source.substr(offset, 4).compare(kJsonTrue)) {
+        throw std::runtime_error("json: parse true value");
+      }
+      border = source[offset + 4];
+      if (!CharIsAnyOf(border, kValueBorder)) {
+        throw std::runtime_error("json: parse true value");
+      }
+      PutBoolean(true);
+      offset += 4;
+      break;
+    case kCharF:
+      if (source.substr(offset, 5).compare(kJsonFalse)) {
+        throw std::runtime_error("json: parse false value");
+      }
+      border = source[offset + 5];
+      if (!CharIsAnyOf(border, kValueBorder)) {
+        throw std::runtime_error("json: parse false value");
+      }
+      PutBoolean(false);
+      offset += 5;
+      break;
+    case kCharDoubleQuote:
+      position = source.find(kStringDoubleQuote, offset + 1);
+      if (position == std::string::npos) {
+        throw std::runtime_error("json: parse string value");
+      }
+      PutString(source.substr(offset + 1, position - offset - 1));
+      offset = position + 1;
+      break;
+    case kCharZero:
+      [[fallthrough]];
+    case kCharOne:
+      [[fallthrough]];
+    case kCharTwo:
+      [[fallthrough]];
+    case kCharThree:
+      [[fallthrough]];
+    case kCharFour:
+      [[fallthrough]];
+    case kCharFive:
+      [[fallthrough]];
+    case kCharSix:
+      [[fallthrough]];
+    case kCharSeven:
+      [[fallthrough]];
+    case kCharEight:
+      [[fallthrough]];
+    case kCharNine:
+      [[fallthrough]];
+    case kCharPlus:
+      [[fallthrough]];
+    case kCharMinus:
+      position = offset + 1;
+      dot = false;
+      while (position < source.length()) {
+        if (CharIsAnyOf(source[position], kValueBorder)) {
           break;
         }
-        if (source[pos] == kCharDot) {
-          dot_found = true;
+        if (source[position] == kCharDot) {
+          dot = true;
         }
-        pos++;
+        position++;
       }
-      if (pos == source.length()) {
-        throw std::runtime_error("invalid json object");
+      if (position == source.length()) {
+        throw std::runtime_error("json: parse number value");
       }
-      std::string num_string = source.substr(off, pos - off);
+      text = source.substr(offset, position - offset);
       try {
-        if (dot_found) {
-          PutFloat(std::atof(num_string.c_str()));
+        if (dot) {
+          PutFloat(std::atof(text.c_str()));
         } else {
-          PutInteger(std::atoi(num_string.c_str()));
+          PutInteger(std::atoi(text.c_str()));
         }
       } catch (std::invalid_argument &) {
-        throw std::runtime_error("invalid number format");
+        throw std::runtime_error("json: parse number value");
       }
-      off = pos;
-    } else if (source[off] == kCharCurlyBracketOpen) {
-      JsonObject obj;
-      obj.Parse(source, off);
-      PutObject(obj);
-    } else if (source[off] == kCharSquareBracketOpen) {
-      JsonArray arr;
-      arr.Parse(source, off);
-      PutArray(arr);
-    } else {
+      offset = position;
+      break;
+    case kCharCurlyBracketOpen:
+      object.Parse(source, offset);
+      PutObject(object);
+      break;
+    case kCharSquareBracketOpen:
+      array.Parse(source, offset);
+      PutArray(array);
+      break;
+    default:
+      throw std::runtime_error("json: invalid value");
+    }
+    if (!ExpectString(source, kStringEmpty, offset)) {
       throw std::runtime_error("invalid json object");
     }
-    if (!ExpectString(source, kStringEmpty, off)) {
-      throw std::runtime_error("invalid json object");
-    }
-    if (source[off] == kCharComma) {
-      off++;
+    if (source[offset] == kCharComma) {
+      offset++;
       continue;
-    } else if (source[off] == kCharSquareBracketClose) {
-      off++;
+    } else if (source[offset] == kCharSquareBracketClose) {
+      offset++;
       break;
     } else {
       throw std::runtime_error("invalid json object");
     }
   }
-  offset = off;
+  source_offset = offset;
 }
 
 size_t SerializeJsonObject(JsonObject &object, std::ostream &stream) {
