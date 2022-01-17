@@ -17,7 +17,7 @@ limitations under the License. */
 namespace db_api {
 
 static bool AccessPermitted(const HttpRequest &request, ServiceMap &services) {
-  UserPool *user = static_cast<UserPool *>(services[kUserService]);
+  UserPool *user = static_cast<UserPool *>(services[kServiceUser]);
   std::string auth = request.GetHeader(kHttpAuthorization);
   if (auth.empty()) {
     return false;
@@ -38,8 +38,8 @@ static bool AccessPermitted(const HttpRequest &request, ServiceMap &services) {
 }
 
 static bool ServicesAvailable(ServiceMap &services) {
-  return services.find(kUserService) != services.end() &&
-         services.find(kDatabaseService) != services.end();
+  return services.find(kServiceUser) != services.end() &&
+         services.find(kServiceDatabase) != services.end();
 }
 
 static bool JsonContent(const HttpRequest &request) {
@@ -67,7 +67,7 @@ HttpResponse Insert(const HttpRequest &request, ServiceMap &services) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST);
   }
   DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              db->Insert(array).String());
 }
@@ -89,7 +89,7 @@ HttpResponse Erase(const HttpRequest &request, ServiceMap &services) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST);
   }
   DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              db->Erase(array).String());
 }
@@ -111,7 +111,7 @@ HttpResponse Find(const HttpRequest &request, ServiceMap &services) {
     return HttpResponse::Build(HttpStatus::BAD_REQUEST);
   }
   DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              db->Find(array).String());
 }
@@ -124,7 +124,7 @@ HttpResponse Keys(const HttpRequest &request, ServiceMap &services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED);
   }
   DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              db->Keys().String());
 }
@@ -137,7 +137,7 @@ HttpResponse Values(const HttpRequest &request, ServiceMap &services) {
     return HttpResponse::Build(HttpStatus::UNAUTHORIZED);
   }
   DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              db->Values().String());
 }
@@ -151,7 +151,7 @@ HttpResponse Image(const HttpRequest &request, ServiceMap &services) {
   }
   JsonObject result;
   DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kDatabaseService]);
+      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
   return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
                              db->Image().String());
 }

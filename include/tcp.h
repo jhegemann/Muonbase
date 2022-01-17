@@ -54,11 +54,11 @@ public:
   bool SetReadable(size_t index);
   bool SetWriteable(size_t index);
   bool SetDuplex(size_t index);
-  int GetDescriptor(size_t index);
-  int GetEvents(size_t index);
-  bool IsReadable(size_t index);
-  bool IsWritable(size_t index);
-  bool HasErrors(size_t index);
+  int GetDescriptor(size_t index) const;
+  int GetEvents(size_t index) const;
+  bool IsReadable(size_t index) const;
+  bool IsWritable(size_t index) const;
+  bool HasErrors(size_t index) const;
 
 private:
   int instance_;
@@ -98,14 +98,14 @@ public:
   int GetDescriptor() const;
   bool WaitReceive(long timeout = 0);
   bool WaitSend(long timeout = 0);
-  bool IsConnected();
+  bool IsConnected() const;
   bool Connect(const std::string &service, const std::string &host);
-  bool IsListening();
+  bool IsListening() const;
   bool Listen(const std::string &service, const std::string &host);
-  bool IsBlocking();
+  bool IsBlocking() const;
   bool Unblock();
   bool Block();
-  bool IsGood();
+  bool IsGood() const;
   TcpSocket *Accept();
   IoStatusCode Receive(std::string &payload, long timeout = 0);
   IoStatusCode Send(std::string &payload, long timeout = 0);
@@ -126,16 +126,16 @@ public:
   void ReadUntil(size_t length, long max_idle = kTcpTimeout);
   void ReadSome(long timeout = 0);
   void SyncRead(long timeout);
-  IoStatusCode GetStatus();
-  size_t GetPosition(const std::string &token);
+  IoStatusCode GetStatus() const;
+  size_t GetPosition(const std::string &token) const;
   std::string PopAll();
-  bool IsInBuffer(const std::string &token);
+  bool IsInBuffer(const std::string &token) const;
   void ClearBuffer();
-  const std::string &GetBuffer();
+  const std::string &GetBuffer() const;
   bool Peak(const std::string &token);
   std::string Tok();
   std::string Tok(size_t length);
-  bool HasErrors();
+  bool HasErrors() const;
 
 private:
   std::string buffer_;
@@ -153,9 +153,9 @@ public:
   void Write(const std::string &payload);
   void Send();
   void SendSome();
-  IoStatusCode GetStatus();
-  bool IsEmpty();
-  bool HasErrors();
+  IoStatusCode GetStatus() const;
+  bool IsEmpty() const;
+  bool HasErrors() const;
 
 private:
   std::string buffer_;

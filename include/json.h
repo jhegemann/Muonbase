@@ -33,6 +33,9 @@ limitations under the License. */
 const std::string kJsonNull = "null";
 const std::string kJsonFalse = "false";
 const std::string kJsonTrue = "true";
+const size_t kJsonNullLength = 4;
+const size_t kJsonFalseLength = 5;
+const size_t kJsonTrueLength = 4;
 
 typedef bool JsonBoolean;
 typedef int64_t JsonInteger;

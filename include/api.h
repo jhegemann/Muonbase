@@ -28,8 +28,8 @@ const std::string kRouteKeys = "/keys";
 const std::string kRouteValues = "/values";
 const std::string kRouteImage = "/image";
 
-const std::string kDatabaseService = "db";
-const std::string kUserService = "user";
+const std::string kServiceDatabase = "db";
+const std::string kServiceUser = "user";
 
 HttpResponse Insert(const HttpRequest &request, ServiceMap &services);
 HttpResponse Erase(const HttpRequest &request, ServiceMap &services);

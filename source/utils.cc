@@ -67,15 +67,15 @@ bool CharIsAnyOf(char character, const std::string &charset) {
 }
 
 bool ExpectString(const std::string &text, const std::string &what,
-                  size_t &off) {
-  size_t pos = off;
-  while (pos < text.length()) {
-    if (CharIsAnyOf(text[pos], kStringWss)) {
-      pos++;
+                  size_t &offset) {
+  size_t position = offset;
+  while (position < text.length()) {
+    if (CharIsAnyOf(text[position], kStringWss)) {
+      position++;
       continue;
     }
-    if (text.substr(pos, what.length()).compare(what) == 0) {
-      off = pos + what.length();
+    if (text.substr(position, what.length()).compare(what) == 0) {
+      offset = position + what.length();
       return true;
     }
     return false;

@@ -72,35 +72,35 @@ bool EpollInstance::ModifyDescriptor(int descriptor, int flags) {
   return true;
 }
 
-int EpollInstance::GetDescriptor(size_t index) {
+int EpollInstance::GetDescriptor(size_t index) const {
   if (index >= kEpollMaximumEvents) {
     return -1;
   }
   return events_[index].data.fd;
 }
 
-int EpollInstance::GetEvents(size_t index) {
+int EpollInstance::GetEvents(size_t index) const {
   if (index >= kEpollMaximumEvents) {
     return -1;
   }
   return events_[index].events;
 }
 
-bool EpollInstance::IsReadable(size_t index) {
+bool EpollInstance::IsReadable(size_t index) const {
   if (GetEvents(index) == -1) {
     return false;
   }
   return GetEvents(index) & EPOLLIN;
 }
 
-bool EpollInstance::IsWritable(size_t index) {
+bool EpollInstance::IsWritable(size_t index) const {
   if (GetEvents(index) == -1) {
     return false;
   }
   return GetEvents(index) & EPOLLOUT;
 }
 
-bool EpollInstance::HasErrors(size_t index) {
+bool EpollInstance::HasErrors(size_t index) const {
   if (GetEvents(index) == -1) {
     return false;
   }
@@ -175,7 +175,7 @@ bool TcpSocket::WaitSend(long timeout) {
   return false;
 }
 
-bool TcpSocket::IsConnected() { return connected_; }
+bool TcpSocket::IsConnected() const { return connected_; }
 
 bool TcpSocket::Connect(const std::string &service, const std::string &host) {
   Close();
@@ -212,7 +212,7 @@ bool TcpSocket::Connect(const std::string &service, const std::string &host) {
   return true;
 }
 
-bool TcpSocket::IsListening() { return listening_; }
+bool TcpSocket::IsListening() const { return listening_; }
 
 bool TcpSocket::Listen(const std::string &service, const std::string &host) {
   Close();
@@ -267,7 +267,7 @@ bool TcpSocket::Listen(const std::string &service, const std::string &host) {
   return true;
 }
 
-bool TcpSocket::IsBlocking() {
+bool TcpSocket::IsBlocking() const {
   int flags = fcntl(descriptor_, F_GETFL, 0);
   if (flags == -1) {
     return false;
@@ -301,7 +301,7 @@ bool TcpSocket::Block() {
   return true;
 }
 
-bool TcpSocket::IsGood() {
+bool TcpSocket::IsGood() const {
   int err;
   int option_value;
   socklen_t option_length = sizeof(int);
@@ -490,7 +490,9 @@ void TcpReader::ReadUntil(size_t length, long max_idle) {
   }
 }
 
-bool TcpReader::HasErrors() { return status_ != SUCCESS && status_ != BLOCKED; }
+bool TcpReader::HasErrors() const {
+  return status_ != SUCCESS && status_ != BLOCKED;
+}
 
 void TcpReader::ReadSome(long timeout) {
   status_ = socket_->Receive(buffer_, timeout);
@@ -503,7 +505,7 @@ void TcpReader::SyncRead(long timeout) {
   status_ = socket_->Receive(buffer_);
 }
 
-size_t TcpReader::GetPosition(const std::string &token) {
+size_t TcpReader::GetPosition(const std::string &token) const {
   return StringPosition(buffer_, token);
 }
 
@@ -513,9 +515,9 @@ std::string TcpReader::PopAll() {
   return temp;
 }
 
-IoStatusCode TcpReader::GetStatus() { return status_; }
+IoStatusCode TcpReader::GetStatus() const { return status_; }
 
-bool TcpReader::IsInBuffer(const std::string &token) {
+bool TcpReader::IsInBuffer(const std::string &token) const {
   return StringContains(buffer_, token);
 }
 
@@ -527,7 +529,7 @@ void TcpReader::ClearBuffer() {
   next_base_ = 0;
 }
 
-const std::string &TcpReader::GetBuffer() { return buffer_; }
+const std::string &TcpReader::GetBuffer() const { return buffer_; }
 
 bool TcpReader::Peak(const std::string &token) {
   if ((peak_ = StringPosition(buffer_, token, base_)) == std::string::npos) {
@@ -582,10 +584,12 @@ void TcpWriter::Send() {
   }
 }
 
-bool TcpWriter::HasErrors() { return status_ != SUCCESS && status_ != BLOCKED; }
+bool TcpWriter::HasErrors() const {
+  return status_ != SUCCESS && status_ != BLOCKED;
+}
 
 void TcpWriter::SendSome() { status_ = socket_->Send(buffer_); }
 
-IoStatusCode TcpWriter::GetStatus() { return status_; }
+IoStatusCode TcpWriter::GetStatus() const { return status_; }
 
-bool TcpWriter::IsEmpty() { return buffer_.empty(); }
+bool TcpWriter::IsEmpty() const { return buffer_.empty(); }

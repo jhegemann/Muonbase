@@ -198,16 +198,16 @@ public:
   HttpConnection(TcpSocket *socket);
   virtual ~HttpConnection();
   HttpStage GetStage() const;
-  TcpReader *GetReader();
-  TcpWriter *GetWriter();
-  const HttpRequest &GetRequest();
-  const HttpResponse &GetResponse();
+  TcpReader *GetReader() const;
+  TcpWriter *GetWriter() const;
+  const HttpRequest &GetRequest() const;
+  const HttpResponse &GetResponse() const;
   void ParseRequest();
   void ParseResponse();
   void Restart();
   bool IsGood();
-  long GetExpiry();
   void ResetExpiry();
+  long GetExpiry() const;
 
 private:
   void ParseMessage(HttpPacket &packet);

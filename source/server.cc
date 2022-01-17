@@ -143,9 +143,9 @@ int main(int argc, char **argv) {
   HttpServer server;
 
   Log::GetInstance()->Info("set up services");
-  server.RegisterService(db_api::kDatabaseService,
+  server.RegisterService(db_api::kServiceDatabase,
                          new DocumentDatabase(data_path));
-  server.RegisterService(db_api::kUserService, new UserPool(user_path));
+  server.RegisterService(db_api::kServiceUser, new UserPool(user_path));
 
   Log::GetInstance()->Info("set up routes");
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteInsert,

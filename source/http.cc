@@ -340,15 +340,15 @@ HttpConnection::~HttpConnection() {
 
 HttpStage HttpConnection::GetStage() const { return stage_; }
 
-TcpReader *HttpConnection::GetReader() { return reader_; }
+TcpReader *HttpConnection::GetReader() const { return reader_; }
 
-TcpWriter *HttpConnection::GetWriter() { return writer_; }
+TcpWriter *HttpConnection::GetWriter() const { return writer_; }
 
-const HttpRequest &HttpConnection::GetRequest() { return request_; }
+const HttpRequest &HttpConnection::GetRequest() const { return request_; }
 
-const HttpResponse &HttpConnection::GetResponse() { return response_; }
+const HttpResponse &HttpConnection::GetResponse() const { return response_; }
 
-long HttpConnection::GetExpiry() { return expiry_; }
+long HttpConnection::GetExpiry() const { return expiry_; }
 
 void HttpConnection::ResetExpiry() {
   expiry_ = TimeEpochMilliseconds() + kHttpConnectionTimeout;

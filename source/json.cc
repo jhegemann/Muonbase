@@ -237,37 +237,37 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
     }
     switch (source[offset]) {
     case kCharN:
-      if (source.substr(offset, 4).compare(kJsonNull)) {
+      if (source.substr(offset, kJsonNullLength).compare(kJsonNull)) {
         throw std::runtime_error("json: parse null value");
       }
-      border = source[offset + 4];
+      border = source[offset + kJsonNullLength];
       if (!CharIsAnyOf(border, kValueBorder)) {
         throw std::runtime_error("json: parse null value");
       }
       PutNull(key);
-      offset += 4;
+      offset += kJsonNullLength;
       break;
     case kCharT:
-      if (source.substr(offset, 4).compare(kJsonTrue)) {
+      if (source.substr(offset, kJsonTrueLength).compare(kJsonTrue)) {
         throw std::runtime_error("json: parse true value");
       }
-      border = source[offset + 4];
+      border = source[offset + kJsonTrueLength];
       if (!CharIsAnyOf(border, kValueBorder)) {
         throw std::runtime_error("json: parse true value");
       }
       PutBoolean(key, true);
-      offset += 4;
+      offset += kJsonTrueLength;
       break;
     case kCharF:
-      if (source.substr(offset, 5).compare(kJsonFalse)) {
+      if (source.substr(offset, kJsonFalseLength).compare(kJsonFalse)) {
         throw std::runtime_error("json: parse false value");
       }
-      border = source[offset + 5];
+      border = source[offset + kJsonFalseLength];
       if (!CharIsAnyOf(border, kValueBorder)) {
         throw std::runtime_error("json: parse false value");
       }
       PutBoolean(key, false);
-      offset += 5;
+      offset += kJsonFalseLength;
       break;
     case kCharDoubleQuote:
       position = source.find(kStringDoubleQuote, offset + 1);
@@ -531,37 +531,37 @@ void JsonArray::Parse(const std::string &source, size_t &source_offset) {
     }
     switch (source[offset]) {
     case kCharN:
-      if (source.substr(offset, 4).compare(kJsonNull)) {
+      if (source.substr(offset, kJsonNullLength).compare(kJsonNull)) {
         throw std::runtime_error("json: parse null value");
       }
-      border = source[offset + 4];
+      border = source[offset + kJsonNullLength];
       if (!CharIsAnyOf(border, kValueBorder)) {
         throw std::runtime_error("json: parse null value");
       }
       PutNull();
-      offset += 4;
+      offset += kJsonNullLength;
       break;
     case kCharT:
-      if (source.substr(offset, 4).compare(kJsonTrue)) {
+      if (source.substr(offset, kJsonTrueLength).compare(kJsonTrue)) {
         throw std::runtime_error("json: parse true value");
       }
-      border = source[offset + 4];
+      border = source[offset + kJsonTrueLength];
       if (!CharIsAnyOf(border, kValueBorder)) {
         throw std::runtime_error("json: parse true value");
       }
       PutBoolean(true);
-      offset += 4;
+      offset += kJsonTrueLength;
       break;
     case kCharF:
-      if (source.substr(offset, 5).compare(kJsonFalse)) {
+      if (source.substr(offset, kJsonFalseLength).compare(kJsonFalse)) {
         throw std::runtime_error("json: parse false value");
       }
-      border = source[offset + 5];
+      border = source[offset + kJsonFalseLength];
       if (!CharIsAnyOf(border, kValueBorder)) {
         throw std::runtime_error("json: parse false value");
       }
       PutBoolean(false);
-      offset += 5;
+      offset += kJsonFalseLength;
       break;
     case kCharDoubleQuote:
       position = source.find(kStringDoubleQuote, offset + 1);
