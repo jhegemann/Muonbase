@@ -89,16 +89,6 @@ either start the server in foreground and observe what happens on the standard o
 or make sure you use e.g. logrotate to automatically rotate your logfiles.
 
 # Configuration
-```
-{
-  "ip": "127.0.0.1",
-  "port": "8260",
-  "dbPath": "./data/muonbase-storage.db",
-  "userPath": "./config/muonbase-user.json",
-  "logPath": "./muonbase-server.log",
-  "workingDirectory": "./"
-}
-```
 The configuration file is in a json format and it is mandatory for the database server to run. 
 Tune the parameters as you want, but keep a few things in mind: (i) binding
 to ip 0.0.0.0 is not recommended, since the transport layer does not support ssl, (ii) binding to
@@ -110,11 +100,6 @@ i.e. the server runs in background. If you run the server in background,
 you should prefer absolute paths over relative paths in the configuration file.
 
 # Users
-```
-{
-  "root": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"
-}
-```
 The user management is not dynamic, so in order to add a user you have to manually edit the users file, which is, 
 like the general configuration, in a json format. Hashed passwords are SHA256 and can be generated 
 e.g. on the command line using `echo -n 'password' | sha256sum`. Don't forget to shred your shell history after doing that.
