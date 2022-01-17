@@ -3,7 +3,7 @@
 </p>
 
 # Description
-General Purpose Schemaless Persistent In-Memory JSON Document Database Server
+General Purpose Persistent In-Memory JSON Document Database Server
 
 # Essentials
 * Fast lookups - Templated in-memory b+ tree data structure
