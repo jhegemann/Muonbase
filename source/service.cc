@@ -1,4 +1,4 @@
-/* Copyright [2022] [Jonas Hegemann, 26 Oct 1988]
+/* Copyright 2022 Jonas Hegemann 26 Oct 1988
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,10 +69,10 @@ void DocumentDatabase::Initialize() {
     }
   }
   if (unlink_journal_closed) {
-    unlink(filepath_journal_closed_.c_str());
+    remove(filepath_journal_closed_.c_str());
   }
   if (unlink_journal) {
-    unlink(filepath_journal_.c_str());
+    remove(filepath_journal_.c_str());
   }
 }
 
@@ -125,7 +125,7 @@ void DocumentDatabase::Tick() {
         throw std::runtime_error("error when writing snapshot to disk");
       } else {
         rename(filepath_snapshot_.c_str(), filepath_.c_str());
-        unlink(filepath_journal_closed_.c_str());
+        remove(filepath_journal_closed_.c_str());
       }
       rollover_in_progress_ = false;
     });
