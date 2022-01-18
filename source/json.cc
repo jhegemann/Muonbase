@@ -945,7 +945,7 @@ uint64_t MemoryJsonObject(const JsonObject &object) {
       result += MemoryJsonObject(object.GetObject(key));
     } else if (object.IsString(key)) {
       result += sizeof(std::any) + sizeof(std::string) +
-                object.GetString(key).length();
+                object.GetString(key).capacity();
     } else {
       throw std::runtime_error("json: object memory");
     }
