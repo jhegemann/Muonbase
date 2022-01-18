@@ -58,6 +58,17 @@ template <> class Serializer<JsonObject>;
 template <> class Serializer<JsonArray>;
 template <class K, class V> class Serializer<Map<K, V>>;
 
+template <class T> class Memory;
+template <> class Memory<std::string>;
+template <class K, class V> class Memory<std::map<K, V>>;
+template <class K> class Memory<std::map<K, std::string>>;
+template <class V> class Memory<std::map<std::string, V>>;
+template <class T> class Memory<std::vector<T>>;
+template <> class Memory<std::vector<std::string>>;
+template <> class Memory<JsonObject>;
+template <> class Memory<JsonArray>;
+template <class K, class V> class Memory<Map<K, V>>;
+
 class Node {
 public:
   Node() {}
@@ -73,6 +84,7 @@ public:
 
 template <class K, class V> class InnerNode : public Node {
   template <class> friend class ::Serializer;
+  template <class> friend class ::Memory;
   template <class, class> friend class ::OuterNode;
   template <class, class> friend class ::Map;
   template <class, class> friend class ::MapIterator;
@@ -327,6 +339,7 @@ template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
 
 template <class K, class V> class OuterNode : public Node {
   template <class> friend class ::Serializer;
+  template <class> friend class ::Memory;
   template <class, class> friend class ::InnerNode;
   template <class, class> friend class ::Map;
   template <class, class> friend class ::MapIterator;
@@ -561,6 +574,7 @@ inline OuterNode<K, V> *OuterNode<K, V>::GetPrevious() const {
 
 template <class K, class V> class Map {
   template <class> friend class ::Serializer;
+  template <class> friend class ::Memory;
   template <class, class> friend class ::InnerNode;
   template <class, class> friend class ::OuterNode;
   template <class, class> friend class ::MapIterator;
@@ -937,6 +951,7 @@ template <class K, class V> const MapIterator<K, V> Map<K, V>::End() const {
 
 template <class K, class V> class MapIterator {
   template <class> friend class ::Serializer;
+  template <class> friend class ::Memory;
   template <class, class> friend class ::InnerNode;
   template <class, class> friend class ::OuterNode;
   template <class, class> friend class ::Map;
@@ -1063,6 +1078,7 @@ template <class K, class V> void MapIterator<K, V>::Decrement() {
 
 template <class K, class V> class Multimap {
   template <class> friend class ::Serializer;
+  template <class> friend class ::Memory;
   template <class, class> friend class ::InnerNode;
   template <class, class> friend class ::OuterNode;
   template <class, class> friend class ::Map;
@@ -1229,6 +1245,7 @@ const MultimapIterator<K, V> inline Multimap<K, V>::End() const {
 
 template <class K, class V> class MultimapIterator {
   template <class> friend class ::Serializer;
+  template <class> friend class ::Memory;
   template <class, class> friend class ::InnerNode;
   template <class, class> friend class ::OuterNode;
   template <class, class> friend class ::Map;
@@ -1385,11 +1402,11 @@ template <class K, class V> void MultimapIterator<K, V>::Decrement() {
 
 template <class T> class Serializer {
 public:
-  size_t Serialize(T &object, std::ostream &stream) {
+  static size_t Serialize(const T &object, std::ostream &stream) {
     stream.write((const char *)&object, sizeof(T));
     return stream ? sizeof(T) : std::string::npos;
   }
-  size_t Deserialize(T &object, std::istream &stream) {
+  static size_t Deserialize(T &object, std::istream &stream) {
     stream.read((char *)&object, sizeof(T));
     return stream ? sizeof(T) : std::string::npos;
   }
@@ -1397,13 +1414,13 @@ public:
 
 template <> class Serializer<std::string> {
 public:
-  size_t Serialize(std::string &object, std::ostream &stream) {
+  static size_t Serialize(const std::string &object, std::ostream &stream) {
     size_t length = object.length();
     stream.write((const char *)&length, sizeof(size_t));
     stream.write((const char *)&object[0], length);
     return stream ? sizeof(size_t) + length : std::string::npos;
   }
-  size_t Deserialize(std::string &object, std::istream &stream) {
+  static size_t Deserialize(std::string &object, std::istream &stream) {
     object.clear();
     size_t length;
     stream.read((char *)&length, sizeof(size_t));
@@ -1415,7 +1432,7 @@ public:
 
 template <class K, class V> class Serializer<std::map<K, V>> {
 public:
-  size_t Serialize(std::map<K, V> &object, std::ostream &stream) {
+  static size_t Serialize(const std::map<K, V> &object, std::ostream &stream) {
     typename std::map<K, V>::iterator it;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
@@ -1426,7 +1443,7 @@ public:
     return stream ? sizeof(size_t) + size * (sizeof(K) + sizeof(V))
                   : std::string::npos;
   }
-  size_t Deserialize(std::map<K, V> &object, std::istream &stream) {
+  static size_t Deserialize(std::map<K, V> &object, std::istream &stream) {
     object.clear();
     size_t size;
     stream.read((char *)&size, sizeof(size_t));
@@ -1444,7 +1461,8 @@ public:
 
 template <class K> class Serializer<std::map<K, std::string>> {
 public:
-  size_t Serialize(std::map<K, std::string> &object, std::ostream &stream) {
+  static size_t Serialize(const std::map<K, std::string> &object,
+                          std::ostream &stream) {
     size_t result = 0;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
@@ -1458,7 +1476,8 @@ public:
     result += size * sizeof(K);
     return stream ? result : std::string::npos;
   }
-  size_t Deserialize(std::map<K, std::string> &object, std::istream &stream) {
+  static size_t Deserialize(std::map<K, std::string> &object,
+                            std::istream &stream) {
     object.clear();
     size_t result = 0;
     size_t size;
@@ -1480,7 +1499,8 @@ public:
 
 template <class V> class Serializer<std::map<std::string, V>> {
 public:
-  size_t Serialize(std::map<std::string, V> &object, std::ostream &stream) {
+  static size_t Serialize(const std::map<std::string, V> &object,
+                          std::ostream &stream) {
     size_t result = 0;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
@@ -1494,7 +1514,8 @@ public:
     result += size * sizeof(V);
     return stream ? result : std::string::npos;
   }
-  size_t Deserialize(std::map<std::string, V> &object, std::istream &stream) {
+  static size_t Deserialize(std::map<std::string, V> &object,
+                            std::istream &stream) {
     object.clear();
     size_t result = 0;
     size_t size;
@@ -1516,7 +1537,7 @@ public:
 
 template <class T> class Serializer<std::vector<T>> {
 public:
-  size_t Serialize(std::vector<T> &object, std::ostream &stream) {
+  static size_t Serialize(const std::vector<T> &object, std::ostream &stream) {
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
     for (size_t i = 0; i < size; i++) {
@@ -1524,7 +1545,7 @@ public:
     }
     return stream ? sizeof(size_t) + size * sizeof(T) : std::string::npos;
   }
-  size_t Deserialize(std::vector<T> &object, std::istream &stream) {
+  static size_t Deserialize(std::vector<T> &object, std::istream &stream) {
     object.clear();
     size_t size;
     stream.read((char *)&size, sizeof(size_t));
@@ -1538,7 +1559,8 @@ public:
 
 template <> class Serializer<std::vector<std::string>> {
 public:
-  size_t Serialize(std::vector<std::string> &object, std::ostream &stream) {
+  static size_t Serialize(const std::vector<std::string> &object,
+                          std::ostream &stream) {
     size_t result = 0;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
@@ -1551,7 +1573,8 @@ public:
     }
     return stream ? result : std::string::npos;
   }
-  size_t Deserialize(std::vector<std::string> &object, std::istream &stream) {
+  static size_t Deserialize(std::vector<std::string> &object,
+                            std::istream &stream) {
     size_t result = 0;
     object.clear();
     size_t size;
@@ -1569,49 +1592,48 @@ public:
   }
 };
 
-template <class K, class V> class Serializer<Map<K, V>> {
-public:
-  size_t Serialize(Map<K, V> &map, std::ostream &stream);
-  size_t Deserialize(Map<K, V> &map, std::istream &stream);
-};
-
 template <> class Serializer<JsonArray> {
 public:
-  size_t Serialize(JsonArray &array, std::ostream &stream) {
-    return SerializeJsonArray(array, stream);
+  static size_t Serialize(const JsonArray &object, std::ostream &stream) {
+    return SerializeJsonArray(object, stream);
   }
-  size_t Deserialize(JsonArray &array, std::istream &stream) {
-    return DeserializeJsonArray(array, stream);
+  static size_t Deserialize(JsonArray &object, std::istream &stream) {
+    return DeserializeJsonArray(object, stream);
   }
 };
 
 template <> class Serializer<JsonObject> {
 public:
-  size_t Serialize(JsonObject &object, std::ostream &stream) {
+  static size_t Serialize(const JsonObject &object, std::ostream &stream) {
     return SerializeJsonObject(object, stream);
   }
-  size_t Deserialize(JsonObject &object, std::istream &stream) {
+  static size_t Deserialize(JsonObject &object, std::istream &stream) {
     return DeserializeJsonObject(object, stream);
   }
 };
 
+template <class K, class V> class Serializer<Map<K, V>> {
+public:
+  static size_t Serialize(const Map<K, V> &object, std::ostream &stream);
+  static size_t Deserialize(Map<K, V> &object, std::istream &stream);
+};
+
 template <class K, class V>
-size_t Serializer<Map<K, V>>::Serialize(Map<K, V> &map, std::ostream &stream) {
+size_t Serializer<Map<K, V>>::Serialize(const Map<K, V> &object,
+                                        std::ostream &stream) {
   size_t bytes = 0;
-  if (map.root_ == nullptr) {
+  if (object.root_ == nullptr) {
     return bytes;
   }
-  size_t size = map.Size();
+  size_t size = object.Size();
   stream.write((const char *)&size, sizeof(size_t));
   bytes += sizeof(size_t);
-  OuterNode<K, V> *cursor = map.FirstLeaf();
-  Serializer<K> key_serializer;
-  Serializer<V> value_serializer;
+  OuterNode<K, V> *cursor = object.FirstLeaf();
   size_t counter = 0;
   for (;;) {
     for (size_t i = 0; i < cursor->keys_.size(); i++) {
-      bytes += key_serializer.Serialize(cursor->keys_[i], stream);
-      bytes += value_serializer.Serialize(cursor->values_[i], stream);
+      bytes += Serializer<K>::Serialize(cursor->keys_[i], stream);
+      bytes += Serializer<V>::Serialize(cursor->values_[i], stream);
       counter++;
     }
     if (cursor->next_) {
@@ -1627,11 +1649,11 @@ size_t Serializer<Map<K, V>>::Serialize(Map<K, V> &map, std::ostream &stream) {
 }
 
 template <class K, class V>
-size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
+size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
                                           std::istream &stream) {
-  auto find_fanout = [](size_t cache, size_t prio, size_t maximum) {
-    if (cache >= 2 * prio) {
-      return prio;
+  auto find_fanout = [](size_t cache, size_t priority, size_t maximum) {
+    if (cache >= 2 * priority) {
+      return priority;
     } else {
       if (cache > maximum) {
         return cache / 2;
@@ -1641,11 +1663,11 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
     }
   };
   size_t bytes = 0;
-  map.Clear();
+  object.Clear();
   size_t size;
   stream.read((char *)&size, sizeof(size_t));
   bytes += sizeof(size_t);
-  map.size_ = size;
+  object.size_ = size;
   const size_t outer_fanout = 3 * OUTER_FANOUT / 4;
   const size_t inner_fanout = 3 * INNER_FANOUT / 4;
   std::vector<Node *> cache;
@@ -1656,12 +1678,10 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
   std::pair<K, V> key_value_pair;
   size_t fanout;
   size_t pairs_read = 0;
-  Serializer<K> key_serializer;
-  Serializer<V> value_serializer;
   while (pairs_read < size || !kv_cache.empty()) {
     while (pairs_read < size && kv_cache.size() < 2 * outer_fanout) {
-      bytes += key_serializer.Deserialize(key_value_pair.first, stream);
-      bytes += value_serializer.Deserialize(key_value_pair.second, stream);
+      bytes += Serializer<K>::Deserialize(key_value_pair.first, stream);
+      bytes += Serializer<V>::Deserialize(key_value_pair.second, stream);
       kv_cache.emplace_back(key_value_pair);
       pairs_read++;
     }
@@ -1687,7 +1707,7 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
   for (;;) {
     size_t cache_size = cache.size();
     if (cache_size == 1) {
-      map.root_ = cache[0];
+      object.root_ = cache[0];
       break;
     }
     size_t cache_index = 0;
@@ -1701,12 +1721,10 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
       inner->children_[0] = cache[cache_index++];
       for (size_t i = 0; i < fanout - 1; i++) {
         if (cache[cache_index]->IsOuter()) {
-          OuterNode<K, V> *node =
-              static_cast<OuterNode<K, V> *>(cache[cache_index]);
+          OuterNode<K, V> *node = (OuterNode<K, V> *)(cache[cache_index]);
           inner->keys_[i] = node->keys_.front();
         } else {
-          InnerNode<K, V> *node =
-              static_cast<InnerNode<K, V> *>(cache[cache_index]);
+          InnerNode<K, V> *node = (InnerNode<K, V> *)(cache[cache_index]);
           inner->keys_[i] = node->keys_.front();
         }
         inner->children_[i + 1] = cache[cache_index++];
@@ -1720,5 +1738,125 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &map,
   }
   return stream ? bytes : std::string::npos;
 }
+
+template <class T> class Memory {
+public:
+  static uint64_t Consumption(const T &object) { return sizeof(object); }
+};
+
+template <> class Memory<std::string> {
+public:
+  static uint64_t Consumption(const std::string &object) {
+    return sizeof(std::string) + object.capacity();
+  }
+};
+
+template <class K, class V> class Memory<std::map<K, V>> {
+public:
+  static uint64_t Consumption(const std::map<K, V> &object) {
+    uint64_t result = sizeof(std::map<K, V>);
+    for (auto it = object.begin(); it != object.end(); it++) {
+      result += sizeof(K) + sizeof(V);
+    }
+    return result;
+  }
+};
+
+template <class K> class Memory<std::map<K, std::string>> {
+public:
+  static uint64_t Consumption(const std::map<K, std::string> &object) {
+    uint64_t result = sizeof(std::map<K, std::string>);
+    for (auto it = object.begin(); it != object.end(); it++) {
+      result += sizeof(K) + Memory<std::string>::Consumption(object->second);
+    }
+    return result;
+  }
+};
+
+template <class V> class Memory<std::map<std::string, V>> {
+public:
+  static uint64_t Consumption(const std::map<std::string, V> &object) {
+    uint64_t result = sizeof(std::map<std::string, V>);
+    for (auto it = object.begin(); it != object.end(); it++) {
+      result += Memory<std::string>::Consumption(object->first) + sizeof(V);
+    }
+    return result;
+  }
+};
+
+template <class T> class Memory<std::vector<T>> {
+public:
+  static uint64_t Consumption(const std::vector<T> &object) {
+    return sizeof(T) * object.capacity();
+  }
+};
+
+template <> class Memory<std::vector<std::string>> {
+public:
+  static uint64_t Consumption(const std::vector<std::string> &object) {
+    uint64_t result = sizeof(std::vector<std::string>);
+    for (size_t i = 0; i < object.size(); i++) {
+      result += Memory<std::string>::Consumption(object[i]);
+    }
+    return result;
+  }
+};
+
+template <> class Memory<JsonObject> {
+public:
+  static uint64_t Consumption(const JsonObject &object) {
+    return MemoryJsonObject(object);
+  }
+};
+
+template <> class Memory<JsonArray> {
+public:
+  static uint64_t Consumption(const JsonArray &object) {
+    return MemoryJsonArray(object);
+  }
+};
+
+template <class K, class V> class Memory<Map<K, V>> {
+public:
+  static uint64_t Consumption(const Map<K, V> &object) {
+    uint64_t result = sizeof(Map<K, V>);
+    if (object.root_ == nullptr) {
+      return result;
+    }
+    std::stack<const Node *> todo;
+    todo.push(object.root_);
+    while (!todo.empty()) {
+      const Node *current = todo.top();
+      todo.pop();
+      if (!current->IsOuter()) {
+        const InnerNode<K, V> *inner =
+            static_cast<const InnerNode<K, V> *>(current);
+        result += sizeof(InnerNode<K, V>);
+        for (size_t i = 0; i < inner->CountKeys(); i++) {
+          result += Memory<K>::Consumption(inner->GetKey(i));
+        }
+        result += (inner->keys_.capacity() - inner->CountKeys()) * sizeof(K);
+        result += sizeof(void *) * inner->children_.capacity();
+        for (size_t i = 0; i < inner->CountChildren(); i++) {
+          todo.push(inner->GetChild(i));
+        }
+      } else {
+        const OuterNode<K, V> *outer =
+            static_cast<const OuterNode<K, V> *>(current);
+        result += sizeof(OuterNode<K, V>);
+        for (size_t i = 0; i < outer->CountKeys(); i++) {
+          result += Memory<K>::Consumption(outer->GetKey(i));
+        }
+        result += (outer->keys_.capacity() - outer->CountKeys()) * sizeof(K);
+        for (size_t i = 0; i < outer->CountValues(); i++) {
+          result += Memory<V>::Consumption(outer->GetValue(i));
+        }
+        result +=
+            (outer->values_.capacity() - outer->CountValues()) * sizeof(V);
+      }
+    }
+    return result;
+  }
+};
 
 #endif

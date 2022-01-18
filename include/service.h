@@ -50,12 +50,13 @@ public:
   virtual void Initialize();
   virtual void Tick();
   virtual void Shutdown();
+  void Rollover();
   JsonArray Insert(const JsonArray &values);
   JsonArray Erase(const JsonArray &keys);
-  JsonArray Find(const JsonArray &keys);
-  JsonArray Keys();
-  JsonArray Values();
-  JsonObject Image();
+  JsonArray Find(const JsonArray &keys) const;
+  JsonArray Keys() const;
+  JsonArray Values() const;
+  JsonObject Image() const;
 
 private:
   std::string filepath_;
@@ -65,7 +66,6 @@ private:
   std::string filepath_corrupted_;
   std::fstream stream_;
   Map<std::string, JsonObject> db_;
-  Serializer<Map<std::string, JsonObject>> serializer_;
   RandomGenerator random_;
   std::thread rollover_worker_;
   std::atomic<bool> rollover_in_progress_;
@@ -79,7 +79,8 @@ public:
   virtual void Initialize();
   virtual void Tick();
   virtual void Shutdown();
-  bool AccessPermitted(const std::string &user, const std::string &password);
+  bool AccessPermitted(const std::string &user,
+                       const std::string &password) const;
 
 private:
   std::string filepath_;

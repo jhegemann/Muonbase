@@ -61,7 +61,7 @@ public:
   void PutObject(JsonObject value);
   void PutArray(JsonArray value);
   JsonBoolean GetBoolean(size_t index) const;
-  JsonInteger GetAsInteger(size_t index) const;
+  JsonInteger GetInteger(size_t index) const;
   JsonFloat GetFloat(size_t index) const;
   JsonString GetString(size_t index) const;
   JsonObject GetObject(size_t index) const;
@@ -89,7 +89,7 @@ public:
   JsonObject(const JsonObject &object);
   JsonObject(const std::string &source);
   virtual ~JsonObject();
-  bool Has(const std::string &key);
+  bool Has(const std::string &key) const;
   void PutNull(const std::string &key);
   void PutBoolean(const std::string &key, JsonBoolean value);
   void PutInteger(const std::string &key, JsonInteger value);
@@ -98,7 +98,7 @@ public:
   void PutObject(const std::string &key, JsonObject value);
   void PutArray(const std::string &key, JsonArray value);
   JsonBoolean GetBoolean(const std::string &key) const;
-  JsonInteger GetAsInteger(const std::string &key) const;
+  JsonInteger GetInteger(const std::string &key) const;
   JsonFloat GetFloat(const std::string &key) const;
   JsonString GetString(const std::string &key) const;
   JsonObject GetObject(const std::string &key) const;
@@ -120,10 +120,13 @@ private:
   void Parse(const std::string &source, size_t &source_offset);
 };
 
-size_t SerializeJsonObject(JsonObject &object, std::ostream &stream);
+size_t SerializeJsonObject(const JsonObject &object, std::ostream &stream);
 size_t DeserializeJsonObject(JsonObject &object, std::istream &stream);
-size_t SerializeJsonArray(JsonArray &array, std::ostream &stream);
-size_t DeserializeJsonArray(JsonArray &array, std::istream &stream);
+size_t SerializeJsonArray(const JsonArray &object, std::ostream &stream);
+size_t DeserializeJsonArray(JsonArray &object, std::istream &stream);
+
+uint64_t MemoryJsonObject(const JsonObject &object);
+uint64_t MemoryJsonArray(const JsonArray &object);
 
 JsonObject RandomDocument();
 JsonArray RandomDocumentArray();

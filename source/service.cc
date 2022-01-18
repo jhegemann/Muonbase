@@ -35,7 +35,8 @@ void DocumentDatabase::Initialize() {
   random_.Seed(time(nullptr));
   if (FileExists(filepath_)) {
     stream_.open(filepath_, std::fstream::in | std::fstream::binary);
-    size_t bytes = serializer_.Deserialize(db_, stream_);
+    size_t bytes =
+        Serializer<Map<std::string, JsonObject>>::Deserialize(db_, stream_);
     stream_.close();
     if (bytes == std::string::npos) {
       rename(filepath_.c_str(), filepath_corrupted_.c_str());
@@ -59,7 +60,8 @@ void DocumentDatabase::Initialize() {
     Log::GetInstance()->Info("database journal rollover");
     stream_.open(filepath_snapshot_, std::fstream::out | std::fstream::binary |
                                          std::fstream::trunc);
-    size_t bytes = serializer_.Serialize(db_, stream_);
+    size_t bytes =
+        Serializer<Map<std::string, JsonObject>>::Serialize(db_, stream_);
     stream_.close();
     if (bytes == std::string::npos) {
       remove(filepath_snapshot_.c_str());
@@ -74,9 +76,15 @@ void DocumentDatabase::Initialize() {
   if (unlink_journal) {
     remove(filepath_journal_.c_str());
   }
+  uint64_t usage = Memory<Map<std::string, JsonObject>>::Consumption(db_);
+  Log::GetInstance()->Info("memory usage: " + std::to_string(usage));
 }
 
-void DocumentDatabase::Tick() {
+void DocumentDatabase::Tick() { Rollover(); }
+
+void DocumentDatabase::Shutdown() {}
+
+void DocumentDatabase::Rollover() {
   if (rollover_in_progress_) {
     return;
   }
@@ -106,7 +114,8 @@ void DocumentDatabase::Tick() {
       Map<std::string, JsonObject> db;
       if (FileExists(filepath_)) {
         stream_.open(filepath_, std::fstream::in | std::fstream::binary);
-        size_t bytes = serializer_.Deserialize(db, stream_);
+        size_t bytes =
+            Serializer<Map<std::string, JsonObject>>::Deserialize(db, stream_);
         stream_.close();
         if (bytes == std::string::npos) {
           rename(filepath_.c_str(), filepath_corrupted_.c_str());
@@ -118,7 +127,8 @@ void DocumentDatabase::Tick() {
       stream_.open(filepath_snapshot_, std::fstream::out |
                                            std::fstream::binary |
                                            std::fstream::trunc);
-      size_t bytes = serializer_.Serialize(db, stream_);
+      size_t bytes =
+          Serializer<Map<std::string, JsonObject>>::Serialize(db, stream_);
       stream_.close();
       if (bytes == std::string::npos) {
         remove(filepath_snapshot_.c_str());
@@ -131,8 +141,6 @@ void DocumentDatabase::Tick() {
     });
   }
 }
-
-void DocumentDatabase::Shutdown() {}
 
 JsonArray DocumentDatabase::Insert(const JsonArray &values) {
   JsonArray result;
@@ -172,7 +180,7 @@ JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
   return result;
 }
 
-JsonArray DocumentDatabase::Find(const JsonArray &keys) {
+JsonArray DocumentDatabase::Find(const JsonArray &keys) const {
   JsonArray result;
   for (size_t i = 0; i < keys.Size(); i++) {
     auto it = db_.Find(keys.GetString(i));
@@ -185,7 +193,7 @@ JsonArray DocumentDatabase::Find(const JsonArray &keys) {
   return result;
 }
 
-JsonArray DocumentDatabase::Keys() {
+JsonArray DocumentDatabase::Keys() const {
   MapIterator<std::string, JsonObject> it = db_.Begin();
   JsonArray keys;
   while (it != db_.End()) {
@@ -195,7 +203,7 @@ JsonArray DocumentDatabase::Keys() {
   return keys;
 }
 
-JsonArray DocumentDatabase::Values() {
+JsonArray DocumentDatabase::Values() const {
   MapIterator<std::string, JsonObject> it = db_.Begin();
   JsonArray values;
   while (it != db_.End()) {
@@ -205,7 +213,7 @@ JsonArray DocumentDatabase::Values() {
   return values;
 }
 
-JsonObject DocumentDatabase::Image() {
+JsonObject DocumentDatabase::Image() const {
   MapIterator<std::string, JsonObject> it = db_.Begin();
   JsonObject image;
   while (it != db_.End()) {
@@ -226,7 +234,7 @@ void UserPool::Tick() {}
 void UserPool::Shutdown() {}
 
 bool UserPool::AccessPermitted(const std::string &user,
-                               const std::string &password) {
+                               const std::string &password) const {
   if (users_.Has(user) && users_.IsString(user)) {
     if (Sha256Hash(password).compare(users_.GetString(user)) == 0) {
       return true;

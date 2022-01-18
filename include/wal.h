@@ -15,8 +15,8 @@ limitations under the License. */
 #ifndef WAL_H
 #define WAL_H
 
-#include "map.h"
 #include "json.h"
+#include "map.h"
 #include <deque>
 #include <sstream>
 
@@ -31,9 +31,9 @@ template <class K, class V> class LogEntry {
 public:
   LogEntry(StorageModification operation, K &key, V *value = nullptr);
   virtual ~LogEntry();
-  StorageModification GetOperation();
-  const K &GetKey();
-  const V *GetValue();
+  StorageModification GetOperation() const;
+  const K &GetKey() const;
+  const V *GetValue() const;
 
 private:
   StorageModification operation_;
@@ -47,13 +47,16 @@ LogEntry<K, V>::LogEntry(StorageModification operation, K &key, V *value)
 
 template <class K, class V> LogEntry<K, V>::~LogEntry() {}
 
-template <class K, class V> StorageModification LogEntry<K, V>::GetOperation() {
+template <class K, class V>
+StorageModification LogEntry<K, V>::GetOperation() const {
   return operation_;
 }
 
-template <class K, class V> const K &LogEntry<K, V>::GetKey() { return key_; }
+template <class K, class V> const K &LogEntry<K, V>::GetKey() const {
+  return key_;
+}
 
-template <class K, class V> const V *LogEntry<K, V>::GetValue() {
+template <class K, class V> const V *LogEntry<K, V>::GetValue() const {
   return value_;
 }
 
@@ -68,8 +71,6 @@ template <class K, class V>
 void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
   std::fstream stream;
   std::deque<LogEntry<K, V>> log;
-  Serializer<K> key_serializer;
-  Serializer<V> value_serializer;
   size_t value_bytes = 0;
   if (FileExists(filepath)) {
     size_t size = FileSize(filepath);
@@ -95,7 +96,7 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
       default:
         throw std::runtime_error("unknown storage operation");
       }
-      bytes += key_serializer.Deserialize(key, stream);
+      bytes += Serializer<K>::Deserialize(key, stream);
       stream.read((char *)&buffer, sizeof(uint8_t));
       if (!stream) {
         throw std::runtime_error("incomplete journal message");
@@ -105,7 +106,7 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
         value = nullptr;
       } else {
         value = new JsonObject();
-        value_bytes = value_serializer.Deserialize((*value), stream);
+        value_bytes = Serializer<V>::Deserialize((*value), stream);
         if (value_bytes == std::string::npos) {
           throw std::runtime_error("incomplete journal message");
           break;
@@ -144,19 +145,17 @@ void WriteAheadLog<K, V>::Append(const std::string &filepath,
                                  StorageModification operation, K &key,
                                  V *value) {
   std::fstream stream;
-  Serializer<K> key_serializer;
-  Serializer<V> value_serializer;
   stream.open(filepath,
               std::fstream::out | std::fstream::binary | std::fstream::app);
   uint8_t buffer = static_cast<uint8_t>(operation);
   stream.write((const char *)&buffer, sizeof(uint8_t));
-  if (key_serializer.Serialize(key, stream) == std::string::npos) {
+  if (Serializer<K>::Serialize(key, stream) == std::string::npos) {
     throw std::runtime_error("error appending to journal");
   }
   if (value) {
     buffer = 1;
     stream.write((const char *)&buffer, sizeof(uint8_t));
-    if (value_serializer.Serialize((*value), stream) == std::string::npos) {
+    if (Serializer<V>::Serialize((*value), stream) == std::string::npos) {
       throw std::runtime_error("error appending to journal");
     }
   } else {
