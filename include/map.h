@@ -613,6 +613,7 @@ protected:
   std::tuple<size_t, OuterNode<K, V> *> Locate(const K &key) const;
   OuterNode<K, V> *FirstLeaf() const;
   OuterNode<K, V> *LastLeaf() const;
+  static size_t Fanout(size_t cache, size_t priority, size_t maximum);
 };
 
 template <class K, class V> Map<K, V>::Map() : root_(nullptr), size_(0) {}
@@ -688,7 +689,8 @@ size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) const {
   return std::min(node_position, kin_position);
 }
 
-template <class K, class V> K Map<K, V>::SeparatorKey(Node *node, Node *kin) const {
+template <class K, class V>
+K Map<K, V>::SeparatorKey(Node *node, Node *kin) const {
   const size_t index = SeparatorIndex(node, kin);
   if (index == std::string::npos) {
     throw std::runtime_error("tree: map separator key");
@@ -947,6 +949,19 @@ template <class K, class V> MapIterator<K, V> Map<K, V>::End() {
 
 template <class K, class V> const MapIterator<K, V> Map<K, V>::End() const {
   return MapIterator<K, V>();
+}
+
+template <class K, class V>
+size_t Map<K, V>::Fanout(size_t cache, size_t priority, size_t maximum) {
+  if (cache >= 2 * priority) {
+    return priority;
+  } else {
+    if (cache > maximum) {
+      return cache / 2;
+    } else {
+      return cache;
+    }
+  }
 }
 
 template <class K, class V> class MapIterator {
@@ -1651,17 +1666,6 @@ size_t Serializer<Map<K, V>>::Serialize(const Map<K, V> &object,
 template <class K, class V>
 size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
                                           std::istream &stream) {
-  auto find_fanout = [](size_t cache, size_t priority, size_t maximum) {
-    if (cache >= 2 * priority) {
-      return priority;
-    } else {
-      if (cache > maximum) {
-        return cache / 2;
-      } else {
-        return cache;
-      }
-    }
-  };
   size_t bytes = 0;
   object.Clear();
   size_t size;
@@ -1685,7 +1689,7 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
       kv_cache.emplace_back(key_value_pair);
       pairs_read++;
     }
-    fanout = find_fanout(kv_cache.size(), outer_fanout, OUTER_FANOUT);
+    fanout = Map<K, V>::Fanout(kv_cache.size(), outer_fanout, OUTER_FANOUT);
     outer = new OuterNode<K, V>();
     outer->keys_.resize(fanout);
     outer->values_.resize(fanout);
@@ -1713,7 +1717,8 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
     size_t cache_index = 0;
     std::vector<Node *> cache_next;
     while (cache_size > 0) {
-      fanout = find_fanout(cache_size, inner_fanout + 1, INNER_FANOUT + 1);
+      fanout =
+          Map<K, V>::Fanout(cache_size, inner_fanout + 1, INNER_FANOUT + 1);
       cache_size -= fanout;
       inner = new InnerNode<K, V>();
       inner->keys_.resize(fanout - 1);
