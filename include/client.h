@@ -22,7 +22,6 @@ limitations under the License. */
 #include "http.h"
 #include "json.h"
 #include "log.h"
-#include "tcp.h"
 
 class Client {
 public:

@@ -25,128 +25,81 @@ template <class K, class V> class WriteAheadLog;
 
 enum StorageModification { STORAGE_INSERT = 0, STORAGE_ERASE };
 
-template <class K, class V> class LogEntry {
-  template <class, class> friend class ::WriteAheadLog;
-
-public:
-  LogEntry(StorageModification operation, K &key, V *value = nullptr);
-  virtual ~LogEntry();
-  StorageModification GetOperation() const;
-  const K &GetKey() const;
-  const V *GetValue() const;
-
-private:
-  StorageModification operation_;
-  K key_;
-  V *value_;
-};
-
-template <class K, class V>
-LogEntry<K, V>::LogEntry(StorageModification operation, K &key, V *value)
-    : operation_(operation), key_(key), value_(value) {}
-
-template <class K, class V> LogEntry<K, V>::~LogEntry() {}
-
-template <class K, class V>
-StorageModification LogEntry<K, V>::GetOperation() const {
-  return operation_;
-}
-
-template <class K, class V> const K &LogEntry<K, V>::GetKey() const {
-  return key_;
-}
-
-template <class K, class V> const V *LogEntry<K, V>::GetValue() const {
-  return value_;
-}
-
 template <class K, class V> class WriteAheadLog {
 public:
   static void Replay(const std::string &filepath, Map<K, V> &db);
-  static void Append(const std::string &filepath, StorageModification operation,
+  static void Append(std::fstream &stream, StorageModification operation,
                      K &key, V *value = nullptr);
 };
 
 template <class K, class V>
 void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
   std::fstream stream;
-  std::deque<LogEntry<K, V>> log;
   size_t value_bytes = 0;
-  if (FileExists(filepath)) {
-    size_t size = FileSize(filepath);
-    stream.open(filepath, std::fstream::in | std::fstream::binary);
-    uint8_t buffer;
-    StorageModification operation;
-    K key;
-    V *value;
-    size_t bytes = 0;
-    while (bytes < size) {
-      stream.read((char *)&buffer, sizeof(uint8_t));
-      if (!stream) {
-        throw std::runtime_error("incomplete journal message");
-      }
-      bytes += sizeof(uint8_t);
-      switch (buffer) {
-      case 0:
-        operation = STORAGE_INSERT;
-        break;
-      case 1:
-        operation = STORAGE_ERASE;
-        break;
-      default:
-        throw std::runtime_error("unknown storage operation");
-      }
-      bytes += Serializer<K>::Deserialize(key, stream);
-      stream.read((char *)&buffer, sizeof(uint8_t));
-      if (!stream) {
-        throw std::runtime_error("incomplete journal message");
-      }
-      bytes += sizeof(uint8_t);
-      if (buffer == 0) {
-        value = nullptr;
-      } else {
-        value = new JsonObject();
-        value_bytes = Serializer<V>::Deserialize((*value), stream);
-        if (value_bytes == std::string::npos) {
-          throw std::runtime_error("incomplete journal message");
-          break;
-        }
-        bytes += value_bytes;
-      }
-      log.emplace_back(operation, key, value);
-    }
-    stream.close();
-    if (!stream) {
-      throw std::runtime_error("error when loading journal");
-    }
+  if (!FileExists(filepath)) {
+    return;
   }
-  for (auto it = log.begin(); it != log.end(); it++) {
-    switch (it->GetOperation()) {
-    case STORAGE_INSERT:
-      db.Insert(it->GetKey(), *it->GetValue());
+  size_t size = FileSize(filepath);
+  stream.open(filepath, std::fstream::in | std::fstream::binary);
+  uint8_t buffer;
+  StorageModification operation;
+  K key;
+  V *value;
+  size_t bytes = 0;
+  while (bytes < size) {
+    stream.read((char *)&buffer, sizeof(uint8_t));
+    if (!stream) {
+      throw std::runtime_error("incomplete journal message");
+    }
+    bytes += sizeof(uint8_t);
+    switch (buffer) {
+    case 0:
+      operation = STORAGE_INSERT;
       break;
-    case STORAGE_ERASE:
-      db.Erase(it->GetKey());
+    case 1:
+      operation = STORAGE_ERASE;
       break;
     default:
-      abort();
+      throw std::runtime_error("unknown storage modification");
+    }
+    bytes += Serializer<K>::Deserialize(key, stream);
+    stream.read((char *)&buffer, sizeof(uint8_t));
+    if (!stream) {
+      throw std::runtime_error("incomplete journal message");
+    }
+    bytes += sizeof(uint8_t);
+    if (buffer == 0) {
+      value = nullptr;
+    } else {
+      value = new JsonObject();
+      value_bytes = Serializer<V>::Deserialize((*value), stream);
+      if (value_bytes == std::string::npos) {
+        throw std::runtime_error("incomplete journal message");
+        break;
+      }
+      bytes += value_bytes;
+    }
+    switch (operation) {
+    case STORAGE_INSERT:
+      db.Insert(key, *value);
+      break;
+    case STORAGE_ERASE:
+      db.Erase(key);
+      break;
+    default:
+      throw std::runtime_error("unknown storage modification");
     }
   }
-  for (auto it = log.begin(); it != log.end(); it++) {
-    if (it->value_) {
-      delete it->value_;
-    }
+  stream.close();
+  if (!stream) {
+    throw std::runtime_error("error when loading journal");
   }
-  log.clear();
 }
 
 template <class K, class V>
-void WriteAheadLog<K, V>::Append(const std::string &filepath,
+void WriteAheadLog<K, V>::Append(std::fstream &stream,
                                  StorageModification operation, K &key,
                                  V *value) {
-  std::fstream stream;
-  stream.open(filepath,
-              std::fstream::out | std::fstream::binary | std::fstream::app);
   uint8_t buffer = static_cast<uint8_t>(operation);
   stream.write((const char *)&buffer, sizeof(uint8_t));
   if (Serializer<K>::Serialize(key, stream) == std::string::npos) {
@@ -163,7 +116,6 @@ void WriteAheadLog<K, V>::Append(const std::string &filepath,
     stream.write((const char *)&buffer, sizeof(uint8_t));
   }
   stream.flush();
-  stream.close();
   if (!stream) {
     throw std::runtime_error("error appending to journal");
   }

@@ -211,11 +211,17 @@ int main(int argc, char **argv) {
 
   try {
     Client client(ip, port, kUserDefault, kPasswordDefault);
+    Log::GetInstance()->Info("GET /keys");
     JsonArray keys = client.Keys();
+    Log::GetInstance()->Info("GET /values");
     JsonArray values = client.Values();
+    Log::GetInstance()->Info("GET /image");
     JsonObject image = client.Image();
+    Log::GetInstance()->Info("POST /insert");
     JsonArray added_keys = client.Insert(json::RandomObjectArray());
+    Log::GetInstance()->Info("POST /erase");
     client.Erase(added_keys);
+    Log::GetInstance()->Info("POST /find");
     client.Find(keys);
   } catch (std::runtime_error &) {
     Log::GetInstance()->Info("test failed");

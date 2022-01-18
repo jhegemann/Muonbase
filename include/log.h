@@ -24,7 +24,6 @@ limitations under the License. */
 #include "utils.h"
 
 const std::string kLogInfo = "info";
-const std::string kLogAsync = "async";
 const std::string kLogDatetimeFormat = "%d.%m.%Y-%H:%M:%S";
 
 class Log {

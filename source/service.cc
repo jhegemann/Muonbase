@@ -25,11 +25,7 @@ DocumentDatabase::DocumentDatabase(const std::string &filepath)
       filepath_corrupted_(filepath_ + kServiceSuffixCorrupted),
       rollover_in_progress_(false), wait_for_join_(false) {}
 
-DocumentDatabase::~DocumentDatabase() {
-  if (wait_for_join_) {
-    rollover_worker_.join();
-  }
-}
+DocumentDatabase::~DocumentDatabase() {}
 
 void DocumentDatabase::Initialize() {
   random_.Seed(time(nullptr));
@@ -76,13 +72,20 @@ void DocumentDatabase::Initialize() {
   if (unlink_journal) {
     remove(filepath_journal_.c_str());
   }
+  stream_journal_.open(filepath_journal_,
+                       std::fstream::out | std::fstream::binary);
   uint64_t usage = Memory<Map<std::string, JsonObject>>::Consumption(db_);
   Log::GetInstance()->Info("memory usage: " + std::to_string(usage));
 }
 
 void DocumentDatabase::Tick() { Rollover(); }
 
-void DocumentDatabase::Shutdown() {}
+void DocumentDatabase::Shutdown() {
+  stream_journal_.close();
+  if (wait_for_join_) {
+    rollover_worker_.join();
+  }
+}
 
 void DocumentDatabase::Rollover() {
   if (rollover_in_progress_) {
@@ -96,13 +99,19 @@ void DocumentDatabase::Rollover() {
   if (FileExists(filepath_)) {
     if (FileExists(filepath_journal_)) {
       if (FileSize(filepath_journal_) > FileSize(filepath_)) {
+        stream_journal_.close();
         rename(filepath_journal_.c_str(), filepath_closed_.c_str());
+        stream_journal_.open(filepath_journal_,
+                             std::fstream::out | std::fstream::binary);
       }
     }
   } else {
     if (FileExists(filepath_journal_)) {
       if (FileSize(filepath_journal_) > 4194304) {
+        stream_journal_.close();
         rename(filepath_journal_.c_str(), filepath_closed_.c_str());
+        stream_journal_.open(filepath_journal_,
+                             std::fstream::out | std::fstream::binary);
       }
     }
   }
@@ -157,7 +166,7 @@ JsonArray DocumentDatabase::Insert(const JsonArray &values) {
       }
     }
     result.PutString(key);
-    Journal::Append(filepath_journal_, STORAGE_INSERT, key, &value);
+    Journal::Append(stream_journal_, STORAGE_INSERT, key, &value);
     db_.Insert(key, value);
   }
   return result;
@@ -174,7 +183,7 @@ JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
       continue;
     }
     result.PutString(key);
-    Journal::Append(filepath_journal_, STORAGE_ERASE, key, nullptr);
+    Journal::Append(stream_journal_, STORAGE_ERASE, key, nullptr);
     db_.Erase(it);
   }
   return result;

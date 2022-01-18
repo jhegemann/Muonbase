@@ -65,6 +65,7 @@ private:
   std::string filepath_snapshot_;
   std::string filepath_corrupted_;
   std::fstream stream_;
+  std::fstream stream_journal_;
   Map<std::string, JsonObject> db_;
   RandomGenerator random_;
   std::thread rollover_worker_;
