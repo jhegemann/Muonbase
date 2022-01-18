@@ -605,10 +605,10 @@ protected:
   const V &Get(const K &key) const;
   V &Get(const K &key);
   bool Erase(OuterNode<K, V> *outer, const K &key);
-  Node *LeftNode(Node *node);
-  Node *RightNode(Node *node);
-  size_t SeparatorIndex(Node *node, Node *kin);
-  K SeparatorKey(Node *node, Node *kin);
+  Node *LeftNode(Node *node) const;
+  Node *RightNode(Node *node) const;
+  size_t SeparatorIndex(Node *node, Node *kin) const;
+  K SeparatorKey(Node *node, Node *kin) const;
   void PropagateUpwards(Node *origin, K &up_key, Node *kin);
   std::tuple<size_t, OuterNode<K, V> *> Locate(const K &key) const;
   OuterNode<K, V> *FirstLeaf() const;
@@ -644,7 +644,7 @@ template <class K, class V> void Map<K, V>::Clear() {
 
 template <class K, class V> size_t Map<K, V>::Size() const { return size_; }
 
-template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) {
+template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) const {
   if (node == root_) {
     return nullptr;
   }
@@ -657,7 +657,7 @@ template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) {
   return node_parent->children_[position - 1];
 }
 
-template <class K, class V> Node *Map<K, V>::RightNode(Node *node) {
+template <class K, class V> Node *Map<K, V>::RightNode(Node *node) const {
   if (node == root_) {
     return nullptr;
   }
@@ -672,7 +672,7 @@ template <class K, class V> Node *Map<K, V>::RightNode(Node *node) {
 }
 
 template <class K, class V>
-size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) {
+size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) const {
   InnerNode<K, V> *parent = static_cast<InnerNode<K, V> *>(node->GetParent());
   const size_t node_position = parent->ChildIndex(node);
   if (node_position == std::string::npos) {
@@ -688,7 +688,7 @@ size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) {
   return std::min(node_position, kin_position);
 }
 
-template <class K, class V> K Map<K, V>::SeparatorKey(Node *node, Node *kin) {
+template <class K, class V> K Map<K, V>::SeparatorKey(Node *node, Node *kin) const {
   const size_t index = SeparatorIndex(node, kin);
   if (index == std::string::npos) {
     throw std::runtime_error("tree: map separator key");
@@ -1595,20 +1595,20 @@ public:
 template <> class Serializer<JsonArray> {
 public:
   static size_t Serialize(const JsonArray &object, std::ostream &stream) {
-    return SerializeJsonArray(object, stream);
+    return json::Serialize(object, stream);
   }
   static size_t Deserialize(JsonArray &object, std::istream &stream) {
-    return DeserializeJsonArray(object, stream);
+    return json::Deserialize(object, stream);
   }
 };
 
 template <> class Serializer<JsonObject> {
 public:
   static size_t Serialize(const JsonObject &object, std::ostream &stream) {
-    return SerializeJsonObject(object, stream);
+    return json::Serialize(object, stream);
   }
   static size_t Deserialize(JsonObject &object, std::istream &stream) {
-    return DeserializeJsonObject(object, stream);
+    return json::Deserialize(object, stream);
   }
 };
 
@@ -1805,14 +1805,14 @@ public:
 template <> class Memory<JsonObject> {
 public:
   static uint64_t Consumption(const JsonObject &object) {
-    return MemoryJsonObject(object);
+    return json::Memory(object);
   }
 };
 
 template <> class Memory<JsonArray> {
 public:
   static uint64_t Consumption(const JsonArray &object) {
-    return MemoryJsonArray(object);
+    return json::Memory(object);
   }
 };
 

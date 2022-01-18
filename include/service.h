@@ -29,10 +29,10 @@ template <class K, class V> class Map;
 
 typedef WriteAheadLog<std::string, JsonObject> Journal;
 
-const std::string kJournalSuffix = ".journal";
-const std::string kSnapshotSuffix = ".snapshot";
-const std::string kClosedSuffix = ".closed";
-const std::string kCorruptedSuffix = ".corrupted";
+const std::string kServiceSuffixJournal = ".journal";
+const std::string kServiceSuffixSnapshot = ".snapshot";
+const std::string kServiceSuffixClosed = ".closed";
+const std::string kServiceSuffixCorrupted = ".corrupted";
 
 class ApiService {
 public:
@@ -61,7 +61,7 @@ public:
 private:
   std::string filepath_;
   std::string filepath_journal_;
-  std::string filepath_journal_closed_;
+  std::string filepath_closed_;
   std::string filepath_snapshot_;
   std::string filepath_corrupted_;
   std::fstream stream_;

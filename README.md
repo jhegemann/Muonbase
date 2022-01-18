@@ -31,8 +31,8 @@ project parallel to fulltime employments. Please understand that therefore maint
 a bit slow.
 
 Muonbase does not aim to be extremely portable, instead it is designed to run within a common linux distribution.
-It can be build with gcc and c++-20 standard. The g++ version that is currently in use for development
-is g++ 9.3.0. The reason for not making it highly portable in the first place was to save development time.
+It can be build with gcc and `c++-20` standard. The g++ version that is currently in use for development
+is `g++ 9.3.0`. The reason for not making it highly portable in the first place was to save development time.
 In addition, it is assumed to run on *servers* that in most cases run a common linux distribution anyway. 
 It is mandatory that epoll system calls are supported, but that is the normal case.
 
@@ -51,7 +51,7 @@ both the binary package `openssl` as well as the header files in `openssl-dev`. 
 ```
 make clean && make
 ```
-The compiler is configured to give all warnings via `-Wall` and to be `-pedantic`; optimization level `-O3`is applied.
+The compiler is configured to give all warnings via `-Wall` and to be `-pedantic`; optimization level `-Ofast`is applied.
 
 # Usage
 Two binaries are produced by the makefile, which are (i) muonbase-server.app, and (ii) muonbase-client.app. Binary (i) runs the 
@@ -91,8 +91,8 @@ or make sure you use e.g. logrotate to automatically rotate your logfiles.
 # Configuration
 The configuration file is in a json format and it is mandatory for the database server to run. 
 Tune the parameters as you want, but keep a few things in mind: (i) binding
-to ip 0.0.0.0 is not recommended, since the transport layer does not support ssl, (ii) binding to
-ports below 1024 is not recommended since this requires root privileges and is therefore by design not secure. 
+to ip `0.0.0.0` is not recommended, since the transport layer does not support ssl, (ii) binding to
+ports below `1024` is not recommended since this requires root privileges and is therefore by design not secure. 
 The data and user paths can be chosen freely as well as the log path. Make sure permissions in particular 
 of the users file are correct, such that it can be accessed properly by the database server. 
 The working directory will only be used if the daemon command line option is activated, 

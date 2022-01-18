@@ -647,17 +647,10 @@ void JsonArray::Parse(const std::string &source, size_t &source_offset) {
   source_offset = offset;
 }
 
-size_t SerializeJsonObject(const JsonObject &object, std::ostream &stream) {
+namespace json {
+
+size_t Serialize(const JsonObject &object, std::ostream &stream) {
   size_t bytes = 0;
-  static const uint8_t kNull = 0;
-  static const uint8_t kBoolean = 1;
-  static const uint8_t kInteger = 2;
-  static const uint8_t kFloat = 3;
-  static const uint8_t kString = 4;
-  static const uint8_t kObject = 5;
-  static const uint8_t kArray = 6;
-  static const JsonBoolean kFalse = false;
-  static const JsonBoolean kTrue = true;
   std::vector<std::string> keys = object.Keys();
   size_t size = keys.size();
   stream.write((const char *)&size, sizeof(size_t));
@@ -669,41 +662,41 @@ size_t SerializeJsonObject(const JsonObject &object, std::ostream &stream) {
     stream.write((const char *)&keys[i][0], length);
     bytes += sizeof(size_t) + length;
     if (object.IsNull(keys[i])) {
-      stream.write((const char *)&kNull, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeNull, sizeof(uint8_t));
       bytes += sizeof(uint8_t);
     } else if (object.IsBoolean(keys[i])) {
-      stream.write((const char *)&kBoolean, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeBoolean, sizeof(uint8_t));
       if (object.GetBoolean(keys[i])) {
-        stream.write((const char *)&kTrue, sizeof(JsonBoolean));
+        stream.write((const char *)&kJsonTrue, sizeof(JsonBoolean));
       } else {
-        stream.write((const char *)&kFalse, sizeof(JsonBoolean));
+        stream.write((const char *)&kJsonFalse, sizeof(JsonBoolean));
       }
       bytes += sizeof(uint8_t) + sizeof(JsonBoolean);
     } else if (object.IsInteger(keys[i])) {
-      stream.write((const char *)&kInteger, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeInteger, sizeof(uint8_t));
       JsonInteger value = object.GetInteger(keys[i]);
       stream.write((const char *)&value, sizeof(JsonInteger));
       bytes += sizeof(uint8_t) + sizeof(JsonInteger);
     } else if (object.IsFloat(keys[i])) {
-      stream.write((const char *)&kFloat, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeFloat, sizeof(uint8_t));
       JsonFloat value = object.GetFloat(keys[i]);
       stream.write((const char *)&value, sizeof(JsonFloat));
       bytes += sizeof(uint8_t) + sizeof(JsonFloat);
     } else if (object.IsString(keys[i])) {
-      stream.write((const char *)&kString, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeString, sizeof(uint8_t));
       JsonString value = object.GetString(keys[i]);
       length = value.length();
       stream.write((const char *)&length, sizeof(size_t));
       stream.write((const char *)&value[0], length);
       bytes += sizeof(uint8_t) + sizeof(size_t) + length;
     } else if (object.IsObject(keys[i])) {
-      stream.write((const char *)&kObject, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeObject, sizeof(uint8_t));
       JsonObject value = object.GetObject(keys[i]);
-      bytes += sizeof(uint8_t) + SerializeJsonObject(value, stream);
+      bytes += sizeof(uint8_t) + json::Serialize(value, stream);
     } else if (object.IsArray(keys[i])) {
-      stream.write((const char *)&kArray, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeArray, sizeof(uint8_t));
       JsonArray value = object.GetArray(keys[i]);
-      bytes += sizeof(uint8_t) + SerializeJsonArray(value, stream);
+      bytes += sizeof(uint8_t) + json::Serialize(value, stream);
     } else {
       throw std::runtime_error("incompatible json type");
     }
@@ -711,16 +704,9 @@ size_t SerializeJsonObject(const JsonObject &object, std::ostream &stream) {
   return stream ? bytes : std::string::npos;
 }
 
-size_t DeserializeJsonObject(JsonObject &object, std::istream &stream) {
+size_t Deserialize(JsonObject &object, std::istream &stream) {
   object.Clear();
   size_t bytes = 0;
-  static const uint8_t kNull = 0;
-  static const uint8_t kBoolean = 1;
-  static const uint8_t kInteger = 2;
-  static const uint8_t kFloat = 3;
-  static const uint8_t kString = 4;
-  static const uint8_t kObject = 5;
-  static const uint8_t kArray = 6;
   size_t size;
   stream.read((char *)&size, sizeof(size_t));
   size_t length;
@@ -734,37 +720,37 @@ size_t DeserializeJsonObject(JsonObject &object, std::istream &stream) {
     uint8_t type_id;
     stream.read((char *)&type_id, sizeof(uint8_t));
     bytes += sizeof(uint8_t);
-    if (type_id == kNull) {
+    if (type_id == kJsonTypeNull) {
       object.PutNull(key);
-    } else if (type_id == kBoolean) {
+    } else if (type_id == kJsonTypeBoolean) {
       JsonBoolean value;
       stream.read((char *)&value, sizeof(JsonBoolean));
       object.PutBoolean(key, value);
       bytes += sizeof(JsonBoolean);
-    } else if (type_id == kInteger) {
+    } else if (type_id == kJsonTypeInteger) {
       JsonInteger value;
       stream.read((char *)&value, sizeof(JsonInteger));
       object.PutInteger(key, value);
       bytes += sizeof(JsonInteger);
-    } else if (type_id == kFloat) {
+    } else if (type_id == kJsonTypeFloat) {
       JsonFloat value;
       stream.read((char *)&value, sizeof(JsonFloat));
       object.PutFloat(key, value);
       bytes += sizeof(JsonFloat);
-    } else if (type_id == kString) {
+    } else if (type_id == kJsonTypeString) {
       JsonString value;
       stream.read((char *)&length, sizeof(size_t));
       value.resize(length);
       stream.read((char *)&value[0], length);
       object.PutString(key, value);
       bytes += sizeof(size_t) + length;
-    } else if (type_id == kObject) {
+    } else if (type_id == kJsonTypeObject) {
       JsonObject value;
-      bytes += DeserializeJsonObject(value, stream);
+      bytes += json::Deserialize(value, stream);
       object.PutObject(key, value);
-    } else if (type_id == kArray) {
+    } else if (type_id == kJsonTypeArray) {
       JsonArray value;
-      bytes += DeserializeJsonArray(value, stream);
+      bytes += json::Deserialize(value, stream);
       object.PutArray(key, value);
     } else {
       throw std::runtime_error("incompatible json type");
@@ -773,57 +759,48 @@ size_t DeserializeJsonObject(JsonObject &object, std::istream &stream) {
   return stream ? bytes : std::string::npos;
 }
 
-size_t SerializeJsonArray(const JsonArray &object, std::ostream &stream) {
+size_t Serialize(const JsonArray &object, std::ostream &stream) {
   size_t bytes = 0;
-  static const uint8_t kNull = 0;
-  static const uint8_t kBoolean = 1;
-  static const uint8_t kInteger = 2;
-  static const uint8_t kFloat = 3;
-  static const uint8_t kString = 4;
-  static const uint8_t kObject = 5;
-  static const uint8_t kArray = 6;
-  static const JsonBoolean kFalse = 0;
-  static const JsonBoolean kTrue = 1;
   size_t size = object.Size();
   stream.write((const char *)&size, sizeof(size_t));
   bytes += sizeof(size_t);
   for (size_t i = 0; i < size; i++) {
     if (object.IsNull(i)) {
-      stream.write((const char *)&kNull, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeNull, sizeof(uint8_t));
       bytes += sizeof(uint8_t);
     } else if (object.IsBoolean(i)) {
-      stream.write((const char *)&kBoolean, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeBoolean, sizeof(uint8_t));
       if (object.GetBoolean(i)) {
-        stream.write((const char *)&kTrue, sizeof(JsonBoolean));
+        stream.write((const char *)&kJsonTrue, sizeof(JsonBoolean));
       } else {
-        stream.write((const char *)&kFalse, sizeof(JsonBoolean));
+        stream.write((const char *)&kJsonFalse, sizeof(JsonBoolean));
       }
       bytes += sizeof(uint8_t) + sizeof(JsonBoolean);
     } else if (object.IsInteger(i)) {
-      stream.write((const char *)&kInteger, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeInteger, sizeof(uint8_t));
       JsonInteger value = object.GetInteger(i);
       stream.write((const char *)&value, sizeof(JsonInteger));
       bytes += sizeof(uint8_t) + sizeof(JsonInteger);
     } else if (object.IsFloat(i)) {
-      stream.write((const char *)&kFloat, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeFloat, sizeof(uint8_t));
       JsonFloat value = object.GetFloat(i);
       stream.write((const char *)&value, sizeof(JsonFloat));
       bytes += sizeof(uint8_t) + sizeof(JsonFloat);
     } else if (object.IsString(i)) {
-      stream.write((const char *)&kString, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeString, sizeof(uint8_t));
       JsonString value = object.GetString(i);
       size_t length = value.length();
       stream.write((const char *)&length, sizeof(size_t));
       stream.write((const char *)&value[0], length);
       bytes += sizeof(uint8_t) + sizeof(size_t) + length;
     } else if (object.IsObject(i)) {
-      stream.write((const char *)&kObject, sizeof(uint8_t));
+      stream.write((const char *)&kJsonTypeObject, sizeof(uint8_t));
       JsonObject value = object.GetObject(i);
-      bytes += sizeof(uint8_t) + SerializeJsonObject(value, stream);
+      bytes += sizeof(uint8_t) + json::Serialize(value, stream);
     } else if (object.IsArray(i)) {
-      stream.write((const char *)kArray, sizeof(uint8_t));
+      stream.write((const char *)kJsonTypeArray, sizeof(uint8_t));
       JsonArray value = object.GetArray(i);
-      bytes += sizeof(uint8_t) + SerializeJsonArray(value, stream);
+      bytes += sizeof(uint8_t) + json::Serialize(value, stream);
     } else {
       throw std::runtime_error("incompatible json type");
     }
@@ -831,16 +808,9 @@ size_t SerializeJsonArray(const JsonArray &object, std::ostream &stream) {
   return stream ? bytes : std::string::npos;
 }
 
-size_t DeserializeJsonArray(JsonArray &object, std::istream &stream) {
+size_t Deserialize(JsonArray &object, std::istream &stream) {
   object.Clear();
   size_t bytes = 0;
-  static const uint8_t kNull = 0;
-  static const uint8_t kBoolean = 1;
-  static const uint8_t kInteger = 2;
-  static const uint8_t kFloat = 3;
-  static const uint8_t kString = 4;
-  static const uint8_t kObject = 5;
-  static const uint8_t kArray = 6;
   size_t size;
   stream.read((char *)&size, sizeof(size_t));
   bytes += sizeof(size_t);
@@ -848,24 +818,24 @@ size_t DeserializeJsonArray(JsonArray &object, std::istream &stream) {
     uint8_t type_id;
     stream.read((char *)&type_id, sizeof(uint8_t));
     bytes += sizeof(uint8_t);
-    if (type_id == kNull) {
+    if (type_id == kJsonTypeNull) {
       object.PutNull();
-    } else if (type_id == kBoolean) {
+    } else if (type_id == kJsonTypeBoolean) {
       JsonBoolean value;
       stream.read((char *)&value, sizeof(JsonBoolean));
       object.PutBoolean(value);
       bytes += sizeof(JsonBoolean);
-    } else if (type_id == kInteger) {
+    } else if (type_id == kJsonTypeInteger) {
       JsonInteger value;
       stream.read((char *)&value, sizeof(JsonInteger));
       object.PutInteger(value);
       bytes += sizeof(JsonInteger);
-    } else if (type_id == kFloat) {
+    } else if (type_id == kJsonTypeFloat) {
       JsonFloat value;
       stream.read((char *)&value, sizeof(JsonFloat));
       object.PutFloat(value);
       bytes += sizeof(JsonFloat);
-    } else if (type_id == kString) {
+    } else if (type_id == kJsonTypeString) {
       JsonString value;
       size_t length;
       stream.read((char *)&length, sizeof(size_t));
@@ -873,13 +843,13 @@ size_t DeserializeJsonArray(JsonArray &object, std::istream &stream) {
       stream.read((char *)&value[0], length);
       object.PutString(value);
       bytes += sizeof(size_t) + length;
-    } else if (type_id == kObject) {
+    } else if (type_id == kJsonTypeObject) {
       JsonObject value;
-      bytes += DeserializeJsonObject(value, stream);
+      bytes += json::Deserialize(value, stream);
       object.PutObject(value);
-    } else if (type_id == kArray) {
+    } else if (type_id == kJsonTypeArray) {
       JsonArray value;
-      bytes += DeserializeJsonArray(value, stream);
+      bytes += json::Deserialize(value, stream);
       object.PutArray(value);
     } else {
       throw std::runtime_error("incompatible json type");
@@ -888,51 +858,51 @@ size_t DeserializeJsonArray(JsonArray &object, std::istream &stream) {
   return stream ? bytes : std::string::npos;
 }
 
-JsonObject RandomDocument() {
+JsonObject RandomObject() {
   static RandomGenerator random((uint64_t)time(nullptr));
   const std::vector<std::string> keys = {
       random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid(),
       random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid(),
       random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid()};
-  JsonObject result;
-  size_t n = 0;
-  result.PutBoolean(keys[n++], random.Uniform() > 0.5 ? true : false);
-  result.PutFloat(keys[n++], random.Uniform());
-  result.PutInteger(keys[n++], random.Uint64() % 1048576);
-  result.PutString(keys[n++], random.Uuid());
-  result.PutNull(keys[n++]);
   JsonObject object;
+  size_t n = 0;
   object.PutBoolean(keys[n++], random.Uniform() > 0.5 ? true : false);
   object.PutFloat(keys[n++], random.Uniform());
   object.PutInteger(keys[n++], random.Uint64() % 1048576);
   object.PutString(keys[n++], random.Uuid());
   object.PutNull(keys[n++]);
-  result.PutObject(keys[n++], object);
+  JsonObject nested;
+  nested.PutBoolean(keys[n++], random.Uniform() > 0.5 ? true : false);
+  nested.PutFloat(keys[n++], random.Uniform());
+  nested.PutInteger(keys[n++], random.Uint64() % 1048576);
+  nested.PutString(keys[n++], random.Uuid());
+  nested.PutNull(keys[n++]);
+  object.PutObject(keys[n++], nested);
   JsonArray array;
   array.PutBoolean(random.Uniform() > 0.5 ? true : false);
   array.PutFloat(random.Uniform());
   array.PutInteger(random.Uint64() % 1048576);
   array.PutString(random.Uuid());
   array.PutNull();
-  result.PutArray(keys[n++], array);
-  return result;
+  object.PutArray(keys[n++], array);
+  return object;
 }
 
-JsonArray RandomDocumentArray() {
+JsonArray RandomObjectArray() {
   static RandomGenerator random((uint64_t)time(nullptr));
   JsonArray array;
   for (size_t i = 0; i < 1 + random.Uint64() % 10; i++) {
-    array.PutObject(RandomDocument());
+    array.PutObject(RandomObject());
   }
   return array;
 }
 
-uint64_t MemoryJsonObject(const JsonObject &object) {
+uint64_t Memory(const JsonObject &object) {
   uint64_t result = sizeof(std::unordered_map<std::string, std::any>);
   for (std::string key : object.Keys()) {
     result += sizeof(std::string) + key.length();
     if (object.IsArray(key)) {
-      result += MemoryJsonArray(object.GetArray(key));
+      result += json::Memory(object.GetArray(key));
     } else if (object.IsBoolean(key)) {
       result += sizeof(std::any);
     } else if (object.IsFloat(key)) {
@@ -942,7 +912,7 @@ uint64_t MemoryJsonObject(const JsonObject &object) {
     } else if (object.IsNull(key)) {
       result += sizeof(std::any);
     } else if (object.IsObject(key)) {
-      result += MemoryJsonObject(object.GetObject(key));
+      result += json::Memory(object.GetObject(key));
     } else if (object.IsString(key)) {
       result += sizeof(std::any) + sizeof(std::string) +
                 object.GetString(key).capacity();
@@ -953,11 +923,11 @@ uint64_t MemoryJsonObject(const JsonObject &object) {
   return result;
 }
 
-uint64_t MemoryJsonArray(const JsonArray &object) {
+uint64_t Memory(const JsonArray &object) {
   uint64_t result = sizeof(std::vector<std::any>);
   for (size_t i = 0; i < object.Size(); i++) {
     if (object.IsArray(i)) {
-      result += MemoryJsonArray(object.GetArray(i));
+      result += json::Memory(object.GetArray(i));
     } else if (object.IsBoolean(i)) {
       result += sizeof(std::any);
     } else if (object.IsFloat(i)) {
@@ -967,7 +937,7 @@ uint64_t MemoryJsonArray(const JsonArray &object) {
     } else if (object.IsNull(i)) {
       result += sizeof(std::any);
     } else if (object.IsObject(i)) {
-      result += MemoryJsonObject(object.GetObject(i));
+      result += json::Memory(object.GetObject(i));
     } else if (object.IsString(i)) {
       result += sizeof(std::any) + sizeof(std::string) +
                 object.GetString(i).capacity();
@@ -977,3 +947,5 @@ uint64_t MemoryJsonArray(const JsonArray &object) {
   }
   return result;
 }
+
+} // namespace json

@@ -33,9 +33,18 @@ limitations under the License. */
 const std::string kJsonNull = "null";
 const std::string kJsonFalse = "false";
 const std::string kJsonTrue = "true";
+
 const size_t kJsonNullLength = 4;
 const size_t kJsonFalseLength = 5;
 const size_t kJsonTrueLength = 4;
+
+const uint8_t kJsonTypeNull = 0;
+const uint8_t kJsonTypeBoolean = 1;
+const uint8_t kJsonTypeInteger = 2;
+const uint8_t kJsonTypeFloat = 3;
+const uint8_t kJsonTypeString = 4;
+const uint8_t kJsonTypeObject = 5;
+const uint8_t kJsonTypeArray = 6;
 
 typedef bool JsonBoolean;
 typedef int64_t JsonInteger;
@@ -120,15 +129,19 @@ private:
   void Parse(const std::string &source, size_t &source_offset);
 };
 
-size_t SerializeJsonObject(const JsonObject &object, std::ostream &stream);
-size_t DeserializeJsonObject(JsonObject &object, std::istream &stream);
-size_t SerializeJsonArray(const JsonArray &object, std::ostream &stream);
-size_t DeserializeJsonArray(JsonArray &object, std::istream &stream);
+namespace json {
 
-uint64_t MemoryJsonObject(const JsonObject &object);
-uint64_t MemoryJsonArray(const JsonArray &object);
+size_t Serialize(const JsonObject &object, std::ostream &stream);
+size_t Deserialize(JsonObject &object, std::istream &stream);
+size_t Serialize(const JsonArray &object, std::ostream &stream);
+size_t Deserialize(JsonArray &object, std::istream &stream);
 
-JsonObject RandomDocument();
-JsonArray RandomDocumentArray();
+uint64_t Memory(const JsonObject &object);
+uint64_t Memory(const JsonArray &object);
+
+JsonObject RandomObject();
+JsonArray RandomObjectArray();
+
+} // namespace json
 
 #endif

@@ -674,6 +674,7 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
   epoll_instance_.DeleteDescriptor(signal_descriptor_);
   close(signal_descriptor_);
   Log::GetInstance()->Info("close server socket");
+  epoll_instance_.DeleteDescriptor(server_socket_.GetDescriptor());
   server_socket_.Close();
   Log::GetInstance()->Info("delete connections");
   DeleteAllConnections();
@@ -955,7 +956,12 @@ void HttpServer::HandleServerEvent() {
     delete client_socket;
     return;
   }
-  client_socket->Unblock();
+  if (!client_socket->Unblock()) {
+    Log::GetInstance()->Info("cannot unblock client socket");
+    client_socket->Close();
+    delete client_socket;
+    return;
+  }
   HttpConnection *connection = new HttpConnection(client_socket);
   connections_.insert(
       std::make_pair(client_socket->GetDescriptor(), connection));

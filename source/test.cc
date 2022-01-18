@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
         clock.Start();
         count = 0;
         for (size_t i = 0; i < order; i++) {
-          JsonArray values = RandomDocumentArray();
+          JsonArray values = json::RandomObjectArray();
           JsonArray keys = client.Insert(values);
           for (size_t j = 0; j < keys.Size(); j++) {
             mirrored_state.insert(
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
           clock.Start();
           size_t count = 0;
           for (size_t j = 0; j < order; j++) {
-            JsonArray values = RandomDocumentArray();
+            JsonArray values = json::RandomObjectArray();
             JsonArray keys = client.Insert(values);
             for (size_t k = 0; k < keys.Size(); k++) {
               mirrored_state.insert(
@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
     JsonArray keys = client.Keys();
     JsonArray values = client.Values();
     JsonObject image = client.Image();
-    JsonArray added_keys = client.Insert(RandomDocumentArray());
+    JsonArray added_keys = client.Insert(json::RandomObjectArray());
     client.Erase(added_keys);
     client.Find(keys);
   } catch (std::runtime_error &) {

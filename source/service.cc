@@ -19,10 +19,10 @@ ApiService::ApiService() {}
 ApiService::~ApiService() {}
 
 DocumentDatabase::DocumentDatabase(const std::string &filepath)
-    : filepath_(filepath), filepath_journal_(filepath + kJournalSuffix),
-      filepath_journal_closed_(filepath + kJournalSuffix + kClosedSuffix),
-      filepath_snapshot_(filepath + kSnapshotSuffix),
-      filepath_corrupted_(filepath_ + kCorruptedSuffix),
+    : filepath_(filepath), filepath_journal_(filepath + kServiceSuffixJournal),
+      filepath_closed_(filepath + kServiceSuffixJournal + kServiceSuffixClosed),
+      filepath_snapshot_(filepath + kServiceSuffixSnapshot),
+      filepath_corrupted_(filepath_ + kServiceSuffixCorrupted),
       rollover_in_progress_(false), wait_for_join_(false) {}
 
 DocumentDatabase::~DocumentDatabase() {
@@ -46,8 +46,8 @@ void DocumentDatabase::Initialize() {
   bool rollover_necessary = false;
   bool unlink_journal_closed = false;
   bool unlink_journal = false;
-  if (FileExists(filepath_journal_closed_)) {
-    Journal::Replay(filepath_journal_closed_, db_);
+  if (FileExists(filepath_closed_)) {
+    Journal::Replay(filepath_closed_, db_);
     rollover_necessary = true;
     unlink_journal_closed = true;
   }
@@ -71,7 +71,7 @@ void DocumentDatabase::Initialize() {
     }
   }
   if (unlink_journal_closed) {
-    remove(filepath_journal_closed_.c_str());
+    remove(filepath_closed_.c_str());
   }
   if (unlink_journal) {
     remove(filepath_journal_.c_str());
@@ -96,17 +96,17 @@ void DocumentDatabase::Rollover() {
   if (FileExists(filepath_)) {
     if (FileExists(filepath_journal_)) {
       if (FileSize(filepath_journal_) > FileSize(filepath_)) {
-        rename(filepath_journal_.c_str(), filepath_journal_closed_.c_str());
+        rename(filepath_journal_.c_str(), filepath_closed_.c_str());
       }
     }
   } else {
     if (FileExists(filepath_journal_)) {
       if (FileSize(filepath_journal_) > 4194304) {
-        rename(filepath_journal_.c_str(), filepath_journal_closed_.c_str());
+        rename(filepath_journal_.c_str(), filepath_closed_.c_str());
       }
     }
   }
-  if (FileExists(filepath_journal_closed_)) {
+  if (FileExists(filepath_closed_)) {
     rollover_in_progress_ = true;
     wait_for_join_ = true;
     Log::GetInstance()->Info("defer journal rollover");
@@ -123,7 +123,7 @@ void DocumentDatabase::Rollover() {
               "error when deserializing database from disk");
         }
       }
-      Journal::Replay(filepath_journal_closed_, db);
+      Journal::Replay(filepath_closed_, db);
       stream_.open(filepath_snapshot_, std::fstream::out |
                                            std::fstream::binary |
                                            std::fstream::trunc);
@@ -135,7 +135,7 @@ void DocumentDatabase::Rollover() {
         throw std::runtime_error("error when writing snapshot to disk");
       } else {
         rename(filepath_snapshot_.c_str(), filepath_.c_str());
-        remove(filepath_journal_closed_.c_str());
+        remove(filepath_closed_.c_str());
       }
       rollover_in_progress_ = false;
     });
