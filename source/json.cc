@@ -16,7 +16,7 @@ limitations under the License. */
 
 JsonObject::JsonObject() {}
 
-JsonObject::JsonObject(const JsonObject &object) { Parse(object.String()); }
+JsonObject::JsonObject(const JsonObject &object) { values_ = object.values_; }
 
 JsonObject::JsonObject(const std::string &source) { Parse(source); }
 
@@ -355,7 +355,7 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
 
 JsonArray::JsonArray() {}
 
-JsonArray::JsonArray(const JsonArray &array) { Parse(array.String()); }
+JsonArray::JsonArray(const JsonArray &array) { values_ = array.values_; }
 
 JsonArray::JsonArray(const std::string &source) { Parse(source); }
 
