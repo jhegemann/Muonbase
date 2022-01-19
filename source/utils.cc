@@ -15,31 +15,31 @@ limitations under the License. */
 #include "utils.h"
 
 std::string EncodeBase64(const std::string &to_encode) {
-  const unsigned long predicted_len = 4 * ((to_encode.length() + 2) / 3);
+  const unsigned long predicted_length = 4 * ((to_encode.length() + 2) / 3);
   std::unique_ptr<char[]> output_buffer{
-      std::make_unique<char[]>(predicted_len + 1)};
-  const std::vector<unsigned char> vec_chars{to_encode.begin(),
-                                             to_encode.end()};
-  const int output_len =
+      std::make_unique<char[]>(predicted_length + 1)};
+  const std::vector<unsigned char> char_vector{to_encode.begin(),
+                                               to_encode.end()};
+  const int output_length =
       EVP_EncodeBlock(reinterpret_cast<unsigned char *>(output_buffer.get()),
-                      vec_chars.data(), static_cast<int>(vec_chars.size()));
-  if (output_len == -1) {
+                      char_vector.data(), static_cast<int>(char_vector.size()));
+  if (output_length == -1) {
     throw std::runtime_error("could not base 64 encode bytes");
   }
   return output_buffer.get();
 }
 
 std::string DecodeBase64(const std::string &to_decode) {
-  const unsigned long predicted_len = 3 * to_decode.length() / 4;
+  const unsigned long predicted_length = 3 * to_decode.length() / 4;
   const std::unique_ptr<char[]> output_buffer{
-      std::make_unique<char[]>(predicted_len + 1)};
-  const std::vector<unsigned char> vec_chars{to_decode.begin(),
-                                             to_decode.end()};
-  const int output_len =
+      std::make_unique<char[]>(predicted_length + 1)};
+  const std::vector<unsigned char> char_vector{to_decode.begin(),
+                                               to_decode.end()};
+  const int output_length =
       EVP_DecodeBlock(reinterpret_cast<unsigned char *>(output_buffer.get()),
-                      vec_chars.data(), static_cast<int>(vec_chars.size()));
-  if (output_len == -1) {
-    throw std::runtime_error("could not base 64 encode bytes");
+                      char_vector.data(), static_cast<int>(char_vector.size()));
+  if (output_length == -1) {
+    throw std::runtime_error("could not base 64 decode bytes");
   }
   return output_buffer.get();
 }

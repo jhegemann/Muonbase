@@ -15,19 +15,17 @@ limitations under the License. */
 #ifndef SERVICE_H
 #define SERVICE_H
 
+#include "journal.h"
 #include "json.h"
 #include "map.h"
 #include "rand.h"
 #include "utils.h"
-#include "wal.h"
 #include <atomic>
 #include <fstream>
 #include <optional>
 #include <thread>
 
 template <class K, class V> class Map;
-
-typedef WriteAheadLog<std::string, JsonObject> Journal;
 
 const std::string kServiceSuffixJournal = ".journal";
 const std::string kServiceSuffixSnapshot = ".snapshot";

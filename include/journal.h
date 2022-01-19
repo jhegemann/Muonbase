@@ -12,20 +12,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
-#ifndef WAL_H
-#define WAL_H
+#ifndef JOURNAL_H
+#define JOURNAL_H
 
 #include "json.h"
 #include "map.h"
 #include <deque>
 #include <sstream>
 
-template <class K, class V> class LogEntry;
-template <class K, class V> class WriteAheadLog;
-
 enum StorageModification { STORAGE_INSERT = 0, STORAGE_ERASE };
 
-template <class K, class V> class WriteAheadLog {
+template <class K, class V> class Journal {
 public:
   static void Replay(const std::string &filepath, Map<K, V> &db);
   static void Append(std::fstream &stream, StorageModification operation,
@@ -33,7 +30,7 @@ public:
 };
 
 template <class K, class V>
-void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
+void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
   std::fstream stream;
   size_t value_bytes = 0;
   if (!FileExists(filepath)) {
@@ -97,9 +94,8 @@ void WriteAheadLog<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
 }
 
 template <class K, class V>
-void WriteAheadLog<K, V>::Append(std::fstream &stream,
-                                 StorageModification operation, K &key,
-                                 V *value) {
+void Journal<K, V>::Append(std::fstream &stream, StorageModification operation,
+                           K &key, V *value) {
   uint8_t buffer = static_cast<uint8_t>(operation);
   stream.write((const char *)&buffer, sizeof(uint8_t));
   if (Serializer<K>::Serialize(key, stream) == std::string::npos) {

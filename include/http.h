@@ -35,6 +35,12 @@ limitations under the License. */
 #include "service.h"
 #include "tcp.h"
 
+class ApiService;
+class HttpPacket;
+class HttpRequest;
+class HttpResponse;
+class HttpServer;
+
 const std::string kHttpProtocol1_1 = "HTTP/1.1";
 const std::string kHttpLineFeed = "\r\n";
 const std::string kHttpDoubleLineFeed = "\r\n\r\n";

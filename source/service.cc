@@ -43,12 +43,12 @@ void DocumentDatabase::Initialize() {
   bool unlink_journal_closed = false;
   bool unlink_journal = false;
   if (FileExists(filepath_closed_)) {
-    Journal::Replay(filepath_closed_, db_);
+    Journal<std::string, JsonObject>::Replay(filepath_closed_, db_);
     rollover_necessary = true;
     unlink_journal_closed = true;
   }
   if (FileExists(filepath_journal_)) {
-    Journal::Replay(filepath_journal_, db_);
+    Journal<std::string, JsonObject>::Replay(filepath_journal_, db_);
     rollover_necessary = true;
     unlink_journal = true;
   }
@@ -132,7 +132,7 @@ void DocumentDatabase::Rollover() {
               "error when deserializing database from disk");
         }
       }
-      Journal::Replay(filepath_closed_, db);
+      Journal<std::string, JsonObject>::Replay(filepath_closed_, db);
       stream_.open(filepath_snapshot_, std::fstream::out |
                                            std::fstream::binary |
                                            std::fstream::trunc);
@@ -166,7 +166,8 @@ JsonArray DocumentDatabase::Insert(const JsonArray &values) {
       }
     }
     result.PutString(key);
-    Journal::Append(stream_journal_, STORAGE_INSERT, key, &value);
+    Journal<std::string, JsonObject>::Append(stream_journal_, STORAGE_INSERT,
+                                             key, &value);
     db_.Insert(key, value);
   }
   return result;
@@ -183,7 +184,8 @@ JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
       continue;
     }
     result.PutString(key);
-    Journal::Append(stream_journal_, STORAGE_ERASE, key, nullptr);
+    Journal<std::string, JsonObject>::Append(stream_journal_, STORAGE_ERASE,
+                                             key, nullptr);
     db_.Erase(it);
   }
   return result;
