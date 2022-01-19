@@ -25,7 +25,9 @@ limitations under the License. */
 #include <optional>
 #include <thread>
 
-template <class K, class V> class Map;
+class ApiService;
+class DocumentDatabase;
+class UserPool;
 
 const std::string kServiceSuffixJournal = ".journal";
 const std::string kServiceSuffixSnapshot = ".snapshot";

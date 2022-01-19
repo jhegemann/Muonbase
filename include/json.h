@@ -30,6 +30,13 @@ limitations under the License. */
 #include "rand.h"
 #include "utils.h"
 
+class JsonArray;
+class JsonObject;
+typedef bool JsonBoolean;
+typedef int64_t JsonInteger;
+typedef double JsonFloat;
+typedef std::string JsonString;
+
 const std::string kJsonNull = "null";
 const std::string kJsonFalse = "false";
 const std::string kJsonTrue = "true";
@@ -45,14 +52,6 @@ const uint8_t kJsonTypeFloat = 3;
 const uint8_t kJsonTypeString = 4;
 const uint8_t kJsonTypeObject = 5;
 const uint8_t kJsonTypeArray = 6;
-
-typedef bool JsonBoolean;
-typedef int64_t JsonInteger;
-typedef double JsonFloat;
-typedef std::string JsonString;
-
-class JsonArray;
-class JsonObject;
 
 class JsonArray {
 public:

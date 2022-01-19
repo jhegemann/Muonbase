@@ -36,6 +36,11 @@ limitations under the License. */
 
 #include "utils.h"
 
+class EpollInstance;
+class TcpSocket;
+class TcpReader;
+class TcpWriter;
+
 const unsigned kEpollMaximumEvents = 256;
 
 class EpollInstance {
