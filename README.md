@@ -256,3 +256,40 @@ server: muonbase/1
 
 {"zzr5LnsH":{"ncbUwsBQ":[false,0.265096,193415,"C3aQQq9L",null],"Vr9rB8SU":null,"TtjcoESY":"TJOu4tze","BdMPeHbn":{"QACpIKkd":null,"fr8cN7U4":"6epwVv6A","cHa0o7j9":197795,"2LwRv8bE":0.787538,"kWC23Hsc":true},"ryP6MUmU":769357,"fqzTlMKm":0.705919,"9YHE3L5T":false},"zzqau98i":{"c5bQscHb":{"n2kVFSgo":true,"4u5kfjRA":0.872484,"HkygXUsT":4699,"HrpFZZzc":"fEqYtimw","LP9Pwzjy":null},"JhTwN8zs":null,"5iJbIcmn":"2oMkBFlD","rOsyzNI4":444145,"yhbY7qvg":[false,0.584231,419467,"k9L85xyW",null],"FEoxZw84":0.468937,"mT0Xnvbr":false},"zzfetCp7":{"aRA48kWl":false,"3wzBxhMx":"nj02dxuc","k01ULZXC":0.630318,"xkiVNGVK":231285,"pTw5bfkn":null,"OCWNH9JX":{"8rbCQVFw":false,"SvEwWves":0.629154,"06Nt7tOF":73181,"GNdDZ4rF":"qZh2e4W7","QB5I3aUy":null},"1XfxXPKx":[false,0.574921,388153,"DcwFXjW6",null]},"zzQKc0J5":{"Fktc0mne":[false,0.614807,791088,"EY446uHW",null],"XbhaefQR":{"hciZceOp":true,"rajn9Vyx":0.675364,"0WhH3dCT":532056,"45Va45N5":null,"0f5x8n7k":"2imFMQTK"},"gtZz0NMd":null,"uqD6SV2R":0.969152,"v1CmX7g8":"RPW0Eh63","g3KBDOAk":33...
 ```
+
+# Benchmark
+Though implementing http rest, Muonbase is highly performant as the benchmarks suggest. In the following example, four threads are simultaneously inserting and erasing random documents, where processing times are around one millisecond. Note that the processing time is measured as the complete HTTP request and response time (measured in a locally connected client) divided by the number of documents that are affected by the operation.
+```
+[630|19.01.2022-11:22:55|info]available service found on 127.0.0.1:8260
+[630|19.01.2022-11:22:55|info]thread 0 fill db
+[630|19.01.2022-11:22:55|info]thread 1 fill db
+[630|19.01.2022-11:22:55|info]thread 3 fill db
+[630|19.01.2022-11:22:55|info]thread 2 fill db
+[630|19.01.2022-11:23:11|info]thread 3 took 1.032023ms per insertion
+[630|19.01.2022-11:23:11|info]thread 0 took 1.042072ms per insertion
+[630|19.01.2022-11:23:11|info]thread 1 took 1.045334ms per insertion
+[630|19.01.2022-11:23:11|info]thread 2 took 1.055682ms per insertion
+[630|19.01.2022-11:23:25|info]thread 3 cycle 1 took 0.963253ms per insertion
+[630|19.01.2022-11:23:25|info]thread 0 cycle 1 took 0.960790ms per insertion
+[630|19.01.2022-11:23:25|info]thread 1 cycle 1 took 0.968386ms per insertion
+[630|19.01.2022-11:23:25|info]thread 2 cycle 1 took 0.977701ms per insertion
+[630|19.01.2022-11:23:35|info]thread 0 cycle 1 took 0.659111ms per erasure
+[630|19.01.2022-11:23:42|info]thread 0 cycle 2 took 0.463204ms per insertion
+[630|19.01.2022-11:23:46|info]thread 2 cycle 1 took 1.415076ms per erasure
+[630|19.01.2022-11:23:47|info]thread 1 cycle 1 took 1.424651ms per erasure
+[630|19.01.2022-11:23:47|info]thread 3 cycle 1 took 1.447002ms per erasure
+[630|19.01.2022-11:23:58|info]thread 2 cycle 2 took 0.782765ms per insertion
+[630|19.01.2022-11:23:59|info]thread 1 cycle 2 took 0.796189ms per insertion
+[630|19.01.2022-11:23:59|info]thread 3 cycle 2 took 0.785089ms per insertion
+[630|19.01.2022-11:24:02|info]thread 0 cycle 2 took 1.306766ms per erasure
+[630|19.01.2022-11:24:13|info]thread 1 cycle 2 took 0.954167ms per erasure
+[630|19.01.2022-11:24:13|info]thread 2 cycle 2 took 0.968234ms per erasure
+[630|19.01.2022-11:24:14|info]thread 3 cycle 2 took 0.990764ms per erasure
+[630|19.01.2022-11:24:14|info]GET /keys
+[630|19.01.2022-11:24:14|info]GET /values
+[630|19.01.2022-11:24:15|info]GET /image
+[630|19.01.2022-11:24:17|info]POST /insert
+[630|19.01.2022-11:24:17|info]POST /erase
+[630|19.01.2022-11:24:17|info]POST /find
+[630|19.01.2022-11:24:18|info]all tests passed
+```
