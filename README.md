@@ -6,13 +6,13 @@
 General Purpose Persistent In-Memory JSON Document Database Server
 
 # Essentials
-* Fast lookups - Templated in-memory B+ tree data structure
+* CRUD performance - Templated in-memory B+ tree data structure
+* Persistence - Compact B+ tree snapshot and journal on disk
+* Efficient transport - Epoll server
 * No special drivers - HTTP REST interface
-* Efficient transport - Epoll HTTP server
-* Few dependencies - Coded from scratch in vanilla C++
 * Concise codebase - Easy to understand and fully transparent
+* Few dependencies - Coded from scratch in vanilla C++
 * Seamless integration - JSON as data exchange format
-* Persistence - Tree snapshot and journal on disk
 * Automated testing - Load scenario with random inserts and erasures
 
 # Upcoming
