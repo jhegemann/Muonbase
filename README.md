@@ -10,7 +10,7 @@ General Purpose Persistent In-Memory JSON Document Database Server
 * No special drivers - Http rest interface
 * Small footprint - Single-threaded epoll http server
 * Few dependencies - Coded from scratch in vanilla c/c++
-* Overseeable codebase - Easy to understand and fully transparent
+* Concise codebase - Easy to understand and fully transparent
 * Seamless integration - Json as data exchange format
 * Persistence - Tree snapshot and write-ahead-log on disk
 * Automated testing - Load scenario with random inserts and erasures
@@ -80,13 +80,13 @@ Usage: muonbase-client.app [-h] [-n <threads>] [-t] [-i <ip>] [-p <port>] [-o <o
          -c <cycles>: cycles
 ```
 Note that, when `-t` is omitted, the database client will just check if the database server is available on the specified ip and port.
-Pass `-t` to run the randomized testing procedure and feel free to adjust `-o`, which is the number of initial database inserts,
+Pass `-t` to run the randomized testing procedure and adjust `-o`, which is the number of initial database inserts,
 and `-c`, which is the repetition number of a combined insert-erase operation.
 
 # Logs
 Logs are either extremely verbose or totally absent. If you need logs e.g. for debugging purpose, 
 either start the server in foreground and observe what happens on the standard output, 
-or make sure you use e.g. logrotate to automatically rotate your logfiles.
+or make sure you use e.g. `logrotate` to automatically rotate your logfiles.
 
 # Configuration
 The configuration file is in a json format and it is mandatory for the database server to run. 
