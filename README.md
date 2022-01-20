@@ -260,36 +260,36 @@ server: muonbase/1
 # Benchmark
 Though implementing http rest, Muonbase is highly performant as the benchmarks suggest. In the following example, four threads are simultaneously inserting and erasing random documents, where processing times are around one millisecond. Note that the processing time is measured as the complete HTTP request and response time (measured in a locally connected client) divided by the number of documents that are affected by the operation.
 ```
-[630|19.01.2022-11:22:55|info]available service found on 127.0.0.1:8260
-[630|19.01.2022-11:22:55|info]thread 0 fill db
-[630|19.01.2022-11:22:55|info]thread 1 fill db
-[630|19.01.2022-11:22:55|info]thread 3 fill db
-[630|19.01.2022-11:22:55|info]thread 2 fill db
-[630|19.01.2022-11:23:11|info]thread 3 took 1.032023ms per insertion
-[630|19.01.2022-11:23:11|info]thread 0 took 1.042072ms per insertion
-[630|19.01.2022-11:23:11|info]thread 1 took 1.045334ms per insertion
-[630|19.01.2022-11:23:11|info]thread 2 took 1.055682ms per insertion
-[630|19.01.2022-11:23:25|info]thread 3 cycle 1 took 0.963253ms per insertion
-[630|19.01.2022-11:23:25|info]thread 0 cycle 1 took 0.960790ms per insertion
-[630|19.01.2022-11:23:25|info]thread 1 cycle 1 took 0.968386ms per insertion
-[630|19.01.2022-11:23:25|info]thread 2 cycle 1 took 0.977701ms per insertion
-[630|19.01.2022-11:23:35|info]thread 0 cycle 1 took 0.659111ms per erasure
-[630|19.01.2022-11:23:42|info]thread 0 cycle 2 took 0.463204ms per insertion
-[630|19.01.2022-11:23:46|info]thread 2 cycle 1 took 1.415076ms per erasure
-[630|19.01.2022-11:23:47|info]thread 1 cycle 1 took 1.424651ms per erasure
-[630|19.01.2022-11:23:47|info]thread 3 cycle 1 took 1.447002ms per erasure
-[630|19.01.2022-11:23:58|info]thread 2 cycle 2 took 0.782765ms per insertion
-[630|19.01.2022-11:23:59|info]thread 1 cycle 2 took 0.796189ms per insertion
-[630|19.01.2022-11:23:59|info]thread 3 cycle 2 took 0.785089ms per insertion
-[630|19.01.2022-11:24:02|info]thread 0 cycle 2 took 1.306766ms per erasure
-[630|19.01.2022-11:24:13|info]thread 1 cycle 2 took 0.954167ms per erasure
-[630|19.01.2022-11:24:13|info]thread 2 cycle 2 took 0.968234ms per erasure
-[630|19.01.2022-11:24:14|info]thread 3 cycle 2 took 0.990764ms per erasure
-[630|19.01.2022-11:24:14|info]GET /keys
-[630|19.01.2022-11:24:14|info]GET /values
-[630|19.01.2022-11:24:15|info]GET /image
-[630|19.01.2022-11:24:17|info]POST /insert
-[630|19.01.2022-11:24:17|info]POST /erase
-[630|19.01.2022-11:24:17|info]POST /find
-[630|19.01.2022-11:24:18|info]all tests passed
+[4969|20.01.2022-14:33:39|info]available service found on 127.0.0.1:8260
+[4969|20.01.2022-14:33:39|info]thread 0 fill db
+[4969|20.01.2022-14:33:39|info]thread 1 fill db
+[4969|20.01.2022-14:33:39|info]thread 3 fill db
+[4969|20.01.2022-14:33:39|info]thread 2 fill db
+[4969|20.01.2022-14:33:52|info]thread 0 took 0.847212ms per insertion
+[4969|20.01.2022-14:33:52|info]thread 1 took 0.837370ms per insertion
+[4969|20.01.2022-14:33:52|info]thread 3 took 0.833036ms per insertion
+[4969|20.01.2022-14:33:52|info]thread 2 took 0.842341ms per insertion
+[4969|20.01.2022-14:34:04|info]thread 0 cycle 1 took 0.849125ms per insertion
+[4969|20.01.2022-14:34:04|info]thread 1 cycle 1 took 0.852044ms per insertion
+[4969|20.01.2022-14:34:04|info]thread 3 cycle 1 took 0.849465ms per insertion
+[4969|20.01.2022-14:34:04|info]thread 2 cycle 1 took 0.833695ms per insertion
+[4969|20.01.2022-14:34:13|info]thread 0 cycle 1 took 0.602037ms per erasure
+[4969|20.01.2022-14:34:19|info]thread 0 cycle 2 took 0.412117ms per insertion
+[4969|20.01.2022-14:34:27|info]thread 1 cycle 1 took 1.517777ms per erasure
+[4969|20.01.2022-14:34:28|info]thread 3 cycle 1 took 1.568884ms per erasure
+[4969|20.01.2022-14:34:28|info]thread 2 cycle 1 took 1.573184ms per erasure
+[4969|20.01.2022-14:34:37|info]thread 1 cycle 2 took 0.687114ms per insertion
+[4969|20.01.2022-14:34:38|info]thread 3 cycle 2 took 0.690717ms per insertion
+[4969|20.01.2022-14:34:38|info]thread 2 cycle 2 took 0.688060ms per insertion
+[4969|20.01.2022-14:34:39|info]thread 0 cycle 2 took 1.275226ms per erasure
+[4969|20.01.2022-14:34:54|info]thread 1 cycle 2 took 1.136800ms per erasure
+[4969|20.01.2022-14:34:54|info]thread 2 cycle 2 took 1.072862ms per erasure
+[4969|20.01.2022-14:34:55|info]thread 3 cycle 2 took 1.109718ms per erasure
+[4969|20.01.2022-14:34:55|info]GET /keys
+[4969|20.01.2022-14:34:55|info]GET /values
+[4969|20.01.2022-14:34:56|info]GET /image
+[4969|20.01.2022-14:34:58|info]POST /insert
+[4969|20.01.2022-14:34:58|info]POST /erase
+[4969|20.01.2022-14:34:58|info]POST /find
+[4969|20.01.2022-14:34:59|info]all tests passed
 ```
