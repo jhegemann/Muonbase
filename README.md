@@ -31,7 +31,7 @@ project parallel to fulltime employments. Please understand that therefore maint
 a bit slow.
 
 Muonbase does not aim to be extremely portable, instead it is designed to run within a common linux distribution.
-It can be build with gcc and `c++-20` standard. The g++ version that is currently in use for development
+It can be build with `gcc` and `c++-20` standard. The `g++` version that is currently in use for development
 is `g++ 9.3.0`. The reason for not making it highly portable in the first place was to save development time.
 In addition, it is assumed to run on *servers* that in most cases run a common linux distribution anyway. 
 It is mandatory that epoll system calls are supported, but that is the normal case.
