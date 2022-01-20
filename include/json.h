@@ -30,6 +30,7 @@ limitations under the License. */
 #include "rand.h"
 #include "utils.h"
 
+typedef std::any JsonValue;
 class JsonArray;
 class JsonObject;
 typedef bool JsonBoolean;
@@ -52,6 +53,17 @@ const uint8_t kJsonTypeFloat = 3;
 const uint8_t kJsonTypeString = 4;
 const uint8_t kJsonTypeObject = 5;
 const uint8_t kJsonTypeArray = 6;
+
+namespace json {
+
+bool IsArray(const JsonValue &value);
+bool IsObject(const JsonValue &value);
+bool IsBoolean(const JsonValue &value);
+bool IsInteger(const JsonValue &value);
+bool IsFloat(const JsonValue &value);
+bool IsString(const JsonValue &value);
+
+} // namespace json
 
 class JsonArray {
 public:
@@ -86,7 +98,7 @@ public:
   void Parse(const std::string &source);
 
 private:
-  std::vector<std::any> values_;
+  std::vector<JsonValue> values_;
   void Parse(const std::string &source, size_t &source_offset);
 };
 
@@ -124,7 +136,7 @@ public:
   void Parse(const std::string &source);
 
 private:
-  std::unordered_map<std::string, std::any> values_;
+  std::unordered_map<std::string, JsonValue> values_;
   void Parse(const std::string &source, size_t &source_offset);
 };
 

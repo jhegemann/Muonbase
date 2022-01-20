@@ -14,6 +14,34 @@ limitations under the License. */
 
 #include "json.h"
 
+namespace json {
+
+bool IsArray(const JsonValue &value) {
+  return value.type() == typeid(JsonArray);
+}
+
+bool IsObject(const JsonValue &value) {
+  return value.type() == typeid(JsonObject);
+}
+
+bool IsBoolean(const JsonValue &value) {
+  return value.type() == typeid(JsonBoolean);
+}
+
+bool IsInteger(const JsonValue &value) {
+  return value.type() == typeid(JsonInteger);
+}
+
+bool IsFloat(const JsonValue &value) {
+  return value.type() == typeid(JsonFloat);
+}
+
+bool IsString(const JsonValue &value) {
+  return value.type() == typeid(JsonString);
+}
+
+} // namespace json
+
 JsonObject::JsonObject() {}
 
 JsonObject::JsonObject(const JsonObject &object) { values_ = object.values_; }
@@ -23,15 +51,11 @@ JsonObject::JsonObject(const std::string &source) { Parse(source); }
 JsonObject::~JsonObject() {}
 
 bool JsonObject::Has(const std::string &key) const {
-  if (values_.find(key) != values_.end()) {
-    return true;
-  }
-  return false;
+  return values_.find(key) != values_.end();
 }
 
 void JsonObject::PutNull(const std::string &key) {
-  std::any null;
-  null.reset();
+  static const JsonValue null = {};
   values_.insert(std::make_pair(key, null));
 }
 
@@ -88,63 +112,27 @@ bool JsonObject::IsNull(const std::string &key) const {
 }
 
 bool JsonObject::IsBoolean(const std::string &key) const {
-  try {
-    JsonBoolean value __attribute__((unused));
-    value = std::any_cast<JsonBoolean>(values_.at(key));
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsBoolean(values_.at(key));
 }
 
 bool JsonObject::IsInteger(const std::string &key) const {
-  try {
-    JsonInteger value __attribute__((unused));
-    value = std::any_cast<JsonInteger>(values_.at(key));
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsInteger(values_.at(key));
 }
 
 bool JsonObject::IsFloat(const std::string &key) const {
-  try {
-    JsonFloat value __attribute__((unused));
-    value = std::any_cast<JsonFloat>(values_.at(key));
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsFloat(values_.at(key));
 }
 
 bool JsonObject::IsString(const std::string &key) const {
-  try {
-    JsonString value __attribute__((unused));
-    value = std::any_cast<JsonString>(values_.at(key));
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsString(values_.at(key));
 }
 
 bool JsonObject::IsObject(const std::string &key) const {
-  try {
-    JsonObject value __attribute__((unused));
-    value = std::any_cast<JsonObject>(values_.at(key));
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsObject(values_.at(key));
 }
 
 bool JsonObject::IsArray(const std::string &key) const {
-  try {
-    JsonArray value __attribute__((unused));
-    value = std::any_cast<JsonArray>(values_.at(key));
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsArray(values_.at(key));
 }
 
 std::vector<std::string> JsonObject::Keys() const {
@@ -163,7 +151,7 @@ std::string JsonObject::String() const {
   std::string sep = kStringEmpty;
   ss << kStringCurlyBracketOpen;
   std::string key;
-  std::any value;
+  JsonValue value;
   for (auto it = values_.begin(); it != values_.end(); it++) {
     key = it->first;
     value = it->second;
@@ -364,8 +352,7 @@ JsonArray::~JsonArray() {}
 size_t JsonArray::Size() const { return values_.size(); }
 
 void JsonArray::PutNull() {
-  std::any null;
-  null.reset();
+  static const JsonValue null = {};
   values_.emplace_back(null);
 }
 
@@ -410,63 +397,27 @@ bool JsonArray::IsNull(size_t index) const {
 }
 
 bool JsonArray::IsBoolean(size_t index) const {
-  try {
-    JsonBoolean value __attribute__((unused));
-    value = std::any_cast<JsonBoolean>(values_[index]);
-    return true;
-  } catch (std::bad_any_cast &expection) {
-    return false;
-  }
+  return json::IsBoolean(values_.at(index));
 }
 
 bool JsonArray::IsInteger(size_t index) const {
-  try {
-    JsonInteger value __attribute__((unused));
-    value = std::any_cast<JsonInteger>(values_[index]);
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsInteger(values_.at(index));
 }
 
 bool JsonArray::IsFloat(size_t index) const {
-  try {
-    JsonFloat value __attribute__((unused));
-    value = std::any_cast<JsonFloat>(values_[index]);
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsFloat(values_.at(index));
 }
 
 bool JsonArray::IsString(size_t index) const {
-  try {
-    JsonString value __attribute__((unused));
-    value = std::any_cast<JsonString>(values_[index]);
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsString(values_.at(index));
 }
 
 bool JsonArray::IsObject(size_t index) const {
-  try {
-    JsonObject value __attribute__((unused));
-    value = std::any_cast<JsonObject>(values_[index]);
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsObject(values_.at(index));
 }
 
 bool JsonArray::IsArray(size_t index) const {
-  try {
-    JsonArray value __attribute__((unused));
-    value = std::any_cast<JsonArray>(values_[index]);
-    return true;
-  } catch (std::bad_any_cast &exception) {
-    return false;
-  }
+  return json::IsArray(values_.at(index));
 }
 
 void JsonArray::Clear() { values_.clear(); }
