@@ -42,7 +42,7 @@ as a single source of truth.
 
 # SSL
 Muonbase supports only plain HTTP transport and does not implement SSL. In order to set up secure endpoints it 
-is recommended to bind the server locally and let e.g. `haproxy` (or another suitable proxy server) do the ssl termination. 
+is recommended to bind the server locally and let e.g. `haproxy` (or another suitable proxy server) do the SSL termination. 
 This is easy, secure, and performant.
 
 # Build
