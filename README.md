@@ -6,21 +6,21 @@
 General Purpose Persistent In-Memory JSON Document Database Server
 
 # Essentials
-* Fast lookups - Templated in-memory b+ tree data structure
-* No special drivers - Http rest interface
-* Small footprint - Single-threaded epoll http server
-* Few dependencies - Coded from scratch in vanilla c/c++
+* Fast lookups - Templated in-memory B+ tree data structure
+* No special drivers - HTTP REST interface
+* Small footprint - Single-threaded epoll HTTP server
+* Few dependencies - Coded from scratch in vanilla C++
 * Concise codebase - Easy to understand and fully transparent
-* Seamless integration - Json as data exchange format
+* Seamless integration - JSON as data exchange format
 * Persistence - Tree snapshot and write-ahead-log on disk
 * Automated testing - Load scenario with random inserts and erasures
 
 # Upcoming
 * Queries
 * Indexing
-* Sharding
 * Encryption
 * Compression
+* Sharding
 
 # Disclaimer
 Muonbase is far from being perfect and it explicitly does not claim to be so. However, it is written
@@ -34,15 +34,15 @@ Muonbase does not aim to be extremely portable, instead it is designed to run wi
 It can be build with `gcc` and `c++-20` standard. The `g++` version that is currently in use for development
 is `g++ 9.3.0`. The reason for not making it highly portable in the first place was to save development time.
 In addition, it is assumed to run on *servers* that in most cases run a common linux distribution anyway. 
-It is mandatory that epoll system calls are supported, but that is the normal case.
+It is mandatory that epoll system calls are supported, but that is the typical case.
 
 Muonbase is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License. Don't use Muonbase
 as a single source of truth.
 
 # SSL
-Muonbase supports only plain http transport and does not implement ssl. In order to set up secure endpoints it 
-is recommended to bind the server locally and let e.g. haproxy (or another suitable proxy server) do the ssl termination. 
+Muonbase supports only plain HTTP transport and does not implement SSL. In order to set up secure endpoints it 
+is recommended to bind the server locally and let e.g. `haproxy` (or another suitable proxy server) do the ssl termination. 
 This is easy, secure, and performant.
 
 # Build
@@ -89,9 +89,9 @@ either start the server in foreground and observe what happens on the standard o
 or make sure you use e.g. `logrotate` to automatically rotate your logfiles.
 
 # Configuration
-The configuration file is in a json format and it is mandatory for the database server to run. 
+The configuration file is in a JSON format and it is mandatory for the database server to run. 
 Tune the parameters as you want, but keep a few things in mind: (i) binding
-to ip `0.0.0.0` is not recommended, since the transport layer does not support ssl, (ii) binding to
+to ip `0.0.0.0` is not recommended, since the transport layer does not support SSL, (ii) binding to
 ports below `1024` is not recommended since this requires root privileges and is therefore by design not secure. 
 The data and user paths can be chosen freely as well as the log path. Make sure permissions in particular 
 of the users file are correct, such that it can be accessed properly by the database server. 
@@ -101,7 +101,7 @@ you should prefer absolute paths over relative paths in the configuration file.
 
 # Users
 The user management is not dynamic, so in order to add a user you have to manually edit the users file, which is, 
-like the general configuration, in a json format. Hashed passwords are SHA256 and can be generated 
+like the general configuration, in a JSON format. Hashed passwords are `SHA256` and can be generated 
 e.g. on the command line using `echo -n 'password' | sha256sum`. Don't forget to shred your shell history after doing that.
 Some shells don't log commands to history if they are prefixed with a space. Regarding authorization, Muonbase by now implements 
 only simple http basic authorization and there is no possibility to set user permissions on specific documents, 
@@ -258,7 +258,7 @@ server: muonbase/1
 ```
 
 # Benchmark
-Though implementing http rest, Muonbase is highly performant as the benchmarks suggest. In the following example, four threads are simultaneously inserting and erasing random documents, where processing times are around one millisecond. Note that the processing time is measured as the complete HTTP request and response time (measured in a locally connected client) divided by the number of documents that are affected by the operation.
+Though implementing HTTP REST, Muonbase is highly performant as the benchmarks suggest. In the following example, four threads are simultaneously inserting and erasing random documents, where processing times are around one millisecond. Note that the processing time is measured as the complete HTTP request and response time (measured in a locally connected client) divided by the number of documents that are affected by the operation.
 ```
 [4969|20.01.2022-14:33:39|info]available service found on 127.0.0.1:8260
 [4969|20.01.2022-14:33:39|info]thread 0 fill db
