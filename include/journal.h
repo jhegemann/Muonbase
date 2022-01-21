@@ -41,7 +41,7 @@ void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
   uint8_t buffer;
   StorageModification operation;
   K key;
-  V *value;
+  V value;
   size_t bytes = 0;
   while (bytes < size) {
     stream.read((char *)&buffer, sizeof(uint8_t));
@@ -65,11 +65,8 @@ void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
       throw std::runtime_error("incomplete journal message");
     }
     bytes += sizeof(uint8_t);
-    if (buffer == 0) {
-      value = nullptr;
-    } else {
-      value = new JsonObject();
-      value_bytes = Serializer<V>::Deserialize((*value), stream);
+    if (buffer != 0) {
+      value_bytes = Serializer<V>::Deserialize(value, stream);
       if (value_bytes == std::string::npos) {
         throw std::runtime_error("incomplete journal message");
         break;
@@ -78,7 +75,7 @@ void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
     }
     switch (operation) {
     case STORAGE_INSERT:
-      db.Insert(key, *value);
+      db.Insert(key, value);
       break;
     case STORAGE_ERASE:
       db.Erase(key);
