@@ -5,7 +5,7 @@ data/*.db.journal
 data/*.db.journal.closed
 data/*.db.corrupted
 
-bin/*.app
+bin/*
 
 build/*.o
 

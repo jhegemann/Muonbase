@@ -42,7 +42,7 @@ static const size_t kCyclesDefault = 8;
 static const size_t kThreadsDefault = 4;
 
 static void PrintUsage() {
-  std::cout << "Usage: muonbase-client.app [-h] [-n <threads>] [-t] [-i <ip>] "
+  std::cout << "Usage: muonbase-client [-h] [-n <threads>] [-t] [-i <ip>] "
                "[-p <port>] [-o <order>] "
                "[-c <cycles>]"
             << std::endl;
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
       size_t count;
       try {
         LOG_INFO("thread" + kStringSpace + std::to_string(index) +
-                 kStringSpace + "fill db");
+                 kStringSpace + "started");
         clock.Start();
         count = 0;
         for (size_t i = 0; i < order; i++) {
@@ -158,9 +158,9 @@ int main(int argc, char **argv) {
         }
         clock.Stop();
         LOG_INFO("thread" + kStringSpace + std::to_string(index) +
-                 kStringSpace + "took" + kStringSpace +
-                 std::to_string(clock.Time() / count) + "ms" + kStringSpace +
-                 "per insertion");
+                 kStringSpace + "fill db" + kStringSpace + "took" +
+                 kStringSpace + std::to_string(clock.Time() / count) + "ms" +
+                 kStringSpace + "per insertion");
 
         for (size_t i = 1; i <= cycles; i++) {
           clock.Start();

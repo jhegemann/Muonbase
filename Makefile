@@ -35,10 +35,10 @@ LINKING_THREAD = -lpthread
 all: $(TARGETS)
 
 server: $(SERVER_OBJECTS) Makefile
-	$(CC) $(SERVER_OBJECTS) -o $(BN)/muonbase-server.app $(LINKING_SSL) $(LINKING_THREAD)
+	$(CC) $(SERVER_OBJECTS) -o $(BN)/muonbase-server $(LINKING_SSL) $(LINKING_THREAD)
 
 client: $(CLIENT_OBJECTS) Makefile
-	$(CC) $(CLIENT_OBJECTS) -o $(BN)/muonbase-client.app $(LINKING_SSL) $(LINKING_THREAD)
+	$(CC) $(CLIENT_OBJECTS) -o $(BN)/muonbase-client $(LINKING_SSL) $(LINKING_THREAD)
 
 $(BD)/%.o: $(SD)/%.cc
 	$(CC) $(CFLAGS) -I$(ID) -I. -o $@ -c $<

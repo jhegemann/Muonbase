@@ -43,7 +43,7 @@ static const bool kDaemonizeDefault = false;
 static const bool kVerboseDefault = false;
 
 static void PrintUsage() {
-  std::cout << "Usage: muonbase-server.app [-h] [-v] [-d] [-c <config>]"
+  std::cout << "Usage: muonbase-server [-h] [-v] [-d] [-c <config>]"
             << std::endl;
   std::cout << "\t -h: help" << std::endl;
   std::cout << "\t -v: verbose - default " << std::boolalpha << kVerboseDefault

@@ -54,11 +54,11 @@ make clean && make
 The compiler is configured to give all warnings via `-Wall` and to be `-pedantic`; optimization level `-Ofast`is applied.
 
 # Usage
-Two binaries are produced by the makefile, which are (i) muonbase-server.app, and (ii) muonbase-client.app. Binary (i) runs the 
+Two binaries are produced by the makefile, which are (i) muonbase-server, and (ii) muonbase-client. Binary (i) runs the 
 database server, which is used as follows
 ```
-user@linux-machine:/home/muonbase$ ./bin/muonbase-server.app -h
-Usage: muonbase-server.app [-h] [-v] [-d] [-c <config>]
+user@linux-machine:/home/muonbase$ ./bin/muonbase-server -h
+Usage: muonbase-server [-h] [-v] [-d] [-c <config>]
          -h: help
          -v: verbose
          -d: daemonize
@@ -69,8 +69,8 @@ The option `-d` will run the server in background; option `-v` will switch on lo
 
 Binary (ii) runs automated tests against a running database server and is used as follows
 ```
-user@linux-machine:/home/muonbase$ ./bin/muonbase-client.app -h
-Usage: muonbase-client.app [-h] [-n <threads>] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
+user@linux-machine:/home/muonbase$ ./bin/muonbase-client -h
+Usage: muonbase-client [-h] [-n <threads>] [-t] [-i <ip>] [-p <port>] [-o <order>] [-c <cycles>]
          -h: help
          -t: test
          -n <threads>: threads
@@ -109,8 +109,6 @@ meaning that all users can read and modify all documents in one collection. If y
 horizontally and launch one new database server per user.
 
 # API
-
-
 
 ## Routes
 * POST /insert
@@ -260,36 +258,36 @@ server: muonbase/1
 # Benchmark
 Though implementing HTTP REST, Muonbase is highly performant as the benchmarks suggest. In the following example, four threads are simultaneously inserting and erasing random documents, where processing times are around one millisecond. Note that the processing time is measured as the complete HTTP request and response time (measured in a locally connected client) divided by the number of documents that are affected by the operation.
 ```
-[4969|20.01.2022-14:33:39|info]available service found on 127.0.0.1:8260
-[4969|20.01.2022-14:33:39|info]thread 0 fill db
-[4969|20.01.2022-14:33:39|info]thread 1 fill db
-[4969|20.01.2022-14:33:39|info]thread 3 fill db
-[4969|20.01.2022-14:33:39|info]thread 2 fill db
-[4969|20.01.2022-14:33:52|info]thread 0 took 0.847212ms per insertion
-[4969|20.01.2022-14:33:52|info]thread 1 took 0.837370ms per insertion
-[4969|20.01.2022-14:33:52|info]thread 3 took 0.833036ms per insertion
-[4969|20.01.2022-14:33:52|info]thread 2 took 0.842341ms per insertion
-[4969|20.01.2022-14:34:04|info]thread 0 cycle 1 took 0.849125ms per insertion
-[4969|20.01.2022-14:34:04|info]thread 1 cycle 1 took 0.852044ms per insertion
-[4969|20.01.2022-14:34:04|info]thread 3 cycle 1 took 0.849465ms per insertion
-[4969|20.01.2022-14:34:04|info]thread 2 cycle 1 took 0.833695ms per insertion
-[4969|20.01.2022-14:34:13|info]thread 0 cycle 1 took 0.602037ms per erasure
-[4969|20.01.2022-14:34:19|info]thread 0 cycle 2 took 0.412117ms per insertion
-[4969|20.01.2022-14:34:27|info]thread 1 cycle 1 took 1.517777ms per erasure
-[4969|20.01.2022-14:34:28|info]thread 3 cycle 1 took 1.568884ms per erasure
-[4969|20.01.2022-14:34:28|info]thread 2 cycle 1 took 1.573184ms per erasure
-[4969|20.01.2022-14:34:37|info]thread 1 cycle 2 took 0.687114ms per insertion
-[4969|20.01.2022-14:34:38|info]thread 3 cycle 2 took 0.690717ms per insertion
-[4969|20.01.2022-14:34:38|info]thread 2 cycle 2 took 0.688060ms per insertion
-[4969|20.01.2022-14:34:39|info]thread 0 cycle 2 took 1.275226ms per erasure
-[4969|20.01.2022-14:34:54|info]thread 1 cycle 2 took 1.136800ms per erasure
-[4969|20.01.2022-14:34:54|info]thread 2 cycle 2 took 1.072862ms per erasure
-[4969|20.01.2022-14:34:55|info]thread 3 cycle 2 took 1.109718ms per erasure
-[4969|20.01.2022-14:34:55|info]GET /keys
-[4969|20.01.2022-14:34:55|info]GET /values
-[4969|20.01.2022-14:34:56|info]GET /image
-[4969|20.01.2022-14:34:58|info]POST /insert
-[4969|20.01.2022-14:34:58|info]POST /erase
-[4969|20.01.2022-14:34:58|info]POST /find
-[4969|20.01.2022-14:34:59|info]all tests passed
+[3516|21.01.2022-23:17:18|info|source/test.cc:128] available service found on 127.0.0.1:8260
+[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 0 started
+[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 2 started
+[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 3 started
+[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 1 started
+[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 0 fill db took 0.741290ms per insertion
+[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 2 fill db took 0.747771ms per insertion
+[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 3 fill db took 0.741381ms per insertion
+[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 1 fill db took 0.745466ms per insertion
+[3516|21.01.2022-23:17:39|info|source/test.cc:178] thread 0 cycle 1 took 0.710467ms per insertion
+[3516|21.01.2022-23:17:39|info|source/test.cc:178] thread 2 cycle 1 took 0.720587ms per insertion
+[3516|21.01.2022-23:17:40|info|source/test.cc:178] thread 3 cycle 1 took 0.716768ms per insertion
+[3516|21.01.2022-23:17:40|info|source/test.cc:178] thread 1 cycle 1 took 0.727198ms per insertion
+[3516|21.01.2022-23:17:49|info|source/test.cc:195] thread 0 cycle 1 took 0.607129ms per erasure
+[3516|21.01.2022-23:17:54|info|source/test.cc:178] thread 0 cycle 2 took 0.379271ms per insertion
+[3516|21.01.2022-23:17:58|info|source/test.cc:195] thread 1 cycle 1 took 1.227128ms per erasure
+[3516|21.01.2022-23:17:58|info|source/test.cc:195] thread 2 cycle 1 took 1.239757ms per erasure
+[3516|21.01.2022-23:17:59|info|source/test.cc:195] thread 3 cycle 1 took 1.277629ms per erasure
+[3516|21.01.2022-23:18:07|info|source/test.cc:178] thread 1 cycle 2 took 0.625199ms per insertion
+[3516|21.01.2022-23:18:07|info|source/test.cc:178] thread 2 cycle 2 took 0.626124ms per insertion
+[3516|21.01.2022-23:18:08|info|source/test.cc:178] thread 3 cycle 2 took 0.608676ms per insertion
+[3516|21.01.2022-23:18:11|info|source/test.cc:195] thread 0 cycle 2 took 1.094233ms per erasure
+[3516|21.01.2022-23:18:21|info|source/test.cc:195] thread 1 cycle 2 took 0.928922ms per erasure
+[3516|21.01.2022-23:18:21|info|source/test.cc:195] thread 2 cycle 2 took 0.916651ms per erasure
+[3516|21.01.2022-23:18:21|info|source/test.cc:195] thread 3 cycle 2 took 0.896016ms per erasure
+[3516|21.01.2022-23:18:21|info|source/test.cc:213] GET /keys
+[3516|21.01.2022-23:18:22|info|source/test.cc:215] GET /values
+[3516|21.01.2022-23:18:29|info|source/test.cc:217] GET /image
+[3516|21.01.2022-23:18:38|info|source/test.cc:219] POST /insert
+[3516|21.01.2022-23:18:38|info|source/test.cc:221] POST /erase
+[3516|21.01.2022-23:18:38|info|source/test.cc:223] POST /find
+[3516|21.01.2022-23:18:47|info|source/test.cc:229] all tests passed
 ```
