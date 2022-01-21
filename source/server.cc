@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
       try {
         config.Parse(FileToString(optarg));
       } catch (std::runtime_error &) {
-        Log::GetInstance()->Info("error parsing configuration");
+        LOG_INFO("error parsing configuration");
         exit(1);
       }
       config_available = true;
@@ -80,11 +80,11 @@ int main(int argc, char **argv) {
       PrintUsage();
       exit(0);
     case kCharColon:
-      Log::GetInstance()->Info("option needs a value");
+      LOG_INFO("option needs a value");
       PrintUsage();
       exit(1);
     case kCharQuestionMark:
-      Log::GetInstance()->Info("unknown option " + std::string(optopt, 1));
+      LOG_INFO("unknown option " + std::string(optopt, 1));
       PrintUsage();
       exit(1);
     default:
@@ -107,20 +107,19 @@ int main(int argc, char **argv) {
     if (config.Has(kWorkingDirectory) && config.IsString(kWorkingDirectory)) {
       working_directory = config.GetString(kWorkingDirectory);
     } else {
-      Log::GetInstance()->Info("no " + kWorkingDirectory +
-                               " found, fallback: " + kWorkingDirectoryDefault);
+      LOG_INFO("no " + kWorkingDirectory +
+               " found, fallback: " + kWorkingDirectoryDefault);
     }
-    Log::GetInstance()->Info("daemonize process");
+    LOG_INFO("daemonize process");
     if (DaemonizeProcess(working_directory) == -1) {
-      Log::GetInstance()->Info("could not daemonize process");
+      LOG_INFO("could not daemonize process");
       exit(1);
     }
     Log::GetInstance()->SetLogfile(kLogPathDefault);
     if (config.Has(kLogPath) && config.IsString(kLogPath)) {
       Log::GetInstance()->SetLogfile(config.GetString(kLogPath));
     } else {
-      Log::GetInstance()->Info("no " + kLogPath +
-                               " found, fallback: " + kLogPathDefault);
+      LOG_INFO("no " + kLogPath + " found, fallback: " + kLogPathDefault);
     }
   }
 
@@ -128,26 +127,24 @@ int main(int argc, char **argv) {
   if (config.Has(kDbPath) && config.IsString(kDbPath)) {
     data_path = config.GetString(kDbPath);
   } else {
-    Log::GetInstance()->Info("no " + kDbPath +
-                             " found, fallback: " + kDbPathDefault);
+    LOG_INFO("no " + kDbPath + " found, fallback: " + kDbPathDefault);
   }
 
   std::string user_path = kUserPathDefault;
   if (config.Has(kUserPath) && config.IsString(kUserPath)) {
     user_path = config.GetString(kUserPath);
   } else {
-    Log::GetInstance()->Info("no " + kUserPath +
-                             " found, fallback: " + kUserPathDefault);
+    LOG_INFO("no " + kUserPath + " found, fallback: " + kUserPathDefault);
   }
 
   HttpServer server;
 
-  Log::GetInstance()->Info("set up services");
+  LOG_INFO("set up services");
   server.RegisterService(db_api::kServiceDatabase,
                          new DocumentDatabase(data_path));
   server.RegisterService(db_api::kServiceUser, new UserPool(user_path));
 
-  Log::GetInstance()->Info("set up routes");
+  LOG_INFO("set up routes");
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteInsert,
                          db_api::Insert);
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteErase, db_api::Erase);
@@ -156,19 +153,18 @@ int main(int argc, char **argv) {
   server.RegisterHandler(HttpMethod::GET, db_api::kRouteValues, db_api::Values);
   server.RegisterHandler(HttpMethod::GET, db_api::kRouteImage, db_api::Image);
 
-  Log::GetInstance()->Info("start server");
+  LOG_INFO("start server");
   std::string ip = kIpDefault;
   if (config.Has(kIp) && config.IsString(kIp)) {
     ip = config.GetString(kIp);
   } else {
-    Log::GetInstance()->Info("no " + kIp + " found, fallback: " + kIpDefault);
+    LOG_INFO("no " + kIp + " found, fallback: " + kIpDefault);
   }
   std::string port = kPortDefault;
   if (config.Has(kPort) && config.IsString(kPort)) {
     port = config.GetString(kPort);
   } else {
-    Log::GetInstance()->Info("no " + kPort +
-                             " found, fallback: " + kPortDefault);
+    LOG_INFO("no " + kPort + " found, fallback: " + kPortDefault);
   }
 
   server.Serve(port, ip);

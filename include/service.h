@@ -34,6 +34,20 @@ const std::string kServiceSuffixSnapshot = ".snapshot";
 const std::string kServiceSuffixClosed = ".closed";
 const std::string kServiceSuffixCorrupted = ".corrupted";
 
+typedef Map<std::string, JsonObject> DocumentMap;
+typedef Serializer<DocumentMap> DatabaseSerializer;
+typedef Memory<DocumentMap> DatabaseMemory;
+typedef Journal<std::string, JsonObject> DatabaseJournal;
+
+namespace db {
+
+size_t Serialize(const std::string &filepath, const DocumentMap &database,
+                 const std::atomic<bool> &cancel = false);
+size_t Deserialize(const std::string &filepath, DocumentMap &database,
+                   const std::atomic<bool> &cancel = false);
+
+} // namespace db
+
 class ApiService {
 public:
   ApiService();
@@ -50,7 +64,6 @@ public:
   virtual void Initialize();
   virtual void Tick();
   virtual void Shutdown();
-  void Rollover();
   JsonArray Insert(const JsonArray &values);
   JsonArray Erase(const JsonArray &keys);
   JsonArray Find(const JsonArray &keys) const;
@@ -59,6 +72,10 @@ public:
   JsonObject Image() const;
 
 private:
+  void RotateJournal();
+  void Rollover();
+  size_t Serialize(const std::string &filepath);
+  size_t Deserialize(const std::string &filepath);
   std::string filepath_;
   std::string filepath_journal_;
   std::string filepath_closed_;
@@ -66,11 +83,11 @@ private:
   std::string filepath_corrupted_;
   std::fstream stream_;
   std::fstream stream_journal_;
-  Map<std::string, JsonObject> db_;
+  DocumentMap db_;
   RandomGenerator random_;
   std::thread rollover_worker_;
   std::atomic<bool> rollover_in_progress_;
-  std::atomic<bool> rollover_interrupt_;
+  std::atomic<bool> rollover_cancel_;
 };
 
 class UserPool : public ApiService {

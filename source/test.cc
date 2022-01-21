@@ -104,11 +104,11 @@ int main(int argc, char **argv) {
       }
       break;
     case kCharColon:
-      Log::GetInstance()->Info("option needs a value");
+      LOG_INFO("option needs a value");
       PrintUsage();
       exit(1);
     case kCharQuestionMark:
-      Log::GetInstance()->Info("unknown option " + std::string(optopt, 1));
+      LOG_INFO("unknown option " + std::string(optopt, 1));
       PrintUsage();
       exit(1);
     default:
@@ -121,16 +121,16 @@ int main(int argc, char **argv) {
 
   TcpSocket socket;
   if (!socket.Connect(port, ip)) {
-    Log::GetInstance()->Info("no service listening on " + ip + ":" + port);
+    LOG_INFO("no service listening on " + ip + ":" + port);
     exit(0);
   }
   if (socket.IsConnected()) {
-    Log::GetInstance()->Info("available service found on " + ip + ":" + port);
+    LOG_INFO("available service found on " + ip + ":" + port);
   }
   socket.Close();
 
   if (!run) {
-    Log::GetInstance()->Info("dry run complete - restart with -t to run tests");
+    LOG_INFO("dry run complete - restart with -t to run tests");
     exit(0);
   }
 
@@ -143,9 +143,8 @@ int main(int argc, char **argv) {
       Clock clock;
       size_t count;
       try {
-        Log::GetInstance()->Info("thread" + kStringSpace +
-                                 std::to_string(index) + kStringSpace +
-                                 "fill db");
+        LOG_INFO("thread" + kStringSpace + std::to_string(index) +
+                 kStringSpace + "fill db");
         clock.Start();
         count = 0;
         for (size_t i = 0; i < order; i++) {
@@ -158,10 +157,10 @@ int main(int argc, char **argv) {
           count += keys.Size();
         }
         clock.Stop();
-        Log::GetInstance()->Info(
-            "thread" + kStringSpace + std::to_string(index) + kStringSpace +
-            "took" + kStringSpace + std::to_string(clock.Time() / count) +
-            "ms" + kStringSpace + "per insertion");
+        LOG_INFO("thread" + kStringSpace + std::to_string(index) +
+                 kStringSpace + "took" + kStringSpace +
+                 std::to_string(clock.Time() / count) + "ms" + kStringSpace +
+                 "per insertion");
 
         for (size_t i = 1; i <= cycles; i++) {
           clock.Start();
@@ -176,11 +175,11 @@ int main(int argc, char **argv) {
             count += keys.Size();
           }
           clock.Stop();
-          Log::GetInstance()->Info(
-              "thread" + kStringSpace + std::to_string(index) + kStringSpace +
-              "cycle" + kStringSpace + std::to_string(i) + kStringSpace +
-              "took" + kStringSpace + std::to_string(clock.Time() / count) +
-              "ms" + kStringSpace + "per insertion");
+          LOG_INFO("thread" + kStringSpace + std::to_string(index) +
+                   kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
+                   kStringSpace + "took" + kStringSpace +
+                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
+                   "per insertion");
 
           clock.Start();
           for (size_t j = 0; j < count; j++) {
@@ -193,14 +192,14 @@ int main(int argc, char **argv) {
             client.Erase(keys);
           }
           clock.Stop();
-          Log::GetInstance()->Info(
-              "thread" + kStringSpace + std::to_string(index) + kStringSpace +
-              "cycle" + kStringSpace + std::to_string(i) + kStringSpace +
-              "took" + kStringSpace + std::to_string(clock.Time() / count) +
-              "ms" + kStringSpace + "per erasure");
+          LOG_INFO("thread" + kStringSpace + std::to_string(index) +
+                   kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
+                   kStringSpace + "took" + kStringSpace +
+                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
+                   "per erasure");
         }
       } catch (std::runtime_error &) {
-        Log::GetInstance()->Info("test failed");
+        LOG_INFO("test failed");
         return;
       }
     });
@@ -211,23 +210,23 @@ int main(int argc, char **argv) {
 
   try {
     Client client(ip, port, kUserDefault, kPasswordDefault);
-    Log::GetInstance()->Info("GET /keys");
+    LOG_INFO("GET /keys");
     JsonArray keys = client.Keys();
-    Log::GetInstance()->Info("GET /values");
+    LOG_INFO("GET /values");
     JsonArray values = client.Values();
-    Log::GetInstance()->Info("GET /image");
+    LOG_INFO("GET /image");
     JsonObject image = client.Image();
-    Log::GetInstance()->Info("POST /insert");
+    LOG_INFO("POST /insert");
     JsonArray added_keys = client.Insert(json::RandomObjectArray());
-    Log::GetInstance()->Info("POST /erase");
+    LOG_INFO("POST /erase");
     client.Erase(added_keys);
-    Log::GetInstance()->Info("POST /find");
+    LOG_INFO("POST /find");
     client.Find(keys);
   } catch (std::runtime_error &) {
-    Log::GetInstance()->Info("test failed");
+    LOG_INFO("test failed");
   }
 
-  Log::GetInstance()->Info("all tests passed");
+  LOG_INFO("all tests passed");
 
   return 0;
 }

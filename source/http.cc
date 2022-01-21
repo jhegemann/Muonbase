@@ -558,7 +558,7 @@ void HttpServer::RegisterHandler(HttpMethod method, const std::string &url,
   }
   std::string handler_id = HttpConstants::GetMethodString(method) + url;
   if (handlers_.find(handler_id) != handlers_.end()) {
-    Log::GetInstance()->Info("handler already registered");
+    LOG_INFO("handler already registered");
     return;
   }
   handlers_.insert(std::make_pair(handler_id, callback));
@@ -569,7 +569,7 @@ void HttpServer::RegisterService(const std::string &name, ApiService *service) {
     return;
   }
   if (services_.find(name) != services_.end()) {
-    Log::GetInstance()->Info("service already registered");
+    LOG_INFO("service already registered");
     return;
   }
   services_.insert(std::make_pair(name, service));
@@ -589,42 +589,41 @@ HttpResponse HttpServer::ExecuteHandler(const HttpRequest &request,
 
 void HttpServer::Serve(const std::string &service, const std::string &host) {
   for (auto service : services_) {
-    Log::GetInstance()->Info("initialize service " + service.first);
+    LOG_INFO("initialize service " + service.first);
     service.second->Initialize();
   }
   if (!epoll_instance_.Create()) {
-    Log::GetInstance()->Info("cannot not set up epoll instance");
+    LOG_INFO("cannot not set up epoll instance");
     return;
   }
   if (!SetupServerSocket(service, host)) {
-    Log::GetInstance()->Info("cannot not set up server socket");
+    LOG_INFO("cannot not set up server socket");
     return;
   }
   if (!epoll_instance_.AddReadableDescriptor(server_socket_.GetDescriptor())) {
-    Log::GetInstance()->Info(
-        "cannot not add listening socket to epoll instance");
+    LOG_INFO("cannot not add listening socket to epoll instance");
     return;
   }
-  Log::GetInstance()->Info("setup signal descriptor");
+  LOG_INFO("setup signal descriptor");
   if (!SetupSignalDescriptor()) {
-    Log::GetInstance()->Info("cannot setup signal descriptor");
+    LOG_INFO("cannot setup signal descriptor");
     return;
   }
   if (!epoll_instance_.AddReadableDescriptor(signal_descriptor_)) {
-    Log::GetInstance()->Info("cannot add signal descriptor to epoll instance");
+    LOG_INFO("cannot add signal descriptor to epoll instance");
     return;
   }
-  Log::GetInstance()->Info("setup timer descriptor");
+  LOG_INFO("setup timer descriptor");
   if (!SetupTimerDescriptor()) {
-    Log::GetInstance()->Info("cannot setup timer descriptor");
+    LOG_INFO("cannot setup timer descriptor");
     return;
   }
   if (!ScheduleTimer(kHttpConnectionTimeout)) {
-    Log::GetInstance()->Info("cannot schedule timer");
+    LOG_INFO("cannot schedule timer");
     return;
   }
   if (!epoll_instance_.AddReadableDescriptor(timer_descriptor_)) {
-    Log::GetInstance()->Info("cannot add timer descriptor to epoll instance");
+    LOG_INFO("cannot add timer descriptor to epoll instance");
     return;
   }
   running_ = true;
@@ -661,46 +660,46 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
       }
     }
   }
-  Log::GetInstance()->Info("shut down services");
+  LOG_INFO("shut down services");
   for (auto service : services_) {
-    Log::GetInstance()->Info("shut down service " + service.first);
+    LOG_INFO("shut down service " + service.first);
     service.second->Shutdown();
     delete service.second;
   }
-  Log::GetInstance()->Info("close timer descriptor");
+  LOG_INFO("close timer descriptor");
   epoll_instance_.DeleteDescriptor(timer_descriptor_);
   close(timer_descriptor_);
-  Log::GetInstance()->Info("close signal descriptor");
+  LOG_INFO("close signal descriptor");
   epoll_instance_.DeleteDescriptor(signal_descriptor_);
   close(signal_descriptor_);
-  Log::GetInstance()->Info("close server socket");
+  LOG_INFO("close server socket");
   epoll_instance_.DeleteDescriptor(server_socket_.GetDescriptor());
   server_socket_.Close();
-  Log::GetInstance()->Info("delete connections");
+  LOG_INFO("delete connections");
   DeleteAllConnections();
-  Log::GetInstance()->Info("release epoll instance");
+  LOG_INFO("release epoll instance");
   epoll_instance_.Release();
   running_ = false;
-  Log::GetInstance()->Info("clean http server shutdown succeeded");
+  LOG_INFO("clean http server shutdown succeeded");
 }
 
 void HttpServer::HandleTimerError() {
-  Log::GetInstance()->Info("error on timer descriptor; close timer descriptor");
+  LOG_INFO("error on timer descriptor; close timer descriptor");
   epoll_instance_.DeleteDescriptor(timer_descriptor_);
   close(timer_descriptor_);
-  Log::GetInstance()->Info("setup timer descriptor");
+  LOG_INFO("setup timer descriptor");
   if (!SetupTimerDescriptor()) {
-    Log::GetInstance()->Info("cannot setup timer descriptor");
+    LOG_INFO("cannot setup timer descriptor");
     running_ = false;
     return;
   }
   if (!ScheduleTimer(kHttpConnectionTimeout)) {
-    Log::GetInstance()->Info("cannot schedule timer");
+    LOG_INFO("cannot schedule timer");
     running_ = false;
     return;
   }
   if (!epoll_instance_.AddReadableDescriptor(timer_descriptor_)) {
-    Log::GetInstance()->Info("cannot add timer descriptor to epoll instance");
+    LOG_INFO("cannot add timer descriptor to epoll instance");
     running_ = false;
     return;
   }
@@ -708,29 +707,28 @@ void HttpServer::HandleTimerError() {
 
 bool HttpServer::SetupTimerDescriptor() {
   if ((timer_descriptor_ = timerfd_create(CLOCK_MONOTONIC, 0)) == -1) {
-    Log::GetInstance()->Info("cannot open timer descriptor");
+    LOG_INFO("cannot open timer descriptor");
     return false;
   }
   if (!UnblockDescriptor(timer_descriptor_)) {
-    Log::GetInstance()->Info("cannot set timer descriptor to nonblocking mode");
+    LOG_INFO("cannot set timer descriptor to nonblocking mode");
     return false;
   }
   return true;
 }
 
 void HttpServer::HandleSignalError() {
-  Log::GetInstance()->Info(
-      "error on signal descriptor; close signal descriptor");
+  LOG_INFO("error on signal descriptor; close signal descriptor");
   epoll_instance_.DeleteDescriptor(signal_descriptor_);
   close(signal_descriptor_);
-  Log::GetInstance()->Info("setup signal descriptor");
+  LOG_INFO("setup signal descriptor");
   if (!SetupSignalDescriptor()) {
-    Log::GetInstance()->Info("cannot setup signal descriptor");
+    LOG_INFO("cannot setup signal descriptor");
     running_ = false;
     return;
   }
   if (!epoll_instance_.AddReadableDescriptor(signal_descriptor_)) {
-    Log::GetInstance()->Info("cannot add signal descriptor to epoll instance");
+    LOG_INFO("cannot add signal descriptor to epoll instance");
     running_ = false;
     return;
   }
@@ -738,25 +736,24 @@ void HttpServer::HandleSignalError() {
 
 bool HttpServer::SetupSignalDescriptor() {
   if (sigemptyset(&sigset_) == -1) {
-    Log::GetInstance()->Info("cannot clear signal set");
+    LOG_INFO("cannot clear signal set");
     return false;
   }
   if (sigaddset(&sigset_, SIGINT) == -1 || sigaddset(&sigset_, SIGKILL) == -1 ||
       sigaddset(&sigset_, SIGTERM) == -1) {
-    Log::GetInstance()->Info("cannot add signal to signal set");
+    LOG_INFO("cannot add signal to signal set");
     return false;
   }
   if (sigprocmask(SIG_BLOCK, &sigset_, nullptr) == -1) {
-    Log::GetInstance()->Info("cannot block signals");
+    LOG_INFO("cannot block signals");
     return false;
   }
   if ((signal_descriptor_ = signalfd(-1, &sigset_, 0)) == -1) {
-    Log::GetInstance()->Info("cannot open signal descriptor");
+    LOG_INFO("cannot open signal descriptor");
     return false;
   }
   if (!UnblockDescriptor(signal_descriptor_)) {
-    Log::GetInstance()->Info(
-        "cannot set signal descriptor to nonblocking mode");
+    LOG_INFO("cannot set signal descriptor to nonblocking mode");
     return false;
   }
   return true;
@@ -778,7 +775,7 @@ void HttpServer::DeleteConnection(int descriptor) {
   if (it_connection == connections_.end()) {
     return;
   }
-  Log::GetInstance()->Info("delete connection " + std::to_string(descriptor));
+  LOG_INFO("delete connection " + std::to_string(descriptor));
   epoll_instance_.DeleteDescriptor(descriptor);
   delete it_connection->second;
   it_connection = connections_.erase(it_connection);
@@ -787,8 +784,7 @@ void HttpServer::DeleteConnection(int descriptor) {
 void HttpServer::DeleteAllConnections() {
   auto it_connection = connections_.begin();
   while (it_connection != connections_.end()) {
-    Log::GetInstance()->Info("delete connection " +
-                             std::to_string(it_connection->first));
+    LOG_INFO("delete connection " + std::to_string(it_connection->first));
     epoll_instance_.DeleteDescriptor(it_connection->first);
     delete it_connection->second;
     it_connection = connections_.erase(it_connection);
@@ -797,14 +793,13 @@ void HttpServer::DeleteAllConnections() {
 }
 
 void HttpServer::DeleteExpiredConnections() {
-  Log::GetInstance()->Info("check for expired connections");
+  LOG_INFO("check for expired connections");
   int descriptor;
   auto it_connection = connections_.begin();
   while (it_connection != connections_.end()) {
     if (it_connection->second->GetExpiry() <= TimeEpochMilliseconds()) {
       descriptor = it_connection->first;
-      Log::GetInstance()->Info("delete expired connection " +
-                               std::to_string(descriptor));
+      LOG_INFO("delete expired connection " + std::to_string(descriptor));
       epoll_instance_.DeleteDescriptor(descriptor);
       delete it_connection->second;
       it_connection = connections_.erase(it_connection);
@@ -815,26 +810,26 @@ void HttpServer::DeleteExpiredConnections() {
 }
 
 bool HttpServer::ClearTimer() {
-  Log::GetInstance()->Info("clear timer");
+  LOG_INFO("clear timer");
   timer_schedule_.it_interval.tv_sec = 0;
   timer_schedule_.it_interval.tv_nsec = 0;
   timer_schedule_.it_value.tv_sec = 0;
   timer_schedule_.it_value.tv_nsec = 0;
   if (timerfd_settime(timer_descriptor_, 0, &timer_schedule_, 0) == -1) {
-    Log::GetInstance()->Info("cannot clear timer");
+    LOG_INFO("cannot clear timer");
     return false;
   }
   return true;
 }
 
 bool HttpServer::ScheduleTimer(long duration) {
-  Log::GetInstance()->Info("schedule timer");
+  LOG_INFO("schedule timer");
   timer_schedule_.it_interval.tv_sec = duration / 1000;
   timer_schedule_.it_interval.tv_nsec = 0;
   timer_schedule_.it_value.tv_sec = duration / 1000;
   timer_schedule_.it_value.tv_nsec = 0;
   if (timerfd_settime(timer_descriptor_, 0, &timer_schedule_, 0) == -1) {
-    Log::GetInstance()->Info("cannot schedule timer");
+    LOG_INFO("cannot schedule timer");
     return false;
   }
   return true;
@@ -879,13 +874,13 @@ bool HttpServer::SignalReceived() {
 }
 
 void HttpServer::HandleTimerEvent() {
-  Log::GetInstance()->Info("event on timer descriptor");
+  LOG_INFO("event on timer descriptor");
   if (!PopTimerEvent()) {
-    Log::GetInstance()->Info("error reading time from timer descriptor");
+    LOG_INFO("error reading time from timer descriptor");
     return;
   }
   for (auto service : services_) {
-    Log::GetInstance()->Info("tick service " + service.first);
+    LOG_INFO("tick service " + service.first);
     service.second->Tick();
   }
   DeleteExpiredConnections();
@@ -898,18 +893,17 @@ void HttpServer::HandleTimerEvent() {
     connection_list += sep + std::to_string(it->first);
     sep = ", ";
   }
-  Log::GetInstance()->Info("open connections: " + connection_list);
+  LOG_INFO("open connections: " + connection_list);
 }
 
 void HttpServer::HandleSignalEvent() {
-  Log::GetInstance()->Info("event on signal descriptor");
+  LOG_INFO("event on signal descriptor");
   if (!PopSignalEvent()) {
-    Log::GetInstance()->Info(
-        "error reading signal info from signal descriptor");
+    LOG_INFO("error reading signal info from signal descriptor");
     return;
   }
   if (SignalReceived()) {
-    Log::GetInstance()->Info("process stopped by signal");
+    LOG_INFO("process stopped by signal");
     running_ = false;
     return;
   }
@@ -917,47 +911,46 @@ void HttpServer::HandleSignalEvent() {
 
 void HttpServer::HandleServerError(const std::string &service,
                                    const std::string &host) {
-  Log::GetInstance()->Info(
-      "error condition on server socket; close server socket");
+  LOG_INFO("error condition on server socket; close server socket");
   epoll_instance_.DeleteDescriptor(server_socket_.GetDescriptor());
   server_socket_.Close();
-  Log::GetInstance()->Info("try to restart server socket");
+  LOG_INFO("try to restart server socket");
   if (!SetupServerSocket(service, host)) {
-    Log::GetInstance()->Info("cannot set up server socket");
+    LOG_INFO("cannot set up server socket");
     running_ = false;
     return;
   }
   if (!epoll_instance_.AddReadableDescriptor(server_socket_.GetDescriptor())) {
-    Log::GetInstance()->Info("cannot add listening socket to epoll instance");
+    LOG_INFO("cannot add listening socket to epoll instance");
     running_ = false;
     return;
   }
-  Log::GetInstance()->Info("server socket has been restarted");
+  LOG_INFO("server socket has been restarted");
   DeleteAllConnections();
-  Log::GetInstance()->Info("all connections dropped");
+  LOG_INFO("all connections dropped");
 }
 
 void HttpServer::HandleServerEvent() {
-  Log::GetInstance()->Info("event on server socket");
+  LOG_INFO("event on server socket");
   if (connections_.size() >= kEpollMaximumEvents - kHttpReservedSockets) {
-    Log::GetInstance()->Info("cannot accept more connections");
+    LOG_INFO("cannot accept more connections");
     return;
   }
-  Log::GetInstance()->Info("accept a new client socket");
+  LOG_INFO("accept a new client socket");
   TcpSocket *client_socket;
   client_socket = server_socket_.Accept();
   if (client_socket == nullptr) {
-    Log::GetInstance()->Info("error accepting new client socket");
+    LOG_INFO("error accepting new client socket");
     return;
   }
   if (!epoll_instance_.AddReadableDescriptor(client_socket->GetDescriptor())) {
-    Log::GetInstance()->Info("cannot add new client socket to epoll instance");
+    LOG_INFO("cannot add new client socket to epoll instance");
     client_socket->Close();
     delete client_socket;
     return;
   }
   if (!client_socket->Unblock()) {
-    Log::GetInstance()->Info("cannot unblock client socket");
+    LOG_INFO("cannot unblock client socket");
     client_socket->Close();
     delete client_socket;
     return;
@@ -968,12 +961,11 @@ void HttpServer::HandleServerEvent() {
 }
 
 void HttpServer::HandleClientEvent(int index) {
-  Log::GetInstance()->Info(
-      "event on client socket - connection " +
-      std::to_string(epoll_instance_.GetDescriptor(index)));
+  LOG_INFO("event on client socket - connection " +
+           std::to_string(epoll_instance_.GetDescriptor(index)));
   auto lookup = connections_.find(epoll_instance_.GetDescriptor(index));
   if (lookup == connections_.end()) {
-    Log::GetInstance()->Info("cannot not find connection");
+    LOG_INFO("cannot not find connection");
     return;
   }
   int descriptor = lookup->first;
@@ -981,35 +973,32 @@ void HttpServer::HandleClientEvent(int index) {
   if (epoll_instance_.IsReadable(index)) {
     connection->ResetExpiry();
     if (connection->GetStage() == END) {
-      Log::GetInstance()->Info(
-          "connection still readable though successfully parsed");
+      LOG_INFO("connection still readable though successfully parsed");
       DeleteConnection(descriptor);
       return;
     }
     connection->GetReader()->ReadSome();
     connection->ParseRequest();
     if (connection->GetStage() == FAILED) {
-      Log::GetInstance()->Info("parsing of request failed");
+      LOG_INFO("parsing of request failed");
       DeleteConnection(descriptor);
       return;
     }
     if (connection->GetStage() == END) {
-      Log::GetInstance()->Info("incoming request: " +
-                               connection->GetRequest().AsShortString());
-      Log::GetInstance()->Info("execute handler for connection " +
-                               std::to_string(descriptor));
+      LOG_INFO("incoming request: " + connection->GetRequest().AsShortString());
+      LOG_INFO("execute handler for connection " + std::to_string(descriptor));
       HttpResponse response =
           ExecuteHandler(connection->GetRequest(), services_);
-      Log::GetInstance()->Info("response: " + response.AsShortString());
+      LOG_INFO("response: " + response.AsShortString());
       connection->GetWriter()->Write(response.String());
       if (!epoll_instance_.SetWriteable(index)) {
-        Log::GetInstance()->Info("could not set descriptor to write mode");
+        LOG_INFO("could not set descriptor to write mode");
         DeleteConnection(descriptor);
         return;
       }
     }
     if (connection->GetReader()->HasErrors()) {
-      Log::GetInstance()->Info("connection closed by client");
+      LOG_INFO("connection closed by client");
       DeleteConnection(descriptor);
       return;
     }
@@ -1017,31 +1006,31 @@ void HttpServer::HandleClientEvent(int index) {
     connection->ResetExpiry();
     connection->GetWriter()->SendSome();
     if (connection->GetWriter()->IsEmpty()) {
-      Log::GetInstance()->Info("response has been sent for connection " +
-                               std::to_string(descriptor));
+      LOG_INFO("response has been sent for connection " +
+               std::to_string(descriptor));
       if (connection->GetRequest()
               .GetHeader("connection")
               .compare("keep-alive") == 0) {
-        Log::GetInstance()->Info("keep-alive request detected");
+        LOG_INFO("keep-alive request detected");
         connection->Restart();
         if (!epoll_instance_.SetReadable(index)) {
-          Log::GetInstance()->Info("could not set descriptor to read mode");
+          LOG_INFO("could not set descriptor to read mode");
           DeleteConnection(descriptor);
           return;
         }
-        Log::GetInstance()->Info("connection restart due to keep-alive header");
+        LOG_INFO("connection restart due to keep-alive header");
         return;
       }
       DeleteConnection(descriptor);
       return;
     }
     if (connection->GetWriter()->HasErrors()) {
-      Log::GetInstance()->Info("connection closed by client");
+      LOG_INFO("connection closed by client");
       DeleteConnection(descriptor);
       return;
     }
   } else if (epoll_instance_.HasErrors(index)) {
-    Log::GetInstance()->Info("client socket has errors");
+    LOG_INFO("client socket has errors");
     DeleteConnection(descriptor);
     return;
   }
