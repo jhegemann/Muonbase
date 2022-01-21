@@ -66,12 +66,12 @@ void DocumentDatabase::Initialize() {
   bool unlink_closed = false;
   bool unlink_journal = false;
   if (FileExists(filepath_closed_)) {
-    Journal<std::string, JsonObject>::Replay(filepath_closed_, db_);
+    DatabaseJournal::Replay(filepath_closed_, db_);
     rollover_necessary = true;
     unlink_closed = true;
   }
   if (FileExists(filepath_journal_)) {
-    Journal<std::string, JsonObject>::Replay(filepath_journal_, db_);
+    DatabaseJournal::Replay(filepath_journal_, db_);
     rollover_necessary = true;
     unlink_journal = true;
   }
@@ -157,7 +157,7 @@ void DocumentDatabase::Rollover() {
         }
       }
       LOG_INFO("journal rollover: replay closed journal");
-      Journal<std::string, JsonObject>::Replay(filepath_closed_, db);
+      DatabaseJournal::Replay(filepath_closed_, db);
       LOG_INFO("journal rollover: write snapshot");
       bytes = db::Serialize(filepath_snapshot_, db, rollover_cancel_);
       if (bytes == std::string::npos) {
