@@ -81,7 +81,6 @@ private:
   std::string filepath_closed_;
   std::string filepath_snapshot_;
   std::string filepath_corrupted_;
-  std::fstream stream_;
   std::fstream stream_journal_;
   DocumentMap db_;
   RandomGenerator random_;
