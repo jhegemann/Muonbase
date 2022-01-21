@@ -104,7 +104,7 @@ The user management is not dynamic, so in order to add a user you have to manual
 like the general configuration, in a JSON format. Hashed passwords are SHA256 and can be generated 
 e.g. on the command line using `echo -n 'password' | sha256sum`. Don't forget to shred your shell history after doing that.
 Some shells don't log commands to history if they are prefixed with a space. Regarding authorization, Muonbase by now implements 
-only simple http basic authorization and there is no possibility to set user permissions on specific documents, 
+only simple HTTP basic authorization and there is no possibility to set user permissions on specific documents, 
 meaning that all users can read and modify all documents in one collection. If you need user specific collections, scale 
 horizontally and launch one new database server per user.
 
