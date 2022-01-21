@@ -40,12 +40,12 @@ void DocumentDatabase::Initialize() {
     }
   }
   bool rollover_necessary = false;
-  bool unlink_journal_closed = false;
+  bool unlink_closed = false;
   bool unlink_journal = false;
   if (FileExists(filepath_closed_)) {
     Journal<std::string, JsonObject>::Replay(filepath_closed_, db_);
     rollover_necessary = true;
-    unlink_journal_closed = true;
+    unlink_closed = true;
   }
   if (FileExists(filepath_journal_)) {
     Journal<std::string, JsonObject>::Replay(filepath_journal_, db_);
@@ -66,7 +66,7 @@ void DocumentDatabase::Initialize() {
       rename(filepath_snapshot_.c_str(), filepath_.c_str());
     }
   }
-  if (unlink_journal_closed) {
+  if (unlink_closed) {
     remove(filepath_closed_.c_str());
   }
   if (unlink_journal) {
