@@ -3,6 +3,7 @@ data/*.db
 data/*.db.snapshot
 data/*.db.journal
 data/*.db.journal.closed
+data/*.db.corrupted
 
 bin/*.app
 

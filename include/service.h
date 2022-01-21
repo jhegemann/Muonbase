@@ -70,7 +70,7 @@ private:
   RandomGenerator random_;
   std::thread rollover_worker_;
   std::atomic<bool> rollover_in_progress_;
-  std::atomic<bool> wait_for_join_;
+  std::atomic<bool> rollover_interrupt_;
 };
 
 class UserPool : public ApiService {

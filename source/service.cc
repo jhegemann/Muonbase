@@ -23,7 +23,7 @@ DocumentDatabase::DocumentDatabase(const std::string &filepath)
       filepath_closed_(filepath + kServiceSuffixJournal + kServiceSuffixClosed),
       filepath_snapshot_(filepath + kServiceSuffixSnapshot),
       filepath_corrupted_(filepath_ + kServiceSuffixCorrupted),
-      rollover_in_progress_(false), wait_for_join_(false) {}
+      rollover_in_progress_(false), rollover_interrupt_(false) {}
 
 DocumentDatabase::~DocumentDatabase() {}
 
@@ -74,6 +74,8 @@ void DocumentDatabase::Initialize() {
   }
   stream_journal_.open(filepath_journal_,
                        std::fstream::out | std::fstream::binary);
+  rollover_in_progress_ = false;
+  rollover_interrupt_ = false;
   uint64_t usage = Memory<Map<std::string, JsonObject>>::Consumption(db_);
   Log::GetInstance()->Info("memory usage: " + std::to_string(usage));
 }
@@ -81,19 +83,20 @@ void DocumentDatabase::Initialize() {
 void DocumentDatabase::Tick() { Rollover(); }
 
 void DocumentDatabase::Shutdown() {
-  stream_journal_.close();
-  if (wait_for_join_) {
+  if (rollover_worker_.joinable()) {
+    Log::GetInstance()->Info("rollover interrupt and join");
+    rollover_interrupt_ = true;
     rollover_worker_.join();
   }
+  stream_journal_.close();
 }
 
 void DocumentDatabase::Rollover() {
   if (rollover_in_progress_) {
     return;
   }
-  if (wait_for_join_) {
+  if (rollover_worker_.joinable()) {
     rollover_worker_.join();
-    wait_for_join_ = false;
     Log::GetInstance()->Info("deferred journal rollover completed");
   }
   if (FileExists(filepath_)) {
@@ -117,31 +120,32 @@ void DocumentDatabase::Rollover() {
   }
   if (FileExists(filepath_closed_)) {
     rollover_in_progress_ = true;
-    wait_for_join_ = true;
     Log::GetInstance()->Info("defer journal rollover");
     rollover_worker_ = std::thread([this] {
       Map<std::string, JsonObject> db;
       if (FileExists(filepath_)) {
+        Log::GetInstance()->Info("journal rollover: load snapshot");
         stream_.open(filepath_, std::fstream::in | std::fstream::binary);
-        size_t bytes =
-            Serializer<Map<std::string, JsonObject>>::Deserialize(db, stream_);
+        size_t bytes = Serializer<Map<std::string, JsonObject>>::Deserialize(
+            db, stream_, rollover_interrupt_);
         stream_.close();
         if (bytes == std::string::npos) {
           rename(filepath_.c_str(), filepath_corrupted_.c_str());
-          throw std::runtime_error(
-              "error when deserializing database from disk");
+          return;
         }
       }
+      Log::GetInstance()->Info("journal rollover: replay closed journal");
       Journal<std::string, JsonObject>::Replay(filepath_closed_, db);
+      Log::GetInstance()->Info("journal rollover: write snapshot");
       stream_.open(filepath_snapshot_, std::fstream::out |
                                            std::fstream::binary |
                                            std::fstream::trunc);
-      size_t bytes =
-          Serializer<Map<std::string, JsonObject>>::Serialize(db, stream_);
+      size_t bytes = Serializer<Map<std::string, JsonObject>>::Serialize(
+          db, stream_, rollover_interrupt_);
       stream_.close();
       if (bytes == std::string::npos) {
         remove(filepath_snapshot_.c_str());
-        throw std::runtime_error("error when writing snapshot to disk");
+        return;
       } else {
         rename(filepath_snapshot_.c_str(), filepath_.c_str());
         remove(filepath_closed_.c_str());

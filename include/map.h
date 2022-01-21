@@ -19,6 +19,7 @@ limitations under the License. */
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <deque>
@@ -1417,11 +1418,13 @@ template <class K, class V> void MultimapIterator<K, V>::Decrement() {
 
 template <class T> class Serializer {
 public:
-  static size_t Serialize(const T &object, std::ostream &stream) {
+  static size_t Serialize(const T &object, std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     stream.write((const char *)&object, sizeof(T));
     return stream ? sizeof(T) : std::string::npos;
   }
-  static size_t Deserialize(T &object, std::istream &stream) {
+  static size_t Deserialize(T &object, std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     stream.read((char *)&object, sizeof(T));
     return stream ? sizeof(T) : std::string::npos;
   }
@@ -1429,13 +1432,15 @@ public:
 
 template <> class Serializer<std::string> {
 public:
-  static size_t Serialize(const std::string &object, std::ostream &stream) {
+  static size_t Serialize(const std::string &object, std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     size_t length = object.length();
     stream.write((const char *)&length, sizeof(size_t));
     stream.write((const char *)&object[0], length);
     return stream ? sizeof(size_t) + length : std::string::npos;
   }
-  static size_t Deserialize(std::string &object, std::istream &stream) {
+  static size_t Deserialize(std::string &object, std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     object.clear();
     size_t length;
     stream.read((char *)&length, sizeof(size_t));
@@ -1447,24 +1452,32 @@ public:
 
 template <class K, class V> class Serializer<std::map<K, V>> {
 public:
-  static size_t Serialize(const std::map<K, V> &object, std::ostream &stream) {
+  static size_t Serialize(const std::map<K, V> &object, std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     typename std::map<K, V>::iterator it;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
     for (it = object.begin(); it != object.end(); ++it) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       stream.write((const char *)&it->first, sizeof(K));
       stream.write((const char *)&it->second, sizeof(V));
     }
     return stream ? sizeof(size_t) + size * (sizeof(K) + sizeof(V))
                   : std::string::npos;
   }
-  static size_t Deserialize(std::map<K, V> &object, std::istream &stream) {
+  static size_t Deserialize(std::map<K, V> &object, std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     object.clear();
     size_t size;
     stream.read((char *)&size, sizeof(size_t));
     K key;
     V value;
     for (size_t i = 0; i < size; i++) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       stream.read((char *)&key, sizeof(K));
       stream.read((char *)&value, sizeof(V));
       object.insert(key, value);
@@ -1477,12 +1490,16 @@ public:
 template <class K> class Serializer<std::map<K, std::string>> {
 public:
   static size_t Serialize(const std::map<K, std::string> &object,
-                          std::ostream &stream) {
+                          std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     size_t result = 0;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
     result += sizeof(size_t);
     for (auto it = object.begin(); it != object.end(); ++it) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       stream.write((const char *)&it->first, sizeof(K));
       size_t length = it->second.length();
       stream.write((const char *)&it->second[0], length);
@@ -1492,7 +1509,8 @@ public:
     return stream ? result : std::string::npos;
   }
   static size_t Deserialize(std::map<K, std::string> &object,
-                            std::istream &stream) {
+                            std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     object.clear();
     size_t result = 0;
     size_t size;
@@ -1500,6 +1518,9 @@ public:
     K key;
     std::string value;
     for (size_t i = 0; i < size; i++) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       stream.read((char *)&key, sizeof(K));
       size_t length;
       stream.read((char *)&length, sizeof(size_t));
@@ -1515,12 +1536,16 @@ public:
 template <class V> class Serializer<std::map<std::string, V>> {
 public:
   static size_t Serialize(const std::map<std::string, V> &object,
-                          std::ostream &stream) {
+                          std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     size_t result = 0;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
     result += sizeof(size_t);
     for (auto it = object.begin(); it != object.end(); ++it) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       size_t length = it->first.length();
       stream.write((const char *)&it->first[0], length);
       result += sizeof(size_t) + length;
@@ -1530,7 +1555,8 @@ public:
     return stream ? result : std::string::npos;
   }
   static size_t Deserialize(std::map<std::string, V> &object,
-                            std::istream &stream) {
+                            std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     object.clear();
     size_t result = 0;
     size_t size;
@@ -1538,6 +1564,9 @@ public:
     std::string key;
     V value;
     for (size_t i = 0; i < size; i++) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       size_t length;
       stream.read((char *)&length, sizeof(size_t));
       key.resize(length);
@@ -1552,20 +1581,28 @@ public:
 
 template <class T> class Serializer<std::vector<T>> {
 public:
-  static size_t Serialize(const std::vector<T> &object, std::ostream &stream) {
+  static size_t Serialize(const std::vector<T> &object, std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
     for (size_t i = 0; i < size; i++) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       stream.write((const char *)&object[i], sizeof(T));
     }
     return stream ? sizeof(size_t) + size * sizeof(T) : std::string::npos;
   }
-  static size_t Deserialize(std::vector<T> &object, std::istream &stream) {
+  static size_t Deserialize(std::vector<T> &object, std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     object.clear();
     size_t size;
     stream.read((char *)&size, sizeof(size_t));
     object.resize(size);
     for (size_t i = 0; i < size; i++) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       stream.read((char *)&object[i], sizeof(T));
     }
     return stream ? sizeof(size_t) + size * sizeof(T) : std::string::npos;
@@ -1575,12 +1612,16 @@ public:
 template <> class Serializer<std::vector<std::string>> {
 public:
   static size_t Serialize(const std::vector<std::string> &object,
-                          std::ostream &stream) {
+                          std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     size_t result = 0;
     size_t size = object.size();
     stream.write((const char *)&size, sizeof(size_t));
     result += sizeof(size_t);
     for (size_t i = 0; i < size; i++) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       size_t length = object[i].length();
       stream.write((const char *)&length, sizeof(length));
       stream.write((const char *)&object[i][0], length);
@@ -1589,7 +1630,8 @@ public:
     return stream ? result : std::string::npos;
   }
   static size_t Deserialize(std::vector<std::string> &object,
-                            std::istream &stream) {
+                            std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     size_t result = 0;
     object.clear();
     size_t size;
@@ -1597,6 +1639,9 @@ public:
     object.resize(size);
     result += size;
     for (size_t i = 0; i < size; i++) {
+      if (interrupt) {
+        return std::string::npos;
+      }
       size_t length;
       stream.read((char *)&length, sizeof(size_t));
       object[i].resize(length);
@@ -1609,33 +1654,40 @@ public:
 
 template <> class Serializer<JsonArray> {
 public:
-  static size_t Serialize(const JsonArray &object, std::ostream &stream) {
+  static size_t Serialize(const JsonArray &object, std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     return json::Serialize(object, stream);
   }
-  static size_t Deserialize(JsonArray &object, std::istream &stream) {
+  static size_t Deserialize(JsonArray &object, std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     return json::Deserialize(object, stream);
   }
 };
 
 template <> class Serializer<JsonObject> {
 public:
-  static size_t Serialize(const JsonObject &object, std::ostream &stream) {
+  static size_t Serialize(const JsonObject &object, std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false) {
     return json::Serialize(object, stream);
   }
-  static size_t Deserialize(JsonObject &object, std::istream &stream) {
+  static size_t Deserialize(JsonObject &object, std::istream &stream,
+                            const std::atomic<bool> &interrupt = false) {
     return json::Deserialize(object, stream);
   }
 };
 
 template <class K, class V> class Serializer<Map<K, V>> {
 public:
-  static size_t Serialize(const Map<K, V> &object, std::ostream &stream);
-  static size_t Deserialize(Map<K, V> &object, std::istream &stream);
+  static size_t Serialize(const Map<K, V> &object, std::ostream &stream,
+                          const std::atomic<bool> &interrupt = false);
+  static size_t Deserialize(Map<K, V> &object, std::istream &stream,
+                            const std::atomic<bool> &interrupt = false);
 };
 
 template <class K, class V>
 size_t Serializer<Map<K, V>>::Serialize(const Map<K, V> &object,
-                                        std::ostream &stream) {
+                                        std::ostream &stream,
+                                        const std::atomic<bool> &interrupt) {
   size_t bytes = 0;
   if (object.root_ == nullptr) {
     return bytes;
@@ -1646,6 +1698,9 @@ size_t Serializer<Map<K, V>>::Serialize(const Map<K, V> &object,
   OuterNode<K, V> *cursor = object.FirstLeaf();
   size_t counter = 0;
   for (;;) {
+    if (interrupt) {
+      return std::string::npos;
+    }
     for (size_t i = 0; i < cursor->keys_.size(); i++) {
       bytes += Serializer<K>::Serialize(cursor->keys_[i], stream);
       bytes += Serializer<V>::Serialize(cursor->values_[i], stream);
@@ -1665,7 +1720,8 @@ size_t Serializer<Map<K, V>>::Serialize(const Map<K, V> &object,
 
 template <class K, class V>
 size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
-                                          std::istream &stream) {
+                                          std::istream &stream,
+                                          const std::atomic<bool> &interrupt) {
   size_t bytes = 0;
   object.Clear();
   size_t size;
@@ -1683,6 +1739,9 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
   size_t fanout;
   size_t pairs_read = 0;
   while (pairs_read < size || !kv_cache.empty()) {
+    if (interrupt) {
+      return std::string::npos;
+    }
     while (pairs_read < size && kv_cache.size() < 2 * outer_fanout) {
       bytes += Serializer<K>::Deserialize(key_value_pair.first, stream);
       bytes += Serializer<V>::Deserialize(key_value_pair.second, stream);
@@ -1709,6 +1768,9 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
     cache.push_back(outer);
   }
   for (;;) {
+    if (interrupt) {
+      return std::string::npos;
+    }
     size_t cache_size = cache.size();
     if (cache_size == 1) {
       object.root_ = cache[0];
