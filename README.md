@@ -7,7 +7,7 @@ General Purpose Persistent In-Memory JSON Document Database Server
 
 # Essentials
 * CRUD performance - Templated in-memory B+ tree data structure
-* Persistence - Compact B+ tree snapshot and journal on disk
+* Storage Persistence - Compact B+ tree snapshot and journal on disk
 * Efficient transport - Epoll server
 * No special drivers - HTTP REST interface
 * Concise codebase - Easy to understand and fully transparent
