@@ -16,7 +16,7 @@ limitations under the License. */
 
 namespace db {
 
-size_t Serialize(const std::string &filepath, const DocumentMap &database,
+size_t Serialize(const std::string &filepath, const Database &database,
                  const std::atomic<bool> &cancel) {
   size_t bytes;
   std::fstream stream;
@@ -27,7 +27,7 @@ size_t Serialize(const std::string &filepath, const DocumentMap &database,
   return bytes;
 }
 
-size_t Deserialize(const std::string &filepath, DocumentMap &database,
+size_t Deserialize(const std::string &filepath, Database &database,
                    const std::atomic<bool> &cancel) {
   size_t bytes;
   std::fstream stream;
@@ -56,7 +56,7 @@ void DocumentDatabase::Initialize() {
   size_t bytes;
   random_.Seed(time(nullptr));
   if (FileExists(filepath_)) {
-    bytes = db::Deserialize(filepath_, db_);
+    bytes = db::Deserialize(filepath_, database_);
     if (bytes == std::string::npos) {
       rename(filepath_.c_str(), filepath_corrupted_.c_str());
       throw std::runtime_error("error when deserializing database from disk");
@@ -66,18 +66,18 @@ void DocumentDatabase::Initialize() {
   bool unlink_closed = false;
   bool unlink_journal = false;
   if (FileExists(filepath_closed_)) {
-    DatabaseJournal::Replay(filepath_closed_, db_);
+    DatabaseJournal::Replay(filepath_closed_, database_);
     rollover_necessary = true;
     unlink_closed = true;
   }
   if (FileExists(filepath_journal_)) {
-    DatabaseJournal::Replay(filepath_journal_, db_);
+    DatabaseJournal::Replay(filepath_journal_, database_);
     rollover_necessary = true;
     unlink_journal = true;
   }
   if (rollover_necessary) {
     LOG_INFO("database journal rollover");
-    bytes = db::Serialize(filepath_snapshot_, db_);
+    bytes = db::Serialize(filepath_snapshot_, database_);
     if (bytes == std::string::npos) {
       remove(filepath_snapshot_.c_str());
       throw std::runtime_error("error when writing snapshot to disk");
@@ -95,7 +95,7 @@ void DocumentDatabase::Initialize() {
                        std::fstream::out | std::fstream::binary);
   rollover_in_progress_ = false;
   rollover_cancel_ = false;
-  uint64_t usage = DatabaseMemory::Consumption(db_);
+  uint64_t usage = DatabaseMemory::Consumption(database_);
   LOG_INFO("memory usage: " + std::to_string(usage));
 }
 
@@ -142,10 +142,10 @@ void DocumentDatabase::Rollover() {
     LOG_INFO("defer journal rollover");
     rollover_worker_ = std::thread([this] {
       size_t bytes;
-      Map<std::string, JsonObject> db;
+      Map<std::string, JsonObject> database;
       if (FileExists(filepath_)) {
         LOG_INFO("journal rollover: load snapshot");
-        bytes = db::Deserialize(filepath_, db, rollover_cancel_);
+        bytes = db::Deserialize(filepath_, database, rollover_cancel_);
         if (bytes == std::string::npos) {
           if (rollover_cancel_) {
             LOG_INFO("rollover cancel");
@@ -157,9 +157,9 @@ void DocumentDatabase::Rollover() {
         }
       }
       LOG_INFO("journal rollover: replay closed journal");
-      DatabaseJournal::Replay(filepath_closed_, db);
+      DatabaseJournal::Replay(filepath_closed_, database);
       LOG_INFO("journal rollover: write snapshot");
-      bytes = db::Serialize(filepath_snapshot_, db, rollover_cancel_);
+      bytes = db::Serialize(filepath_snapshot_, database, rollover_cancel_);
       if (bytes == std::string::npos) {
         if (rollover_cancel_) {
           LOG_INFO("rollover cancel");
@@ -187,13 +187,13 @@ JsonArray DocumentDatabase::Insert(const JsonArray &values) {
     unique = false;
     while (!unique) {
       key = random_.Uuid();
-      if (db_.Find(key) == db_.End()) {
+      if (database_.Find(key) == database_.End()) {
         unique = true;
       }
     }
     result.PutString(key);
     DatabaseJournal::Append(stream_journal_, STORAGE_INSERT, key, &value);
-    db_.Insert(key, value);
+    database_.Insert(key, value);
   }
   return result;
 }
@@ -203,14 +203,14 @@ JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
   std::string key;
   for (size_t i = 0; i < keys.Size(); i++) {
     key = keys.GetString(i);
-    auto it = db_.Find(key);
-    if (it == db_.End()) {
+    auto it = database_.Find(key);
+    if (it == database_.End()) {
       result.PutNull();
       continue;
     }
     result.PutString(key);
     DatabaseJournal::Append(stream_journal_, STORAGE_ERASE, key, nullptr);
-    db_.Erase(it);
+    database_.Erase(it);
   }
   return result;
 }
@@ -218,8 +218,8 @@ JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
 JsonArray DocumentDatabase::Find(const JsonArray &keys) const {
   JsonArray result;
   for (size_t i = 0; i < keys.Size(); i++) {
-    auto it = db_.Find(keys.GetString(i));
-    if (it == db_.End()) {
+    auto it = database_.Find(keys.GetString(i));
+    if (it == database_.End()) {
       result.PutNull();
       continue;
     }
@@ -229,9 +229,9 @@ JsonArray DocumentDatabase::Find(const JsonArray &keys) const {
 }
 
 JsonArray DocumentDatabase::Keys() const {
-  MapIterator<std::string, JsonObject> it = db_.Begin();
+  MapIterator<std::string, JsonObject> it = database_.Begin();
   JsonArray keys;
-  while (it != db_.End()) {
+  while (it != database_.End()) {
     keys.PutString(it.GetKey());
     it++;
   }
@@ -239,9 +239,9 @@ JsonArray DocumentDatabase::Keys() const {
 }
 
 JsonArray DocumentDatabase::Values() const {
-  MapIterator<std::string, JsonObject> it = db_.Begin();
+  MapIterator<std::string, JsonObject> it = database_.Begin();
   JsonArray values;
-  while (it != db_.End()) {
+  while (it != database_.End()) {
     values.PutObject(it.GetValue());
     it++;
   }
@@ -249,9 +249,9 @@ JsonArray DocumentDatabase::Values() const {
 }
 
 JsonObject DocumentDatabase::Image() const {
-  MapIterator<std::string, JsonObject> it = db_.Begin();
+  MapIterator<std::string, JsonObject> it = database_.Begin();
   JsonObject image;
-  while (it != db_.End()) {
+  while (it != database_.End()) {
     image.PutObject(it.GetKey(), it.GetValue());
     it++;
   }

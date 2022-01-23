@@ -80,6 +80,7 @@ public:
   void PutString(JsonString value);
   void PutObject(JsonObject value);
   void PutArray(JsonArray value);
+  JsonValue GetValue(size_t index) const;
   JsonBoolean GetBoolean(size_t index) const;
   JsonInteger GetInteger(size_t index) const;
   JsonFloat GetFloat(size_t index) const;
@@ -117,6 +118,7 @@ public:
   void PutString(const std::string &key, JsonString value);
   void PutObject(const std::string &key, JsonObject value);
   void PutArray(const std::string &key, JsonArray value);
+  JsonValue GetValue(const std::string &key) const;
   JsonBoolean GetBoolean(const std::string &key) const;
   JsonInteger GetInteger(const std::string &key) const;
   JsonFloat GetFloat(const std::string &key) const;

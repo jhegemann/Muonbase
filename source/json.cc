@@ -83,6 +83,10 @@ void JsonObject::PutArray(const std::string &key, JsonArray value) {
   values_.insert(std::make_pair(key, value));
 }
 
+JsonValue JsonObject::GetValue(const std::string &key) const {
+  return values_.at(key);
+}
+
 JsonBoolean JsonObject::GetBoolean(const std::string &key) const {
   return std::any_cast<JsonBoolean>(values_.at(key));
 }
@@ -368,6 +372,8 @@ void JsonArray::PutObject(JsonObject value) { values_.emplace_back(value); }
 
 void JsonArray::PutArray(JsonArray value) { values_.emplace_back(value); }
 
+JsonValue JsonArray::GetValue(size_t index) const { return values_[index]; }
+
 JsonBoolean JsonArray::GetBoolean(size_t index) const {
   return std::any_cast<JsonBoolean>(values_[index]);
 }
@@ -397,27 +403,27 @@ bool JsonArray::IsNull(size_t index) const {
 }
 
 bool JsonArray::IsBoolean(size_t index) const {
-  return json::IsBoolean(values_.at(index));
+  return json::IsBoolean(values_[index]);
 }
 
 bool JsonArray::IsInteger(size_t index) const {
-  return json::IsInteger(values_.at(index));
+  return json::IsInteger(values_[index]);
 }
 
 bool JsonArray::IsFloat(size_t index) const {
-  return json::IsFloat(values_.at(index));
+  return json::IsFloat(values_[index]);
 }
 
 bool JsonArray::IsString(size_t index) const {
-  return json::IsString(values_.at(index));
+  return json::IsString(values_[index]);
 }
 
 bool JsonArray::IsObject(size_t index) const {
-  return json::IsObject(values_.at(index));
+  return json::IsObject(values_[index]);
 }
 
 bool JsonArray::IsArray(size_t index) const {
-  return json::IsArray(values_.at(index));
+  return json::IsArray(values_[index]);
 }
 
 void JsonArray::Clear() { values_.clear(); }

@@ -34,16 +34,16 @@ const std::string kServiceSuffixSnapshot = ".snapshot";
 const std::string kServiceSuffixClosed = ".closed";
 const std::string kServiceSuffixCorrupted = ".corrupted";
 
-typedef Map<std::string, JsonObject> DocumentMap;
-typedef Serializer<DocumentMap> DatabaseSerializer;
-typedef Memory<DocumentMap> DatabaseMemory;
+typedef Map<std::string, JsonObject> Database;
+typedef Serializer<Database> DatabaseSerializer;
+typedef Memory<Database> DatabaseMemory;
 typedef Journal<std::string, JsonObject> DatabaseJournal;
 
 namespace db {
 
-size_t Serialize(const std::string &filepath, const DocumentMap &database,
+size_t Serialize(const std::string &filepath, const Database &database,
                  const std::atomic<bool> &cancel = false);
-size_t Deserialize(const std::string &filepath, DocumentMap &database,
+size_t Deserialize(const std::string &filepath, Database &database,
                    const std::atomic<bool> &cancel = false);
 
 } // namespace db
@@ -74,15 +74,13 @@ public:
 private:
   void RotateJournal();
   void Rollover();
-  size_t Serialize(const std::string &filepath);
-  size_t Deserialize(const std::string &filepath);
   std::string filepath_;
   std::string filepath_journal_;
   std::string filepath_closed_;
   std::string filepath_snapshot_;
   std::string filepath_corrupted_;
   std::fstream stream_journal_;
-  DocumentMap db_;
+  Database database_;
   RandomGenerator random_;
   std::thread rollover_worker_;
   std::atomic<bool> rollover_in_progress_;
