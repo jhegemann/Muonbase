@@ -26,6 +26,7 @@ limitations under the License. */
 #include <fstream>
 #include <functional>
 #include <map>
+#include <shared_mutex>
 #include <stack>
 #include <string>
 #include <tuple>
@@ -39,6 +40,11 @@ limitations under the License. */
 
 #define INNER_FANOUT 32
 #define OUTER_FANOUT 32
+
+#define CAST_INNER(node) static_cast<InnerNode<K, V> *>(node)
+#define CAST_OUTER(node) static_cast<OuterNode<K, V> *>(node)
+#define CAST_CONST_INNER(node) static_cast<const InnerNode<K, V> *>(node)
+#define CAST_CONST_OUTER(node) static_cast<const OuterNode<K, V> *>(node)
 
 class Node;
 template <class K, class V> class InnerNode;
@@ -77,10 +83,12 @@ public:
   virtual bool IsOuter() const = 0;
   virtual bool IsSparse() const = 0;
   virtual bool IsFull() const = 0;
+  virtual bool IsEmpty() const = 0;
   virtual Node *GetParent() const = 0;
   virtual void SetParent(Node *node) = 0;
   virtual bool Redistribute(Node *node) = 0;
   virtual bool Coalesce(Node *node) = 0;
+  virtual std::shared_mutex &SharedMutex() = 0;
 };
 
 template <class K, class V> class InnerNode : public Node {
@@ -100,6 +108,7 @@ public:
   bool IsOuter() const;
   bool IsSparse() const;
   bool IsFull() const;
+  bool IsEmpty() const;
   size_t CountKeys() const;
   size_t CountChildren() const;
   K &Key(size_t index);
@@ -110,15 +119,17 @@ public:
   size_t KeyIndex(const K &key) const;
   void Insert(Node *left, K &separator, Node *right);
   void Erase(const K &key, Node *child);
-  std::tuple<InnerNode<K, V> *, K> Split();
+  std::pair<InnerNode<K, V> *, K> Split();
   size_t SeparatorIndex(InnerNode<K, V> *kin);
   bool Redistribute(Node *node);
   bool Coalesce(Node *node);
+  std::shared_mutex &SharedMutex();
 
 protected:
   Node *parent_;
   std::vector<K> keys_;
   std::vector<Node *> children_;
+  std::shared_mutex mutex_;
 };
 
 template <class K, class V> InnerNode<K, V>::InnerNode() {
@@ -146,6 +157,10 @@ template <class K, class V> inline bool InnerNode<K, V>::IsSparse() const {
 
 template <class K, class V> inline bool InnerNode<K, V>::IsFull() const {
   return keys_.size() > INNER_FANOUT;
+}
+
+template <class K, class V> inline bool InnerNode<K, V>::IsEmpty() const {
+  return keys_.empty();
 }
 
 template <class K, class V> inline size_t InnerNode<K, V>::CountKeys() const {
@@ -248,7 +263,7 @@ void InnerNode<K, V>::Erase(const K &key, Node *child) {
 }
 
 template <class K, class V>
-std::tuple<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
+std::pair<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
   const size_t size = keys_.size();
   const size_t keys_left = (size % 2 == 0) ? size / 2 : size / 2 + 1;
   const size_t children_left = keys_left + 1;
@@ -264,18 +279,16 @@ std::tuple<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
     (*it)->SetParent(kin);
   }
   kin->SetParent(parent_);
-  return std::make_tuple(kin, up_key);
+  return std::make_pair(kin, up_key);
 }
 
 template <class K, class V>
 size_t InnerNode<K, V>::SeparatorIndex(InnerNode<K, V> *kin) {
-  const size_t self_index =
-      static_cast<InnerNode<K, V> *>(parent_)->ChildIndex(this);
+  const size_t self_index = CAST_INNER(parent_)->ChildIndex(this);
   if (self_index == std::string::npos) {
     return std::string::npos;
   }
-  const size_t kin_index =
-      static_cast<InnerNode<K, V> *>(parent_)->ChildIndex(kin);
+  const size_t kin_index = CAST_INNER(parent_)->ChildIndex(kin);
   if (kin_index == std::string::npos) {
     return std::string::npos;
   }
@@ -286,19 +299,18 @@ size_t InnerNode<K, V>::SeparatorIndex(InnerNode<K, V> *kin) {
 }
 
 template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
-  InnerNode<K, V> *kin = static_cast<InnerNode<K, V> *>(node);
+  InnerNode<K, V> *kin = CAST_INNER(node);
   const size_t separator_index = SeparatorIndex(kin);
   if (separator_index == std::string::npos) {
     throw std::runtime_error("tree: inner redistribute");
   }
-  K up_key = static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index];
+  K up_key = CAST_INNER(parent_)->keys_[separator_index];
   if (kin->keys_.size() >= keys_.size() + 2) {
     keys_.push_back(up_key);
     children_.push_back(kin->children_.front());
     kin->children_.erase(kin->children_.begin());
     children_.back()->SetParent(this);
-    static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index] =
-        kin->keys_[0];
+    CAST_INNER(parent_)->keys_[separator_index] = kin->keys_[0];
     kin->keys_.erase(kin->keys_.begin());
     return true;
   }
@@ -307,8 +319,7 @@ template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
     kin->children_.insert(kin->children_.begin(), children_.back());
     children_.pop_back();
     kin->children_.front()->SetParent(kin);
-    static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index] =
-        keys_.back();
+    CAST_INNER(parent_)->keys_[separator_index] = keys_.back();
     keys_.pop_back();
     return true;
   }
@@ -316,7 +327,7 @@ template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
 }
 
 template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
-  InnerNode<K, V> *kin = static_cast<InnerNode<K, V> *>(node);
+  InnerNode<K, V> *kin = CAST_INNER(node);
   if (keys_.size() + kin->keys_.size() > INNER_FANOUT) {
     return false;
   }
@@ -324,8 +335,7 @@ template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
   if (separator_index == std::string::npos) {
     throw std::runtime_error("tree: inner coalesce separator");
   }
-  const K up_key =
-      static_cast<InnerNode<K, V> *>(parent_)->keys_[separator_index];
+  const K up_key = CAST_INNER(parent_)->keys_[separator_index];
   keys_.push_back(up_key);
   std::move(kin->keys_.begin(), kin->keys_.end(), std::back_inserter(keys_));
   kin->keys_.clear();
@@ -336,6 +346,11 @@ template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
             std::back_inserter(children_));
   kin->children_.clear();
   return true;
+}
+
+template <class K, class V>
+inline std::shared_mutex &InnerNode<K, V>::SharedMutex() {
+  return mutex_;
 }
 
 template <class K, class V> class OuterNode : public Node {
@@ -355,6 +370,7 @@ public:
   bool IsOuter() const;
   bool IsSparse() const;
   bool IsFull() const;
+  bool IsEmpty() const;
   size_t CountKeys() const;
   size_t CountValues() const;
   K &Key(size_t index);
@@ -365,11 +381,13 @@ public:
   size_t KeyIndex(const K &key) const;
   void Insert(const K &key, const V &value);
   void Erase(const K &key);
-  std::tuple<OuterNode<K, V> *, K> Split();
+  MapIterator<K, V> Erase(const MapIterator<K, V> &iterator);
+  std::pair<OuterNode<K, V> *, K> Split();
   bool Redistribute(Node *node);
   bool Coalesce(Node *node);
   OuterNode<K, V> *GetNext() const;
   OuterNode<K, V> *GetPrevious() const;
+  std::shared_mutex &SharedMutex();
 
 protected:
   std::vector<K> keys_;
@@ -377,6 +395,7 @@ protected:
   Node *parent_;
   OuterNode<K, V> *next_;
   OuterNode<K, V> *previous_;
+  std::shared_mutex mutex_;
 };
 
 template <class K, class V>
@@ -405,6 +424,10 @@ template <class K, class V> inline bool OuterNode<K, V>::IsSparse() const {
 
 template <class K, class V> inline bool OuterNode<K, V>::IsFull() const {
   return keys_.size() > OUTER_FANOUT;
+}
+
+template <class K, class V> inline bool OuterNode<K, V>::IsEmpty() const {
+  return keys_.empty();
 }
 
 template <class K, class V> inline size_t OuterNode<K, V>::CountKeys() const {
@@ -475,9 +498,6 @@ size_t OuterNode<K, V>::KeyIndex(const K &key) const {
 template <class K, class V>
 void OuterNode<K, V>::Insert(const K &key, const V &value) {
   if (keys_.empty()) {
-    if (!values_.empty()) {
-      throw std::runtime_error("tree: outer insert");
-    }
     keys_.push_back(key);
     values_.push_back(value);
     return;
@@ -500,7 +520,17 @@ template <class K, class V> void OuterNode<K, V>::Erase(const K &key) {
 }
 
 template <class K, class V>
-std::tuple<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
+MapIterator<K, V> OuterNode<K, V>::Erase(const MapIterator<K, V> &iterator) {
+  size_t index = iterator.index_;
+  MapIterator<K, V> result = iterator;
+  result++;
+  keys_.erase(keys_.begin() + index);
+  values_.erase(values_.begin() + index);
+  return result;
+}
+
+template <class K, class V>
+std::pair<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
   const size_t size = keys_.size();
   const size_t keys_left = (size % 2 == 0) ? size / 2 : size / 2 + 1;
   OuterNode<K, V> *kin = new OuterNode<K, V>();
@@ -518,11 +548,11 @@ std::tuple<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
   }
   next_ = kin;
   kin->parent_ = parent_;
-  return std::make_tuple(kin, up_key);
+  return std::make_pair(kin, up_key);
 }
 
 template <class K, class V> bool OuterNode<K, V>::Redistribute(Node *node) {
-  OuterNode<K, V> *kin = static_cast<OuterNode<K, V> *>(node);
+  OuterNode<K, V> *kin = CAST_OUTER(node);
   if (kin->keys_.size() >= keys_.size() + 2) {
     keys_.push_back(kin->keys_.front());
     values_.push_back(kin->values_.front());
@@ -537,17 +567,16 @@ template <class K, class V> bool OuterNode<K, V>::Redistribute(Node *node) {
     return false;
   }
   const K up_key = kin->keys_.front();
-  const size_t up_key_index =
-      static_cast<InnerNode<K, V> *>(parent_)->ChildIndex(this);
+  const size_t up_key_index = CAST_INNER(parent_)->ChildIndex(this);
   if (up_key_index == std::string::npos) {
     throw std::runtime_error("tree: outer redistribute");
   }
-  static_cast<InnerNode<K, V> *>(parent_)->keys_[up_key_index] = up_key;
+  CAST_INNER(parent_)->keys_[up_key_index] = up_key;
   return true;
 }
 
 template <class K, class V> bool OuterNode<K, V>::Coalesce(Node *node) {
-  OuterNode<K, V> *kin = static_cast<OuterNode<K, V> *>(node);
+  OuterNode<K, V> *kin = CAST_OUTER(node);
   if (kin->keys_.size() + keys_.size() > OUTER_FANOUT) {
     return false;
   }
@@ -573,6 +602,11 @@ inline OuterNode<K, V> *OuterNode<K, V>::GetPrevious() const {
   return previous_;
 }
 
+template <class K, class V>
+inline std::shared_mutex &OuterNode<K, V>::SharedMutex() {
+  return mutex_;
+}
+
 template <class K, class V> class Map {
   template <class> friend class ::Serializer;
   template <class> friend class ::Memory;
@@ -588,11 +622,11 @@ public:
   void Clear();
   size_t Size() const;
   void Insert(const K &key, const V &value);
-  void Insert(MapIterator<K, V> &iter, const V &value);
+  void Update(const MapIterator<K, V> &iterator, const V &value);
   const V &operator[](const K &key) const;
   V &operator[](const K &key);
   bool Erase(const K &key);
-  bool Erase(MapIterator<K, V> iter);
+  MapIterator<K, V> Erase(const MapIterator<K, V> &iterator);
   bool Contains(const K &key) const;
   MapIterator<K, V> Find(const K &key) const;
   MapIterator<K, V> Begin();
@@ -605,13 +639,12 @@ protected:
   size_t size_;
   const V &Get(const K &key) const;
   V &Get(const K &key);
-  bool Erase(OuterNode<K, V> *outer, const K &key);
   Node *LeftNode(Node *node) const;
   Node *RightNode(Node *node) const;
   size_t SeparatorIndex(Node *node, Node *kin) const;
   K SeparatorKey(Node *node, Node *kin) const;
   void PropagateUpwards(Node *origin, K &up_key, Node *kin);
-  std::tuple<size_t, OuterNode<K, V> *> Locate(const K &key) const;
+  MapIterator<K, V> Locate(const K &key) const;
   OuterNode<K, V> *FirstLeaf() const;
   OuterNode<K, V> *LastLeaf() const;
   static size_t Fanout(size_t cache, size_t priority, size_t maximum);
@@ -631,7 +664,7 @@ template <class K, class V> void Map<K, V>::Clear() {
       current = std::move(todo.top());
       todo.pop();
       if (!current->IsOuter()) {
-        inner_node = static_cast<InnerNode<K, V> *>(current);
+        inner_node = CAST_INNER(current);
         for (auto it = inner_node->children_.begin();
              it != inner_node->children_.end(); ++it) {
           todo.push(*it);
@@ -650,8 +683,7 @@ template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) const {
   if (node == root_) {
     return nullptr;
   }
-  InnerNode<K, V> *node_parent =
-      static_cast<InnerNode<K, V> *>(node->GetParent());
+  InnerNode<K, V> *node_parent = CAST_INNER(node->GetParent());
   const size_t position = node_parent->ChildIndex(node);
   if (position == std::string::npos || position == 0) {
     return nullptr;
@@ -663,8 +695,7 @@ template <class K, class V> Node *Map<K, V>::RightNode(Node *node) const {
   if (node == root_) {
     return nullptr;
   }
-  InnerNode<K, V> *node_parent =
-      static_cast<InnerNode<K, V> *>(node->GetParent());
+  InnerNode<K, V> *node_parent = CAST_INNER(node->GetParent());
   const size_t position = node_parent->ChildIndex(node);
   if (position == std::string::npos ||
       position == node_parent->children_.size() - 1) {
@@ -675,7 +706,7 @@ template <class K, class V> Node *Map<K, V>::RightNode(Node *node) const {
 
 template <class K, class V>
 size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) const {
-  InnerNode<K, V> *parent = static_cast<InnerNode<K, V> *>(node->GetParent());
+  InnerNode<K, V> *parent = CAST_INNER(node->GetParent());
   const size_t node_position = parent->ChildIndex(node);
   if (node_position == std::string::npos) {
     return std::string::npos;
@@ -696,7 +727,7 @@ K Map<K, V>::SeparatorKey(Node *node, Node *kin) const {
   if (index == std::string::npos) {
     throw std::runtime_error("tree: map separator key");
   }
-  InnerNode<K, V> *parent = static_cast<InnerNode<K, V> *>(node->GetParent());
+  InnerNode<K, V> *parent = CAST_INNER(node->GetParent());
   return parent->keys_[index];
 }
 
@@ -708,26 +739,22 @@ void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *kin) {
     root_ = inner_node;
     return;
   }
-  InnerNode<K, V> *next_origin =
-      static_cast<InnerNode<K, V> *>(origin->GetParent());
+  InnerNode<K, V> *next_origin = CAST_INNER(origin->GetParent());
   next_origin->Insert(origin, up_key, kin);
   if (next_origin->IsFull()) {
-    Node *next_kin;
-    K next_key;
-    std::tie(next_kin, next_key) = next_origin->Split();
-    PropagateUpwards(next_origin, next_key, next_kin);
+    std::pair<Node *, K> extension = next_origin->Split();
+    PropagateUpwards(next_origin, extension.second, extension.first);
   }
 }
 
 template <class K, class V>
-std::tuple<size_t, OuterNode<K, V> *> Map<K, V>::Locate(const K &key) const {
-  Node *current = root_;
-  if (current == nullptr) {
-    return std::make_tuple(std::string::npos,
-                           static_cast<OuterNode<K, V> *>(nullptr));
+MapIterator<K, V> Map<K, V>::Locate(const K &key) const {
+  if (!root_) {
+    return End();
   }
+  Node *current = root_;
   while (!current->IsOuter()) {
-    InnerNode<K, V> *inner_node = static_cast<InnerNode<K, V> *>(current);
+    InnerNode<K, V> *inner_node = CAST_INNER(current);
     if (key < inner_node->keys_.front()) {
       current = inner_node->children_.front();
       continue;
@@ -736,17 +763,15 @@ std::tuple<size_t, OuterNode<K, V> *> Map<K, V>::Locate(const K &key) const {
       current = inner_node->children_.back();
       continue;
     }
-    const size_t max_index = inner_node->keys_.size() - 1;
-    for (size_t i = 0; i < max_index; i++) {
+    for (size_t i = 0; i < inner_node->keys_.size() - 1; i++) {
       if (inner_node->keys_[i] <= key && key < inner_node->keys_[i + 1]) {
         current = inner_node->children_[i + 1];
-        break;
+        continue;
       }
     }
   }
-  OuterNode<K, V> *outer_node = static_cast<OuterNode<K, V> *>(current);
-  const size_t key_position = outer_node->KeyIndex(key);
-  return std::make_tuple(key_position, outer_node);
+  return MapIterator<K, V>(CAST_OUTER(current)->KeyIndex(key),
+                           CAST_OUTER(current));
 }
 
 template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
@@ -755,9 +780,9 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
   }
   Node *current = root_;
   while (!current->IsOuter()) {
-    current = static_cast<InnerNode<K, V> *>(current)->children_.front();
+    current = CAST_INNER(current)->children_.front();
   }
-  return static_cast<OuterNode<K, V> *>(current);
+  return CAST_OUTER(current);
 }
 
 template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() const {
@@ -766,24 +791,17 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() const {
   }
   Node *current = root_;
   while (!current->IsOuter()) {
-    InnerNode<K, V> *inner_node = static_cast<InnerNode<K, V> *>(current);
-    current = inner_node->children_.back();
+    current = CAST_INNER(current)->children_.back();
   }
-  return static_cast<OuterNode<K, V> *>(current);
+  return CAST_OUTER(current);
 }
 
 template <class K, class V> const V &Map<K, V>::Get(const K &key) const {
-  size_t position;
-  OuterNode<K, V> *outer_node;
-  std::tie(position, outer_node) = Locate(key);
-  return outer_node->values_[position];
+  return Locate(key).GetValue();
 }
 
 template <class K, class V> V &Map<K, V>::Get(const K &key) {
-  size_t position;
-  OuterNode<K, V> *outer_node;
-  std::tie(position, outer_node) = Locate(key);
-  return outer_node->values_[position];
+  return Locate(key).GetValue();
 }
 
 template <class K, class V> const V &Map<K, V>::operator[](const K &key) const {
@@ -795,117 +813,117 @@ template <class K, class V> V &Map<K, V>::operator[](const K &key) {
 }
 
 template <class K, class V>
-void Map<K, V>::Insert(MapIterator<K, V> &iter, const V &value) {
-  if (iter == End()) {
+void Map<K, V>::Update(const MapIterator<K, V> &iterator, const V &value) {
+  if (!iterator.node_ || (iterator.index_ == std::string::npos)) {
     return;
   }
-  iter.GetNode()->values_[iter.GetIndex()] = value;
+  iterator.node_->values_[iterator.index_] = value;
 }
 
 template <class K, class V>
 void Map<K, V>::Insert(const K &key, const V &value) {
-  if (root_ == nullptr) {
-    OuterNode<K, V> *outer_node = new OuterNode<K, V>();
-    outer_node->Insert(key, value);
-    root_ = outer_node;
+  if (!root_) {
+    root_ = new OuterNode<K, V>();
+    CAST_OUTER(root_)->Insert(key, value);
     size_++;
     return;
   }
-  size_t position = std::string::npos;
-  OuterNode<K, V> *outer_node = nullptr;
-  std::tie(position, outer_node) = Locate(key);
-  if (position != std::string::npos) {
-    outer_node->values_[position] = value;
+  MapIterator<K, V> iterator = Locate(key);
+  if (iterator.node_ && iterator.index_ != std::string::npos) {
+    Update(iterator, value);
     return;
   }
-  outer_node->Insert(key, value);
-  if (outer_node->IsFull()) {
-    OuterNode<K, V> *kin;
-    K up_key;
-    std::tie(kin, up_key) = outer_node->Split();
-    PropagateUpwards(outer_node, up_key, kin);
+  iterator.node_->Insert(key, value);
+  if (iterator.node_->IsFull()) {
+    std::pair<Node *, K> extension = iterator.node_->Split();
+    PropagateUpwards(iterator.node_, extension.second, extension.first);
   }
   size_++;
   return;
 }
 
 template <class K, class V>
-bool Map<K, V>::Erase(OuterNode<K, V> *outer_node, const K &key) {
-  outer_node->Erase(key);
-  Node *current = outer_node;
-  if (current == root_) {
-    if (root_->IsOuter()) {
-      if (static_cast<OuterNode<K, V> *>(root_)->CountKeys() == 0) {
-        delete root_;
-        root_ = nullptr;
-      }
-    }
-    return true;
+MapIterator<K, V> Map<K, V>::Erase(const MapIterator<K, V> &iterator) {
+  Node *current = iterator.node_;
+  MapIterator<K, V> result = CAST_OUTER(current)->Erase(iterator);
+  size_--;
+  if (current == root_ && root_->IsOuter() && root_->IsEmpty()) {
+    delete root_;
+    root_ = nullptr;
+    return result;
   }
+  Node *left;
+  Node *right;
+  size_t current_size = -1;
   while (current != root_) {
     if (!current->IsSparse()) {
-      return true;
+      return result;
     }
-    Node *left = LeftNode(current);
+    left = LeftNode(current);
     if (left != nullptr && left->Redistribute(current)) {
-      return true;
+      if (current->IsOuter() && result.node_ == current) {
+        result.index_++;
+      }
+      return result;
     }
-    Node *right = RightNode(current);
+    right = RightNode(current);
     if (right != nullptr && current->Redistribute(right)) {
-      return true;
+      if (current->IsOuter() && result.node_ == right) {
+        result.node_ = CAST_OUTER(current);
+        result.index_ = CAST_OUTER(current)->CountKeys() - 1;
+      }
+      return result;
+    }
+    if (current->IsOuter()) {
+      current_size = CAST_OUTER(current)->CountKeys();
     }
     if (left != nullptr && left->Coalesce(current)) {
-      InnerNode<K, V> *parent =
-          static_cast<InnerNode<K, V> *>(current->GetParent());
+      if (current->IsOuter() && result.node_ == current) {
+        result.node_ = CAST_OUTER(left);
+        result.index_ += CAST_OUTER(left)->CountKeys() - current_size;
+      }
+      InnerNode<K, V> *parent = CAST_INNER(current->GetParent());
       const K separator_key = SeparatorKey(left, current);
       parent->Erase(separator_key, current);
-      Node *backup = current;
-      current = current->GetParent();
-      delete backup;
+      delete current;
+      current = left->GetParent();
       continue;
     }
     if (right != nullptr && current->Coalesce(right)) {
-      InnerNode<K, V> *parent =
-          static_cast<InnerNode<K, V> *>(current->GetParent());
+      if (current->IsOuter() && result.node_ == right) {
+        result.node_ = CAST_OUTER(current);
+        result.index_ = current_size;
+      }
+      InnerNode<K, V> *parent = CAST_INNER(current->GetParent());
       const K separator_key = SeparatorKey(current, right);
       parent->Erase(separator_key, right);
-      Node *backup = right;
+      delete right;
       current = current->GetParent();
-      delete backup;
       continue;
     }
   }
-  InnerNode<K, V> *inner_node = static_cast<InnerNode<K, V> *>(current);
+  InnerNode<K, V> *inner_node = CAST_INNER(current);
   if (inner_node->keys_.empty()) {
     Node *backup = root_;
     root_ = inner_node->children_.front();
     root_->SetParent(nullptr);
     delete backup;
   }
-  return true;
+  return result;
 }
 
 template <class K, class V> bool Map<K, V>::Erase(const K &key) {
-  size_t position;
-  OuterNode<K, V> *outer_node;
-  std::tie(position, outer_node) = Locate(key);
-  if (position == std::string::npos) {
+  MapIterator<K, V> iterator = Locate(key);
+  if (iterator.index_ == std::string::npos) {
     return false;
   }
-  size_--;
-  return Erase(outer_node, key);
-}
-
-template <class K, class V> bool Map<K, V>::Erase(MapIterator<K, V> iter) {
-  size_--;
-  return Erase(iter.GetNode(), iter.GetKey());
+  Erase(iterator);
+  return true;
 }
 
 template <class K, class V> bool Map<K, V>::Contains(const K &key) const {
-  size_t position;
-  OuterNode<K, V> *outer_node;
-  std::tie(position, outer_node) = Locate(key);
-  if (position == std::string::npos) {
+  MapIterator<K, V> iterator = Locate(key);
+  if (iterator.index_ == std::string::npos) {
     return false;
   }
   return true;
@@ -913,15 +931,11 @@ template <class K, class V> bool Map<K, V>::Contains(const K &key) const {
 
 template <class K, class V>
 MapIterator<K, V> Map<K, V>::Find(const K &key) const {
-  MapIterator<K, V> iter;
-  size_t index = std::string::npos;
-  OuterNode<K, V> *outer_node = nullptr;
-  std::tie(index, outer_node) = Locate(key);
-  if (index != std::string::npos) {
-    iter.index_ = index;
-    iter.node_ = outer_node;
+  MapIterator<K, V> iterator = Locate(key);
+  if (iterator.index_ == std::string::npos) {
+    iterator.node_ = nullptr;
   }
-  return iter;
+  return iterator;
 }
 
 template <class K, class V> MapIterator<K, V> Map<K, V>::Begin() {
@@ -987,8 +1001,9 @@ public:
   bool operator!=(const MapIterator<K, V> &rhs);
 
 protected:
-  size_t GetIndex();
-  OuterNode<K, V> *GetNode();
+  MapIterator(size_t index, OuterNode<K, V> *node);
+  const size_t GetIndex() const;
+  const OuterNode<K, V> *GetNode() const;
   K &Key();
   V &Value();
   OuterNode<K, V> *node_;
@@ -999,6 +1014,10 @@ protected:
 
 template <class K, class V>
 MapIterator<K, V>::MapIterator() : node_(nullptr), index_(std::string::npos) {}
+
+template <class K, class V>
+MapIterator<K, V>::MapIterator(size_t index, OuterNode<K, V> *node)
+    : node_(node), index_(index) {}
 
 template <class K, class V> MapIterator<K, V>::~MapIterator() {}
 
@@ -1019,12 +1038,13 @@ inline const V &MapIterator<K, V>::GetValue() const {
   return node_->GetValue(index_);
 }
 
-template <class K, class V> inline size_t MapIterator<K, V>::GetIndex() {
+template <class K, class V>
+inline const size_t MapIterator<K, V>::GetIndex() const {
   return index_;
 }
 
 template <class K, class V>
-inline OuterNode<K, V> *MapIterator<K, V>::GetNode() {
+inline const OuterNode<K, V> *MapIterator<K, V>::GetNode() const {
   return node_;
 }
 
@@ -1112,7 +1132,7 @@ public:
   void Clear();
   bool Erase(const K &key);
   bool Erase(const K &key, const V &value);
-  bool Erase(MultimapIterator<K, V> iter);
+  bool Erase(MultimapIterator<K, V> &iter);
   bool Contains(const K &key) const;
   MultimapIterator<K, V> Find(const K &key) const;
   MultimapIterator<K, V> Begin();
@@ -1204,7 +1224,7 @@ bool Multimap<K, V>::Erase(const K &key, const V &value) {
 }
 
 template <class K, class V>
-inline bool Multimap<K, V>::Erase(MultimapIterator<K, V> iter) {
+inline bool Multimap<K, V>::Erase(MultimapIterator<K, V> &iter) {
   return Erase(iter.GetKey(), iter.GetValue());
 }
 
@@ -1218,9 +1238,9 @@ MultimapIterator<K, V> Multimap<K, V>::Find(const K &key) const {
   MapIterator<K, std::vector<V>> iter = tree_.Find(key);
   MultimapIterator<K, V> multi_iter;
   if (iter != tree_.End()) {
-    multi_iter.index_ = iter.GetIndex();
+    multi_iter.index_ = iter.index_;
     multi_iter.multi_index_ = 0;
-    multi_iter.node_ = iter.GetNode();
+    multi_iter.node_ = iter.node_;
   }
   return multi_iter;
 }
@@ -1788,10 +1808,10 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
       inner->children_[0] = cache[cache_index++];
       for (size_t i = 0; i < fanout - 1; i++) {
         if (cache[cache_index]->IsOuter()) {
-          OuterNode<K, V> *node = (OuterNode<K, V> *)(cache[cache_index]);
+          OuterNode<K, V> *node = CAST_OUTER(cache[cache_index]);
           inner->keys_[i] = node->keys_.front();
         } else {
-          InnerNode<K, V> *node = (InnerNode<K, V> *)(cache[cache_index]);
+          InnerNode<K, V> *node = CAST_INNER(cache[cache_index]);
           inner->keys_[i] = node->keys_.front();
         }
         inner->children_[i + 1] = cache[cache_index++];
@@ -1896,8 +1916,7 @@ public:
       const Node *current = todo.top();
       todo.pop();
       if (!current->IsOuter()) {
-        const InnerNode<K, V> *inner =
-            static_cast<const InnerNode<K, V> *>(current);
+        const InnerNode<K, V> *inner = CAST_CONST_INNER(current);
         result += sizeof(InnerNode<K, V>);
         for (size_t i = 0; i < inner->CountKeys(); i++) {
           result += Memory<K>::Consumption(inner->GetKey(i));
@@ -1908,8 +1927,7 @@ public:
           todo.push(inner->GetChild(i));
         }
       } else {
-        const OuterNode<K, V> *outer =
-            static_cast<const OuterNode<K, V> *>(current);
+        const OuterNode<K, V> *outer = CAST_CONST_OUTER(current);
         result += sizeof(OuterNode<K, V>);
         for (size_t i = 0; i < outer->CountKeys(); i++) {
           result += Memory<K>::Consumption(outer->GetKey(i));

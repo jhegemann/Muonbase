@@ -209,23 +209,23 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
   std::string text;
   char border;
   if (!ExpectString(source, kStringCurlyBracketOpen, offset)) {
-    throw std::runtime_error("invalid json object");
+    throw std::runtime_error("json: initial bracket");
   }
   for (;;) {
     if (!ExpectString(source, kStringDoubleQuote, offset)) {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: initial quote key");
     }
     position = source.find(kStringDoubleQuote, offset);
     if (position == std::string::npos) {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: final quote key");
     }
     key = source.substr(offset, position - offset);
     offset = position + 1;
     if (!ExpectString(source, kStringColon, offset)) {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: colon separator");
     }
     if (!ExpectString(source, kStringEmpty, offset)) {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: value start");
     }
     switch (source[offset]) {
     case kCharN:
@@ -330,7 +330,7 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
       throw std::runtime_error("json: invalid value");
     }
     if (!ExpectString(source, kStringEmpty, offset)) {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: missing terminator");
     }
     if (source[offset] == kCharComma) {
       offset++;
@@ -339,7 +339,7 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
       offset++;
       break;
     } else {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: invalid terminator");
     }
   }
   source_offset = offset;
@@ -480,11 +480,11 @@ void JsonArray::Parse(const std::string &source, size_t &source_offset) {
   bool dot;
   std::string text;
   if (!ExpectString(source, kStringSquareBracketOpen, offset)) {
-    throw std::runtime_error("invalid json object:");
+    throw std::runtime_error("json: initial bracket");
   }
   for (;;) {
     if (!ExpectString(source, kStringEmpty, offset)) {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: value start");
     }
     switch (source[offset]) {
     case kCharN:
@@ -589,7 +589,7 @@ void JsonArray::Parse(const std::string &source, size_t &source_offset) {
       throw std::runtime_error("json: invalid value");
     }
     if (!ExpectString(source, kStringEmpty, offset)) {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: missing terminator");
     }
     if (source[offset] == kCharComma) {
       offset++;
@@ -598,7 +598,7 @@ void JsonArray::Parse(const std::string &source, size_t &source_offset) {
       offset++;
       break;
     } else {
-      throw std::runtime_error("invalid json object");
+      throw std::runtime_error("json: invalid terminator");
     }
   }
   source_offset = offset;
