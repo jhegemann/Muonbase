@@ -1126,13 +1126,13 @@ public:
   virtual ~Multimap();
   size_t Size() const;
   void Insert(const K &key, const V &value);
-  void Insert(MultimapIterator<K, V> &iter, const V &value);
+  void Insert(const MultimapIterator<K, V> &iter, const V &value);
   const std::vector<V> &operator[](const K &key) const;
   std::vector<V> &operator[](const K &key);
   void Clear();
   bool Erase(const K &key);
   bool Erase(const K &key, const V &value);
-  bool Erase(MultimapIterator<K, V> &iter);
+  bool Erase(const MultimapIterator<K, V> &iter);
   bool Contains(const K &key) const;
   MultimapIterator<K, V> Find(const K &key) const;
   MultimapIterator<K, V> Begin();
@@ -1168,7 +1168,8 @@ void Multimap<K, V>::Insert(const K &key, const V &value) {
 }
 
 template <class K, class V>
-void Multimap<K, V>::Insert(MultimapIterator<K, V> &iter, const V &value) {
+void Multimap<K, V>::Insert(const MultimapIterator<K, V> &iter,
+                            const V &value) {
   MapIterator<K, std::vector<V>> single_iter;
   single_iter.node_ = iter.node_;
   single_iter.index_ = iter.index_;
@@ -1224,7 +1225,7 @@ bool Multimap<K, V>::Erase(const K &key, const V &value) {
 }
 
 template <class K, class V>
-inline bool Multimap<K, V>::Erase(MultimapIterator<K, V> &iter) {
+inline bool Multimap<K, V>::Erase(const MultimapIterator<K, V> &iter) {
   return Erase(iter.GetKey(), iter.GetValue());
 }
 
