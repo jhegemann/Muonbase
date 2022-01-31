@@ -649,7 +649,6 @@ protected:
   size_t SeparatorIndex(Node *node, Node *kin) const;
   K SeparatorKey(Node *node, Node *kin) const;
   void PropagateUpwards(Node *origin, K &up_key, Node *kin);
-  void ProceedDownwards(const K &key, Node *node) const;
   MapIterator<K, V> Locate(const K &key) const;
   OuterNode<K, V> *FirstLeaf() const;
   OuterNode<K, V> *LastLeaf() const;
@@ -754,35 +753,28 @@ void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *kin) {
 }
 
 template <class K, class V>
-void Map<K, V>::ProceedDownwards(const K &key, Node *node) const {
-  if (node->IsOuter()) {
-    return;
-  }
-  InnerNode<K, V> *inner_node = CAST_INNER(node);
-  if (key < inner_node->keys_.front()) {
-    node = inner_node->children_.front();
-    return;
-  }
-  if (key >= inner_node->keys_.back()) {
-    node = inner_node->children_.back();
-    return;
-  }
-  for (size_t i = 0; i < inner_node->keys_.size() - 1; i++) {
-    if (inner_node->keys_[i] <= key && key < inner_node->keys_[i + 1]) {
-      node = inner_node->children_[i + 1];
-      return;
-    }
-  }
-}
-
-template <class K, class V>
 MapIterator<K, V> Map<K, V>::Locate(const K &key) const {
   if (!root_) {
     return End();
   }
   Node *current = root_;
+  InnerNode<K, V> *inner_node = nullptr;
   while (!current->IsOuter()) {
-    ProceedDownwards(key, current);
+    inner_node = CAST_INNER(current);
+    if (key < inner_node->keys_.front()) {
+      current = inner_node->children_.front();
+      continue;
+    }
+    if (key >= inner_node->keys_.back()) {
+      current = inner_node->children_.back();
+      continue;
+    }
+    for (size_t i = 0; i < inner_node->keys_.size() - 1; i++) {
+      if (inner_node->keys_[i] <= key && key < inner_node->keys_[i + 1]) {
+        current = inner_node->children_[i + 1];
+        continue;
+      }
+    }
   }
   OuterNode<K, V> *outer_node = CAST_OUTER(current);
   return MapIterator<K, V>(outer_node->KeyIndex(key), outer_node);
