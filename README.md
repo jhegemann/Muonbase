@@ -139,6 +139,31 @@ server: muonbase/1
 ["yiIcR6RF","SUGVhqpD","wCynAboQ","WQW2wN1s"]
 ```
 
+### Update
+
+#### Request
+```
+POST /update HTTP/1.1
+authorization: Basic cm9vdDowMDAw
+content-length: 261
+content-type: application/json
+
+{"63jeFlGI":{"DGPhK58Y":{"IRId5BrW":null,"tmv3dbty":"awjBYMPh","NpKp8aPc":226029,"HTvxzDxE":0.133952,"jr6G2ocM":true},"RsgbLqAF":[true,0.265292,351946,"TWjGJnwk",null],"UTXaMSFp":"CvvBuijl","EeS4r8Qw":null,"XxGFOR5Q":407449,"44v4W5xv":0.587373,"uUxGC7K1":true}}
+```
+
+#### Response
+```
+HTTP/1.1 200 OK
+access-control-allow-methods: GET, POST
+access-control-allow-origin: *
+content-length: 262
+content-type: application/json
+date: 20220131105732
+server: muonbase/1
+
+{"63jeFlGI":{"Hk3O3R5o":false,"1I53tRmn":0.691881,"buAj4Yb5":153897,"tjfDYtwG":null,"IZazDlZA":"vs8Dfq5o","Yza2yexy":{"XwYVhcZU":true,"OeB08IpT":0.850394,"eH5tBq5S":160218,"CntBSiMo":"vQwfJGwY","TktL2cUS":null},"LIsFH1HO":[false,0.615295,43084,"OKqUX7pf",null]}}
+```
+
 ### Erase
 
 #### Request

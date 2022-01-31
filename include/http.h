@@ -275,11 +275,15 @@ private:
   ServiceMap services_;
 };
 
+namespace http {
+
 std::optional<HttpResponse>
 SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
             const std::string &url, const std::string &user = kStringEmpty,
             const std::string &password = kStringEmpty,
             HttpContentType content_type = INVALID_CONTENT_TYPE,
             const std::string &content = kStringEmpty);
+
+}
 
 #endif

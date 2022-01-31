@@ -29,6 +29,7 @@ public:
          const std::string &user, const std::string &password);
   virtual ~Client();
   JsonArray Insert(const JsonArray &values);
+  JsonObject Update(const JsonObject &values);
   JsonArray Erase(const JsonArray &keys);
   JsonArray Find(const JsonArray &keys);
   JsonArray Keys();

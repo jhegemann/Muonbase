@@ -72,6 +72,28 @@ HttpResponse Insert(const HttpRequest &request, ServiceMap &services) {
                              db->Insert(array).String());
 }
 
+HttpResponse Update(const HttpRequest &request, ServiceMap &services) {
+  if (!ServicesAvailable(services)) {
+    return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR);
+  }
+  if (!AccessPermitted(request, services)) {
+    return HttpResponse::Build(HttpStatus::UNAUTHORIZED);
+  }
+  if (!JsonContent(request)) {
+    return HttpResponse::Build(HttpStatus::BAD_REQUEST);
+  }
+  JsonObject object;
+  try {
+    object.Parse(request.GetBody());
+  } catch (std::runtime_error &) {
+    return HttpResponse::Build(HttpStatus::BAD_REQUEST);
+  }
+  DocumentDatabase *db =
+      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
+  return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
+                             db->Update(object).String());
+}
+
 HttpResponse Erase(const HttpRequest &request, ServiceMap &services) {
   if (!ServicesAvailable(services)) {
     return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR);

@@ -198,6 +198,22 @@ JsonArray DocumentDatabase::Insert(const JsonArray &values) {
   return result;
 }
 
+JsonObject DocumentDatabase::Update(const JsonObject &values) {
+  JsonObject result;
+  for (std::string &key : values.Keys()) {
+    auto it = database_.Find(key);
+    if (it == database_.End()) {
+      result.PutNull(key);
+      continue;
+    }
+    JsonObject value = it.GetValue();
+    result.PutObject(key, value);
+    DatabaseJournal::Append(stream_journal_, STORAGE_UPDATE, key, &value);
+    database_.Update(it, value);
+  }
+  return result;
+}
+
 JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
   JsonArray result;
   std::string key;

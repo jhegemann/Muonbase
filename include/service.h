@@ -65,6 +65,7 @@ public:
   virtual void Tick();
   virtual void Shutdown();
   JsonArray Insert(const JsonArray &values);
+  JsonObject Update(const JsonObject &values);
   JsonArray Erase(const JsonArray &keys);
   JsonArray Find(const JsonArray &keys) const;
   JsonArray Keys() const;

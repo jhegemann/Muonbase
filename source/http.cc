@@ -1036,6 +1036,8 @@ void HttpServer::HandleClientEvent(int index) {
   }
 }
 
+namespace http {
+
 std::optional<HttpResponse>
 SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
             const std::string &url, const std::string &user,
@@ -1073,3 +1075,5 @@ SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
   }
   return connection.GetResponse();
 }
+
+} // namespace http

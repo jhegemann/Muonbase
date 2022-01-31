@@ -22,6 +22,7 @@ limitations under the License. */
 namespace db_api {
 
 const std::string kRouteInsert = "/insert";
+const std::string kRouteUpdate = "/update";
 const std::string kRouteErase = "/erase";
 const std::string kRouteFind = "/find";
 const std::string kRouteKeys = "/keys";
@@ -32,6 +33,7 @@ const std::string kServiceDatabase = "db";
 const std::string kServiceUser = "user";
 
 HttpResponse Insert(const HttpRequest &request, ServiceMap &services);
+HttpResponse Update(const HttpRequest &request, ServiceMap &services);
 HttpResponse Erase(const HttpRequest &request, ServiceMap &services);
 HttpResponse Find(const HttpRequest &request, ServiceMap &services);
 HttpResponse Keys(const HttpRequest &request, ServiceMap &services);

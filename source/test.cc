@@ -186,6 +186,24 @@ int main(int argc, char **argv) {
             auto it = mirrored_state.begin();
             std::advance(it, random.Uint64() % mirrored_state.size());
             std::string key = it->first;
+            JsonObject value = json::RandomObject();
+            mirrored_state[key] = value;
+            JsonObject values;
+            values.PutObject(key, value);
+            client.Update(values);
+          }
+          clock.Stop();
+          LOG_INFO("thread" + kStringSpace + std::to_string(index) +
+                   kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
+                   kStringSpace + "took" + kStringSpace +
+                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
+                   "per update");
+
+          clock.Start();
+          for (size_t j = 0; j < count; j++) {
+            auto it = mirrored_state.begin();
+            std::advance(it, random.Uint64() % mirrored_state.size());
+            std::string key = it->first;
             it = mirrored_state.erase(it);
             JsonArray keys;
             keys.PutString(key);

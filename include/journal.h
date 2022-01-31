@@ -20,7 +20,11 @@ limitations under the License. */
 #include <deque>
 #include <sstream>
 
-enum StorageModification { STORAGE_INSERT = 0, STORAGE_ERASE };
+enum StorageModification {
+  STORAGE_INSERT = 0,
+  STORAGE_UPDATE = 1,
+  STORAGE_ERASE = 2
+};
 
 template <class K, class V> class Journal {
 public:
@@ -31,11 +35,11 @@ public:
 
 template <class K, class V>
 void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
-  std::fstream stream;
-  size_t value_bytes = 0;
   if (!FileExists(filepath)) {
     return;
   }
+  std::fstream stream;
+  size_t value_bytes = 0;
   size_t size = FileSize(filepath);
   stream.open(filepath, std::fstream::in | std::fstream::binary);
   uint8_t buffer;
@@ -45,30 +49,36 @@ void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
   size_t bytes = 0;
   while (bytes < size) {
     stream.read((char *)&buffer, sizeof(uint8_t));
-    if (!stream) {
-      throw std::runtime_error("incomplete journal message");
-    }
     bytes += sizeof(uint8_t);
+    if (!stream) {
+      throw std::runtime_error("journal: could not read storage modification");
+    }
     switch (buffer) {
     case 0:
       operation = STORAGE_INSERT;
       break;
     case 1:
+      operation = STORAGE_UPDATE;
+      break;
+    case 2:
       operation = STORAGE_ERASE;
       break;
     default:
       throw std::runtime_error("unknown storage modification");
     }
     bytes += Serializer<K>::Deserialize(key, stream);
+    if (!stream) {
+      throw std::runtime_error("journal: could not read key");
+    }
     stream.read((char *)&buffer, sizeof(uint8_t));
     if (!stream) {
-      throw std::runtime_error("incomplete journal message");
+      throw std::runtime_error("journal: could not read flag");
     }
     bytes += sizeof(uint8_t);
     if (buffer != 0) {
       value_bytes = Serializer<V>::Deserialize(value, stream);
       if (value_bytes == std::string::npos) {
-        throw std::runtime_error("incomplete journal message");
+        throw std::runtime_error("journal: could not read value");
         break;
       }
       bytes += value_bytes;
@@ -76,6 +86,9 @@ void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
     switch (operation) {
     case STORAGE_INSERT:
       db.Insert(key, value);
+      break;
+    case STORAGE_UPDATE:
+      db.Update(db.Find(key), value);
       break;
     case STORAGE_ERASE:
       db.Erase(key);
@@ -96,17 +109,23 @@ void Journal<K, V>::Append(std::fstream &stream, StorageModification operation,
   uint8_t buffer = static_cast<uint8_t>(operation);
   stream.write((const char *)&buffer, sizeof(uint8_t));
   if (Serializer<K>::Serialize(key, stream) == std::string::npos) {
-    throw std::runtime_error("error appending to journal");
+    throw std::runtime_error("journal: could append key");
   }
   if (value) {
     buffer = 1;
     stream.write((const char *)&buffer, sizeof(uint8_t));
+    if (!stream) {
+      throw std::runtime_error("journal: could not append flag");
+    }
     if (Serializer<V>::Serialize((*value), stream) == std::string::npos) {
-      throw std::runtime_error("error appending to journal");
+      throw std::runtime_error("journal: could not append value");
     }
   } else {
     buffer = 0;
     stream.write((const char *)&buffer, sizeof(uint8_t));
+    if (!stream) {
+      throw std::runtime_error("journal: could not append flag");
+    }
   }
   stream.flush();
   if (!stream) {
