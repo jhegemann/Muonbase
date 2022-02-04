@@ -34,6 +34,7 @@ limitations under the License. */
 
 #include "json.h"
 #include "log.h"
+#include "trace.h"
 
 #undef INNER_BINARY_SEARCH
 #undef OUTER_BINARY_SEARCH
@@ -137,65 +138,79 @@ protected:
 };
 
 template <class K, class V> InnerNode<K, V>::InnerNode() {
+  STACKTRACE;
   keys_.reserve(INNER_FANOUT + 1);
   children_.reserve(INNER_FANOUT + 2);
 }
 
-template <class K, class V> InnerNode<K, V>::~InnerNode() {}
+template <class K, class V> InnerNode<K, V>::~InnerNode() { STACKTRACE; }
 
 template <class K, class V> inline Node *InnerNode<K, V>::GetParent() const {
+  STACKTRACE;
   return parent_;
 }
 
 template <class K, class V> inline void InnerNode<K, V>::SetParent(Node *node) {
+  STACKTRACE;
   parent_ = node;
 }
 
 template <class K, class V> inline bool InnerNode<K, V>::IsOuter() const {
+  STACKTRACE;
   return false;
 }
 
 template <class K, class V> inline bool InnerNode<K, V>::IsSparse() const {
+  STACKTRACE;
   return keys_.size() < INNER_FANOUT / 2;
 }
 
 template <class K, class V> inline bool InnerNode<K, V>::IsFull() const {
+  STACKTRACE;
   return keys_.size() > INNER_FANOUT;
 }
 
 template <class K, class V> inline bool InnerNode<K, V>::IsEmpty() const {
+  STACKTRACE;
   return keys_.empty();
 }
 
 template <class K, class V> inline size_t InnerNode<K, V>::CountKeys() const {
+  STACKTRACE;
   return keys_.size();
 }
 
 template <class K, class V>
 inline size_t InnerNode<K, V>::CountChildren() const {
+  STACKTRACE;
   return children_.size();
 }
 
 template <class K, class V> inline K &InnerNode<K, V>::Key(size_t index) {
+  STACKTRACE;
   return keys_[index];
 }
 
 template <class K, class V>
 inline const K &InnerNode<K, V>::GetKey(size_t index) const {
+  STACKTRACE;
   return keys_[index];
 }
 
 template <class K, class V> inline Node *InnerNode<K, V>::Child(size_t index) {
+  STACKTRACE;
   return children_[index];
 }
 
 template <class K, class V>
 inline const Node *InnerNode<K, V>::GetChild(size_t index) const {
+  STACKTRACE;
   return children_[index];
 }
 
 template <class K, class V>
 inline size_t InnerNode<K, V>::ChildIndex(const Node *child) const {
+  STACKTRACE;
   if (children_.empty()) {
     return std::string::npos;
   }
@@ -211,6 +226,7 @@ inline size_t InnerNode<K, V>::ChildIndex(const Node *child) const {
 
 template <class K, class V>
 inline size_t InnerNode<K, V>::KeyIndex(const K &key) const {
+  STACKTRACE;
 #ifdef INNER_BINARY_SEARCH
   typename std::vector<K>::iterator it =
       lower_bound(keys_.begin(), keys_.end(), key);
@@ -235,6 +251,7 @@ inline size_t InnerNode<K, V>::KeyIndex(const K &key) const {
 
 template <class K, class V>
 void InnerNode<K, V>::Insert(Node *left, K &separator, Node *right) {
+  STACKTRACE;
   if (keys_.empty()) {
     left->SetParent(this);
     right->SetParent(this);
@@ -254,6 +271,7 @@ void InnerNode<K, V>::Insert(Node *left, K &separator, Node *right) {
 
 template <class K, class V>
 void InnerNode<K, V>::Erase(const K &key, Node *child) {
+  STACKTRACE;
   size_t key_position = KeyIndex(key);
   if (key_position == std::string::npos) {
     return;
@@ -268,6 +286,7 @@ void InnerNode<K, V>::Erase(const K &key, Node *child) {
 
 template <class K, class V>
 std::pair<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
+  STACKTRACE;
   const size_t size = keys_.size();
   const size_t keys_left = (size % 2 == 0) ? size / 2 : size / 2 + 1;
   const size_t children_left = keys_left + 1;
@@ -288,6 +307,7 @@ std::pair<InnerNode<K, V> *, K> InnerNode<K, V>::Split() {
 
 template <class K, class V>
 size_t InnerNode<K, V>::SeparatorIndex(InnerNode<K, V> *kin) {
+  STACKTRACE;
   const size_t self_index = CAST_INNER(parent_)->ChildIndex(this);
   if (self_index == std::string::npos) {
     return std::string::npos;
@@ -303,6 +323,7 @@ size_t InnerNode<K, V>::SeparatorIndex(InnerNode<K, V> *kin) {
 }
 
 template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
+  STACKTRACE;
   InnerNode<K, V> *kin = CAST_INNER(node);
   const size_t separator_index = SeparatorIndex(kin);
   if (separator_index == std::string::npos) {
@@ -331,6 +352,7 @@ template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
 }
 
 template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
+  STACKTRACE;
   InnerNode<K, V> *kin = CAST_INNER(node);
   if (keys_.size() + kin->keys_.size() > INNER_FANOUT) {
     return false;
@@ -354,6 +376,7 @@ template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
 
 template <class K, class V>
 inline std::shared_mutex &InnerNode<K, V>::SharedMutex() {
+  STACKTRACE;
   return mutex_;
 }
 
@@ -404,64 +427,78 @@ protected:
 
 template <class K, class V>
 OuterNode<K, V>::OuterNode() : next_(nullptr), previous_(nullptr) {
+  STACKTRACE;
   keys_.reserve(OUTER_FANOUT + 1);
   values_.reserve(OUTER_FANOUT + 1);
 }
 
-template <class K, class V> OuterNode<K, V>::~OuterNode() {}
+template <class K, class V> OuterNode<K, V>::~OuterNode() { STACKTRACE; }
 
 template <class K, class V> inline Node *OuterNode<K, V>::GetParent() const {
+  STACKTRACE;
   return parent_;
 }
 
 template <class K, class V> inline void OuterNode<K, V>::SetParent(Node *node) {
+  STACKTRACE;
   parent_ = node;
 }
 
 template <class K, class V> inline bool OuterNode<K, V>::IsOuter() const {
+  STACKTRACE;
   return true;
 }
 
 template <class K, class V> inline bool OuterNode<K, V>::IsSparse() const {
+  STACKTRACE;
   return keys_.size() < OUTER_FANOUT / 2;
 }
 
 template <class K, class V> inline bool OuterNode<K, V>::IsFull() const {
+  STACKTRACE;
   return keys_.size() > OUTER_FANOUT;
 }
 
 template <class K, class V> inline bool OuterNode<K, V>::IsEmpty() const {
+  STACKTRACE;
   return keys_.empty();
 }
 
 template <class K, class V> inline size_t OuterNode<K, V>::CountKeys() const {
+  STACKTRACE;
   return keys_.size();
 }
 
 template <class K, class V> inline size_t OuterNode<K, V>::CountValues() const {
+  STACKTRACE;
   return values_.size();
 }
 
 template <class K, class V> inline K &OuterNode<K, V>::Key(size_t index) {
+  STACKTRACE;
   return keys_[index];
 }
 
 template <class K, class V>
 inline const K &OuterNode<K, V>::GetKey(size_t index) const {
+  STACKTRACE;
   return keys_[index];
 }
 
 template <class K, class V> inline V &OuterNode<K, V>::Value(size_t index) {
+  STACKTRACE;
   return values_[index];
 }
 
 template <class K, class V>
 inline const V &OuterNode<K, V>::GetValue(size_t index) const {
+  STACKTRACE;
   return values_[index];
 }
 
 template <class K, class V>
 size_t OuterNode<K, V>::ValueIndex(const V &value) const {
+  STACKTRACE;
   if (values_.empty()) {
     return std::string::npos;
   }
@@ -477,6 +514,7 @@ size_t OuterNode<K, V>::ValueIndex(const V &value) const {
 
 template <class K, class V>
 size_t OuterNode<K, V>::KeyIndex(const K &key) const {
+  STACKTRACE;
 #ifdef OUTER_BINARY_SEARCH
   typename std::vector<K>::iterator it =
       lower_bound(keys_.begin(), keys_.end(), key);
@@ -501,6 +539,7 @@ size_t OuterNode<K, V>::KeyIndex(const K &key) const {
 
 template <class K, class V>
 void OuterNode<K, V>::Insert(const K &key, const V &value) {
+  STACKTRACE;
   if (keys_.empty()) {
     keys_.push_back(key);
     values_.push_back(value);
@@ -515,6 +554,7 @@ void OuterNode<K, V>::Insert(const K &key, const V &value) {
 }
 
 template <class K, class V> void OuterNode<K, V>::Erase(const K &key) {
+  STACKTRACE;
   const size_t key_position = KeyIndex(key);
   if (key_position == std::string::npos) {
     return;
@@ -525,6 +565,7 @@ template <class K, class V> void OuterNode<K, V>::Erase(const K &key) {
 
 template <class K, class V>
 MapIterator<K, V> OuterNode<K, V>::Erase(const MapIterator<K, V> &iterator) {
+  STACKTRACE;
   keys_.erase(keys_.begin() + iterator.index_);
   values_.erase(values_.begin() + iterator.index_);
   MapIterator<K, V> next = iterator;
@@ -536,6 +577,7 @@ MapIterator<K, V> OuterNode<K, V>::Erase(const MapIterator<K, V> &iterator) {
 
 template <class K, class V>
 std::pair<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
+  STACKTRACE;
   const size_t size = keys_.size();
   const size_t keys_left = (size % 2 == 0) ? size / 2 : size / 2 + 1;
   OuterNode<K, V> *kin = new OuterNode<K, V>();
@@ -557,6 +599,7 @@ std::pair<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
 }
 
 template <class K, class V> bool OuterNode<K, V>::Redistribute(Node *node) {
+  STACKTRACE;
   OuterNode<K, V> *kin = CAST_OUTER(node);
   if (kin->keys_.size() >= keys_.size() + 2) {
     keys_.push_back(kin->keys_.front());
@@ -581,6 +624,7 @@ template <class K, class V> bool OuterNode<K, V>::Redistribute(Node *node) {
 }
 
 template <class K, class V> bool OuterNode<K, V>::Coalesce(Node *node) {
+  STACKTRACE;
   OuterNode<K, V> *kin = CAST_OUTER(node);
   if (kin->keys_.size() + keys_.size() > OUTER_FANOUT) {
     return false;
@@ -599,16 +643,19 @@ template <class K, class V> bool OuterNode<K, V>::Coalesce(Node *node) {
 
 template <class K, class V>
 inline OuterNode<K, V> *OuterNode<K, V>::GetNext() const {
+  STACKTRACE;
   return next_;
 }
 
 template <class K, class V>
 inline OuterNode<K, V> *OuterNode<K, V>::GetPrevious() const {
+  STACKTRACE;
   return previous_;
 }
 
 template <class K, class V>
 inline std::shared_mutex &OuterNode<K, V>::SharedMutex() {
+  STACKTRACE;
   return mutex_;
 }
 
@@ -655,11 +702,17 @@ protected:
   static size_t Fanout(size_t cache, size_t priority, size_t maximum);
 };
 
-template <class K, class V> Map<K, V>::Map() : root_(nullptr), size_(0) {}
+template <class K, class V> Map<K, V>::Map() : root_(nullptr), size_(0) {
+  STACKTRACE;
+}
 
-template <class K, class V> Map<K, V>::~Map() { Clear(); }
+template <class K, class V> Map<K, V>::~Map() {
+  STACKTRACE;
+  Clear();
+}
 
 template <class K, class V> void Map<K, V>::Clear() {
+  STACKTRACE;
   if (root_ != nullptr) {
     std::stack<Node *> todo;
     todo.push(root_);
@@ -685,6 +738,7 @@ template <class K, class V> void Map<K, V>::Clear() {
 template <class K, class V> size_t Map<K, V>::Size() const { return size_; }
 
 template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) const {
+  STACKTRACE;
   if (node == root_) {
     return nullptr;
   }
@@ -697,6 +751,7 @@ template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) const {
 }
 
 template <class K, class V> Node *Map<K, V>::RightNode(Node *node) const {
+  STACKTRACE;
   if (node == root_) {
     return nullptr;
   }
@@ -711,6 +766,7 @@ template <class K, class V> Node *Map<K, V>::RightNode(Node *node) const {
 
 template <class K, class V>
 size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) const {
+  STACKTRACE;
   InnerNode<K, V> *parent = CAST_INNER(node->GetParent());
   const size_t node_position = parent->ChildIndex(node);
   if (node_position == std::string::npos) {
@@ -728,6 +784,7 @@ size_t Map<K, V>::SeparatorIndex(Node *node, Node *kin) const {
 
 template <class K, class V>
 K Map<K, V>::SeparatorKey(Node *node, Node *kin) const {
+  STACKTRACE;
   const size_t index = SeparatorIndex(node, kin);
   if (index == std::string::npos) {
     throw std::runtime_error("tree: map separator key");
@@ -738,6 +795,7 @@ K Map<K, V>::SeparatorKey(Node *node, Node *kin) const {
 
 template <class K, class V>
 void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *kin) {
+  STACKTRACE;
   if (origin == root_) {
     InnerNode<K, V> *inner_node = new InnerNode<K, V>();
     inner_node->Insert(origin, up_key, kin);
@@ -754,6 +812,7 @@ void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *kin) {
 
 template <class K, class V>
 MapIterator<K, V> Map<K, V>::Locate(const K &key) const {
+  STACKTRACE;
   if (!root_) {
     return End();
   }
@@ -781,6 +840,7 @@ MapIterator<K, V> Map<K, V>::Locate(const K &key) const {
 }
 
 template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
+  STACKTRACE;
   if (root_ == nullptr) {
     return nullptr;
   }
@@ -792,6 +852,7 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
 }
 
 template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() const {
+  STACKTRACE;
   if (root_ == nullptr) {
     return nullptr;
   }
@@ -803,23 +864,28 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() const {
 }
 
 template <class K, class V> const V &Map<K, V>::Get(const K &key) const {
+  STACKTRACE;
   return Locate(key).GetValue();
 }
 
 template <class K, class V> V &Map<K, V>::Get(const K &key) {
+  STACKTRACE;
   return Locate(key).GetValue();
 }
 
 template <class K, class V> const V &Map<K, V>::operator[](const K &key) const {
+  STACKTRACE;
   return Get(key);
 }
 
 template <class K, class V> V &Map<K, V>::operator[](const K &key) {
+  STACKTRACE;
   return Get(key);
 }
 
 template <class K, class V>
 void Map<K, V>::Update(const MapIterator<K, V> &iterator, const V &value) {
+  STACKTRACE;
   if (!iterator.node_ || (iterator.index_ == std::string::npos)) {
     return;
   }
@@ -828,6 +894,7 @@ void Map<K, V>::Update(const MapIterator<K, V> &iterator, const V &value) {
 
 template <class K, class V>
 void Map<K, V>::Insert(const K &key, const V &value) {
+  STACKTRACE;
   if (!root_) {
     root_ = new OuterNode<K, V>();
     CAST_OUTER(root_)->Insert(key, value);
@@ -850,6 +917,7 @@ void Map<K, V>::Insert(const K &key, const V &value) {
 
 template <class K, class V>
 MapIterator<K, V> Map<K, V>::Erase(const MapIterator<K, V> &iterator) {
+  STACKTRACE;
   Node *current = iterator.node_;
   MapIterator<K, V> next = CAST_OUTER(current)->Erase(iterator);
   size_--;
@@ -919,6 +987,7 @@ MapIterator<K, V> Map<K, V>::Erase(const MapIterator<K, V> &iterator) {
 }
 
 template <class K, class V> bool Map<K, V>::Erase(const K &key) {
+  STACKTRACE;
   MapIterator<K, V> iterator = Locate(key);
   if (iterator.index_ == std::string::npos) {
     return false;
@@ -928,6 +997,7 @@ template <class K, class V> bool Map<K, V>::Erase(const K &key) {
 }
 
 template <class K, class V> bool Map<K, V>::Contains(const K &key) const {
+  STACKTRACE;
   MapIterator<K, V> iterator = Locate(key);
   if (iterator.index_ == std::string::npos) {
     return false;
@@ -937,6 +1007,7 @@ template <class K, class V> bool Map<K, V>::Contains(const K &key) const {
 
 template <class K, class V>
 MapIterator<K, V> Map<K, V>::Find(const K &key) const {
+  STACKTRACE;
   MapIterator<K, V> iterator = Locate(key);
   if (iterator.index_ == std::string::npos) {
     iterator.node_ = nullptr;
@@ -945,6 +1016,7 @@ MapIterator<K, V> Map<K, V>::Find(const K &key) const {
 }
 
 template <class K, class V> MapIterator<K, V> Map<K, V>::Begin() {
+  STACKTRACE;
   if (root_ == nullptr) {
     return End();
   }
@@ -955,6 +1027,7 @@ template <class K, class V> MapIterator<K, V> Map<K, V>::Begin() {
 }
 
 template <class K, class V> const MapIterator<K, V> Map<K, V>::Begin() const {
+  STACKTRACE;
   if (root_ == nullptr) {
     return End();
   }
@@ -965,10 +1038,12 @@ template <class K, class V> const MapIterator<K, V> Map<K, V>::Begin() const {
 }
 
 template <class K, class V> MapIterator<K, V> Map<K, V>::End() {
+  STACKTRACE;
   return MapIterator<K, V>();
 }
 
 template <class K, class V> const MapIterator<K, V> Map<K, V>::End() const {
+  STACKTRACE;
   return MapIterator<K, V>();
 }
 

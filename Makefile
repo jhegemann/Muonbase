@@ -4,7 +4,7 @@ SD = ./source
 ID = ./include
 BN = ./bin
 CC = g++
-CFLAGS = -Ofast -std=c++2a -Wall -pedantic -march=native
+CFLAGS = -std=c++2a -Wall -pedantic -march=native
 
 TARGETS = server client
 
@@ -17,7 +17,8 @@ SERVER_OBJECTS = $(BD)/server.o \
  $(BD)/http.o \
  $(BD)/service.o \
  $(BD)/api.o \
- $(BD)/clock.o
+ $(BD)/clock.o \
+ $(BD)/trace.o
 
 CLIENT_OBJECTS = $(BD)/test.o \
  $(BD)/log.o \
@@ -27,7 +28,8 @@ CLIENT_OBJECTS = $(BD)/test.o \
  $(BD)/tcp.o \
  $(BD)/http.o \
  $(BD)/client.o \
- $(BD)/clock.o
+ $(BD)/clock.o \
+ $(BD)/trace.o
 
 LINKING_SSL = -lssl -lcrypto
 LINKING_THREAD = -lpthread

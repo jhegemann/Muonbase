@@ -77,9 +77,9 @@ public:
   void PutBoolean(JsonBoolean value);
   void PutInteger(JsonInteger value);
   void PutFloat(JsonFloat value);
-  void PutString(JsonString value);
-  void PutObject(JsonObject value);
-  void PutArray(JsonArray value);
+  void PutString(const JsonString &value);
+  void PutObject(const JsonObject &value);
+  void PutArray(const JsonArray &value);
   JsonValue GetValue(size_t index) const;
   JsonBoolean GetBoolean(size_t index) const;
   JsonInteger GetInteger(size_t index) const;
@@ -115,9 +115,9 @@ public:
   void PutBoolean(const std::string &key, JsonBoolean value);
   void PutInteger(const std::string &key, JsonInteger value);
   void PutFloat(const std::string &key, JsonFloat value);
-  void PutString(const std::string &key, JsonString value);
-  void PutObject(const std::string &key, JsonObject value);
-  void PutArray(const std::string &key, JsonArray value);
+  void PutString(const std::string &key, const JsonString &value);
+  void PutObject(const std::string &key, const JsonObject &value);
+  void PutArray(const std::string &key, const JsonArray &value);
   JsonValue GetValue(const std::string &key) const;
   JsonBoolean GetBoolean(const std::string &key) const;
   JsonInteger GetInteger(const std::string &key) const;

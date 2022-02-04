@@ -16,6 +16,7 @@ limitations under the License. */
 #include "clock.h"
 #include "http.h"
 #include "log.h"
+#include "trace.h"
 #include "utils.h"
 #include <iostream>
 #include <optional>
@@ -218,6 +219,7 @@ int main(int argc, char **argv) {
         }
       } catch (std::runtime_error &) {
         LOG_INFO("test failed");
+        Trace::GetInstance()->Print();
         return;
       }
     });
@@ -242,6 +244,7 @@ int main(int argc, char **argv) {
     client.Find(keys);
   } catch (std::runtime_error &) {
     LOG_INFO("test failed");
+    Trace::GetInstance()->Print();
   }
 
   LOG_INFO("all tests passed");

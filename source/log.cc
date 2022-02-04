@@ -31,7 +31,8 @@ Log *Log::GetInstance() {
   return Log::instance_;
 }
 
-void Log::Info(const std::string &msg, const std::string &file, int line) {
+void Log::Info(const std::string &msg, const std::string &file,
+               const std::string &function, int line) {
   std::lock_guard<std::mutex> guard(mutex_);
   if (!verbose_) {
     return;
@@ -41,13 +42,13 @@ void Log::Info(const std::string &msg, const std::string &file, int line) {
   if (stream_.is_open()) {
     stream_ << kStringSquareBracketOpen << pid << kStringPipe << datetime
             << kStringPipe << kLogInfo << kStringPipe << file << kStringColon
-            << line << kStringSquareBracketClose << kStringSpace << msg
-            << std::endl;
+            << function << kStringColon << line << kStringSquareBracketClose
+            << kStringSpace << msg << std::endl;
   } else {
     std::cout << kStringSquareBracketOpen << pid << kStringPipe << datetime
               << kStringPipe << kLogInfo << kStringPipe << file << kStringColon
-              << line << kStringSquareBracketClose << kStringSpace << msg
-              << std::endl;
+              << function << kStringColon << line << kStringSquareBracketClose
+              << kStringSpace << msg << std::endl;
   }
 }
 

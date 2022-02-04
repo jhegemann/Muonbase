@@ -223,16 +223,7 @@ const std::string HttpRequest::String() const {
 const std::string HttpRequest::AsShortString() const {
   std::stringstream packet;
   packet << HttpConstants::GetMethodString(method_) << kStringSpace << url_
-         << kStringSpace << protocol_ << kHttpLineFeed;
-  for (auto it = headers_.begin(); it != headers_.end(); it++) {
-    packet << it->first << kStringColon << kStringSpace << it->second
-           << kHttpLineFeed;
-  }
-  packet << kHttpLineFeed;
-  packet << body_.substr(0, std::min<size_t>(body_.length(), (size_t)1024));
-  if (body_.length() > 1024) {
-    packet << kStringDots;
-  }
+         << kStringSpace << protocol_;
   return packet.str();
 }
 
@@ -310,17 +301,7 @@ const std::string HttpResponse::String() const {
 
 const std::string HttpResponse::AsShortString() const {
   std::stringstream packet;
-  packet << protocol_ << kStringSpace << status_ << kStringSpace << message_
-         << kHttpLineFeed;
-  for (auto it = headers_.begin(); it != headers_.end(); it++) {
-    packet << it->first << kStringColon << kStringSpace << it->second
-           << kHttpLineFeed;
-  }
-  packet << kHttpLineFeed;
-  packet << body_.substr(0, std::min<size_t>(body_.length(), (size_t)1024));
-  if (body_.length() > 1024) {
-    packet << "...";
-  }
+  packet << protocol_ << kStringSpace << status_ << kStringSpace << message_;
   return packet.str();
 }
 
@@ -543,6 +524,8 @@ void HttpConnection::Restart() {
   stage_ = START;
   count_headers_ = 0;
   reader_->ClearBuffer();
+  request_.Initialize();
+  response_.Initialize();
 }
 
 bool HttpConnection::IsGood() { return socket_->IsGood(); }
@@ -891,7 +874,7 @@ void HttpServer::HandleTimerEvent() {
   std::string sep = kStringEmpty;
   for (auto it = connections_.begin(); it != connections_.end(); it++) {
     connection_list += sep + std::to_string(it->first);
-    sep = ", ";
+    sep = kStringComma + kStringSpace;
   }
   LOG_INFO("open connections: " + connection_list);
 }

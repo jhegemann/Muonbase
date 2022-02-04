@@ -47,7 +47,7 @@ both the binary package `openssl` as well as the header files in `openssl-dev`. 
 ```
 make clean && make
 ```
-The compiler is configured to give all warnings via `-Wall` and to be `-pedantic`; optimization level `-Ofast`is applied.
+The compiler is configured to give all warnings via `-Wall` and to be `-pedantic`.
 
 # Usage
 Two binaries are produced by the makefile, which are (i) muonbase-server, and (ii) muonbase-client. Binary (i) runs the 
@@ -108,6 +108,7 @@ horizontally and launch one new database server per user.
 
 ## Routes
 * POST /insert
+* POST /update
 * POST /erase
 * POST /find
 * GET /keys

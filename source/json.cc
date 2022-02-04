@@ -71,15 +71,15 @@ void JsonObject::PutFloat(const std::string &key, JsonFloat value) {
   values_.insert(std::make_pair(key, value));
 }
 
-void JsonObject::PutString(const std::string &key, JsonString value) {
+void JsonObject::PutString(const std::string &key, const JsonString &value) {
   values_.insert(std::make_pair(key, value));
 }
 
-void JsonObject::PutObject(const std::string &key, JsonObject value) {
+void JsonObject::PutObject(const std::string &key, const JsonObject &value) {
   values_.insert(std::make_pair(key, value));
 }
 
-void JsonObject::PutArray(const std::string &key, JsonArray value) {
+void JsonObject::PutArray(const std::string &key, const JsonArray &value) {
   values_.insert(std::make_pair(key, value));
 }
 
@@ -366,11 +366,11 @@ void JsonArray::PutInteger(JsonInteger value) { values_.emplace_back(value); }
 
 void JsonArray::PutFloat(JsonFloat value) { values_.emplace_back(value); }
 
-void JsonArray::PutString(JsonString value) { values_.emplace_back(value); }
+void JsonArray::PutString(const JsonString &value) { values_.emplace_back(value); }
 
-void JsonArray::PutObject(JsonObject value) { values_.emplace_back(value); }
+void JsonArray::PutObject(const JsonObject &value) { values_.emplace_back(value); }
 
-void JsonArray::PutArray(JsonArray value) { values_.emplace_back(value); }
+void JsonArray::PutArray(const JsonArray &value) { values_.emplace_back(value); }
 
 JsonValue JsonArray::GetValue(size_t index) const { return values_[index]; }
 

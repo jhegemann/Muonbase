@@ -23,17 +23,19 @@ limitations under the License. */
 
 #include "utils.h"
 
-#define LOG_INFO(message) Log::GetInstance()->Info(message, __FILE__, __LINE__)
+#define LOG_INFO(message)                                                      \
+  Log::GetInstance()->Info(message, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
 const std::string kLogInfo = "info";
-const std::string kLogDatetimeFormat = "%d.%m.%Y-%H:%M:%S";
+const std::string kLogDatetimeFormat = "%Y%m%d%H%M%S";
 
 class Log {
 public:
   static Log *GetInstance();
   Log(Log &other) = delete;
   void operator=(const Log &) = delete;
-  void Info(const std::string &msg, const std::string &file, int line);
+  void Info(const std::string &msg, const std::string &file,
+            const std::string &function, int line);
   void SetLogfile(const std::string &filepath);
   void SetVerbose(bool verbose);
 

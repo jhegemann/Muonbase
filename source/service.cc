@@ -95,8 +95,8 @@ void DocumentDatabase::Initialize() {
                        std::fstream::out | std::fstream::binary);
   rollover_in_progress_ = false;
   rollover_cancel_ = false;
-  uint64_t usage = DatabaseMemory::Consumption(database_);
-  LOG_INFO("memory usage: " + std::to_string(usage));
+  uint64_t usage = DatabaseMemory::Consumption(database_) / 1024 / 1024;
+  LOG_INFO("memory usage: " + std::to_string(usage) + " megabytes");
 }
 
 void DocumentDatabase::Tick() { Rollover(); }
@@ -142,7 +142,7 @@ void DocumentDatabase::Rollover() {
     LOG_INFO("defer journal rollover");
     rollover_worker_ = std::thread([this] {
       size_t bytes;
-      Map<std::string, JsonObject> database;
+      Database database;
       if (FileExists(filepath_)) {
         LOG_INFO("journal rollover: load snapshot");
         bytes = db::Deserialize(filepath_, database, rollover_cancel_);
@@ -200,16 +200,17 @@ JsonArray DocumentDatabase::Insert(const JsonArray &values) {
 
 JsonObject DocumentDatabase::Update(const JsonObject &values) {
   JsonObject result;
+  JsonObject update;
   for (std::string &key : values.Keys()) {
     auto it = database_.Find(key);
     if (it == database_.End()) {
       result.PutNull(key);
       continue;
     }
-    JsonObject value = it.GetValue();
-    result.PutObject(key, value);
-    DatabaseJournal::Append(stream_journal_, STORAGE_UPDATE, key, &value);
-    database_.Update(it, value);
+    result.PutObject(key, it.GetValue());
+    update = values.GetObject(key);
+    DatabaseJournal::Append(stream_journal_, STORAGE_UPDATE, key, &update);
+    database_.Update(it, update);
   }
   return result;
 }
