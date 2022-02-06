@@ -32,7 +32,17 @@ JsonArray Client::Insert(const JsonArray &values) {
     LOG_INFO("failed: insert response status");
     throw std::runtime_error("insert request");
   }
-  return JsonArray((*response).GetBody());
+  if (response->GetBody().empty()) {
+    LOG_INFO("failed: empty body");
+    throw std::runtime_error("insert request");
+  }
+  JsonArray array;
+  try {
+    array.Parse((*response).GetBody());
+  } catch (std::runtime_error &e) {
+    LOG_INFO(std::string(e.what()));
+  }
+  return array;
 }
 
 JsonObject Client::Update(const JsonObject &values) {
@@ -47,7 +57,17 @@ JsonObject Client::Update(const JsonObject &values) {
     LOG_INFO("failed: update response status");
     throw std::runtime_error("update request");
   }
-  return JsonObject((*response).GetBody());
+  if (response->GetBody().empty()) {
+    LOG_INFO("failed: empty body");
+    throw std::runtime_error("insert request");
+  }
+  JsonObject object;
+  try {
+    object.Parse((*response).GetBody());
+  } catch (std::runtime_error &e) {
+    LOG_INFO(std::string(e.what()));
+  }
+  return object;
 }
 
 JsonArray Client::Erase(const JsonArray &keys) {
@@ -62,7 +82,17 @@ JsonArray Client::Erase(const JsonArray &keys) {
     LOG_INFO("failed: erase response status");
     throw std::runtime_error("erase request");
   }
-  return JsonArray((*response).GetBody());
+  if (response->GetBody().empty()) {
+    LOG_INFO("failed: empty body");
+    throw std::runtime_error("insert request");
+  }
+  JsonArray array;
+  try {
+    array.Parse((*response).GetBody());
+  } catch (std::runtime_error &e) {
+    LOG_INFO(std::string(e.what()));
+  }
+  return array;
 }
 
 JsonArray Client::Find(const JsonArray &keys) {
@@ -76,47 +106,15 @@ JsonArray Client::Find(const JsonArray &keys) {
     LOG_INFO("failed: find response status");
     throw std::runtime_error("find request");
   }
-  return JsonArray((*response).GetBody());
-}
-
-JsonArray Client::Keys() {
-  auto response =
-      http::SendRequest(ip_, port_, GET, db_api::kRouteKeys, user_, password_);
-  if (!response) {
-    LOG_INFO("failed: keys request");
-    throw std::runtime_error("keys request");
+  if (response->GetBody().empty()) {
+    LOG_INFO("failed: empty body");
+    throw std::runtime_error("insert request");
   }
-  if (response->GetStatus() != HttpStatus::OK) {
-    LOG_INFO("failed: keys response status");
-    throw std::runtime_error("keys request");
+  JsonArray array;
+  try {
+    array.Parse((*response).GetBody());
+  } catch (std::runtime_error &e) {
+    LOG_INFO(std::string(e.what()));
   }
-  return JsonArray((*response).GetBody());
-}
-
-JsonArray Client::Values() {
-  auto response = http::SendRequest(ip_, port_, GET, db_api::kRouteValues,
-                                    user_, password_);
-  if (!response) {
-    LOG_INFO("failed: values request");
-    throw std::runtime_error("values request");
-  }
-  if (response->GetStatus() != HttpStatus::OK) {
-    LOG_INFO("failed: values response status");
-    throw std::runtime_error("values request");
-  }
-  return JsonArray((*response).GetBody());
-}
-
-JsonObject Client::Image() {
-  auto response =
-      http::SendRequest(ip_, port_, GET, db_api::kRouteImage, user_, password_);
-  if (!response) {
-    LOG_INFO("failed: image request");
-    throw std::runtime_error("image request");
-  }
-  if (response->GetStatus() != HttpStatus::OK) {
-    LOG_INFO("failed: image response status");
-    throw std::runtime_error("image request");
-  }
-  return JsonObject((*response).GetBody());
+  return array;
 }

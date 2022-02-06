@@ -138,42 +138,29 @@ int main(int argc, char **argv) {
   std::vector<std::thread> threads(num_threads);
   for (size_t index = 0; index < num_threads; index++) {
     threads[index] = std::thread([index, ip, port, order, cycles] {
-      RandomGenerator random(index);
-      std::map<std::string, JsonObject> mirrored_state;
+      Random random(123456789 + index);
+      std::map<std::string, JsonObject> mirror;
       Client client(ip, port, kUserDefault, kPasswordDefault);
       Clock clock;
       size_t count;
       try {
         LOG_INFO("thread" + kStringSpace + std::to_string(index) +
                  kStringSpace + "started");
-        clock.Start();
-        count = 0;
-        for (size_t i = 0; i < order; i++) {
-          JsonArray values = json::RandomObjectArray();
-          JsonArray keys = client.Insert(values);
-          for (size_t j = 0; j < keys.Size(); j++) {
-            mirrored_state.insert(
-                std::make_pair(keys.GetString(j), values.GetObject(j)));
-          }
-          count += keys.Size();
-        }
-        clock.Stop();
-        LOG_INFO("thread" + kStringSpace + std::to_string(index) +
-                 kStringSpace + "fill db" + kStringSpace + "took" +
-                 kStringSpace + std::to_string(clock.Time() / count) + "ms" +
-                 kStringSpace + "per insertion");
 
         for (size_t i = 1; i <= cycles; i++) {
           clock.Start();
-          size_t count = 0;
+          count = 0;
           for (size_t j = 0; j < order; j++) {
             JsonArray values = json::RandomObjectArray();
-            JsonArray keys = client.Insert(values);
-            for (size_t k = 0; k < keys.Size(); k++) {
-              mirrored_state.insert(
-                  std::make_pair(keys.GetString(k), values.GetObject(k)));
+            JsonArray result = client.Insert(values);
+            for (size_t k = 0; k < values.Size(); k++) {
+              if (!result.IsString(k)) {
+                throw std::runtime_error("non-string insert result");
+              }
+              mirror.insert(
+                  std::make_pair(result.GetString(k), values.GetObject(k)));
             }
-            count += keys.Size();
+            count += result.Size();
           }
           clock.Stop();
           LOG_INFO("thread" + kStringSpace + std::to_string(index) +
@@ -183,15 +170,18 @@ int main(int argc, char **argv) {
                    "per insertion");
 
           clock.Start();
-          for (size_t j = 0; j < count; j++) {
-            auto it = mirrored_state.begin();
-            std::advance(it, random.Uint64() % mirrored_state.size());
+          for (size_t i = 0; i < order; i++) {
+            auto it = mirror.begin();
+            std::advance(it, random.Uint64() % mirror.size());
             std::string key = it->first;
             JsonObject value = json::RandomObject();
-            mirrored_state[key] = value;
             JsonObject values;
             values.PutObject(key, value);
-            client.Update(values);
+            JsonObject result = client.Update(values);
+            if (!result.Has(key) || result.IsNull(key)) {
+              throw std::runtime_error("update non-existent key");
+            }
+            it->second = value;
           }
           clock.Stop();
           LOG_INFO("thread" + kStringSpace + std::to_string(index) +
@@ -201,14 +191,37 @@ int main(int argc, char **argv) {
                    "per update");
 
           clock.Start();
-          for (size_t j = 0; j < count; j++) {
-            auto it = mirrored_state.begin();
-            std::advance(it, random.Uint64() % mirrored_state.size());
+          for (size_t i = 0; i < order; i++) {
+            auto it = mirror.begin();
+            std::advance(it, random.Uint64() % mirror.size());
             std::string key = it->first;
-            it = mirrored_state.erase(it);
             JsonArray keys;
             keys.PutString(key);
-            client.Erase(keys);
+            JsonArray result = client.Find(keys);
+            if (result.Size() == 0 || !result.IsObject(0)) {
+              LOG_INFO(result.String());
+              throw std::runtime_error("could not find key ");
+            }
+          }
+          clock.Stop();
+          LOG_INFO("thread" + kStringSpace + std::to_string(index) +
+                   kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
+                   kStringSpace + "took" + kStringSpace +
+                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
+                   "per lookup");
+
+          clock.Start();
+          for (size_t i = 0; i < order; i++) {
+            auto it = mirror.begin();
+            std::advance(it, random.Uint64() % mirror.size());
+            std::string key = it->first;
+            JsonArray keys;
+            keys.PutString(key);
+            JsonArray result = client.Erase(keys);
+            if (result.Size() == 0 || !result.IsString(0)) {
+              throw std::runtime_error("could not erase key");
+            }
+            it = mirror.erase(it);
           }
           clock.Stop();
           LOG_INFO("thread" + kStringSpace + std::to_string(index) +
@@ -217,34 +230,14 @@ int main(int argc, char **argv) {
                    std::to_string(clock.Time() / count) + "ms" + kStringSpace +
                    "per erasure");
         }
-      } catch (std::runtime_error &) {
-        LOG_INFO("test failed");
-        Trace::GetInstance()->Print();
-        return;
+      } catch (std::exception &e) {
+        LOG_INFO("test failed: " + std::string(e.what()));
+        abort();
       }
     });
   }
   for (size_t i = 0; i < num_threads; i++) {
     threads[i].join();
-  }
-
-  try {
-    Client client(ip, port, kUserDefault, kPasswordDefault);
-    LOG_INFO("GET /keys");
-    JsonArray keys = client.Keys();
-    LOG_INFO("GET /values");
-    JsonArray values = client.Values();
-    LOG_INFO("GET /image");
-    JsonObject image = client.Image();
-    LOG_INFO("POST /insert");
-    JsonArray added_keys = client.Insert(json::RandomObjectArray());
-    LOG_INFO("POST /erase");
-    client.Erase(added_keys);
-    LOG_INFO("POST /find");
-    client.Find(keys);
-  } catch (std::runtime_error &) {
-    LOG_INFO("test failed");
-    Trace::GetInstance()->Print();
   }
 
   LOG_INFO("all tests passed");

@@ -19,6 +19,7 @@ limitations under the License. */
 #include "json.h"
 #include "map.h"
 #include "rand.h"
+#include "trace.h"
 #include "utils.h"
 #include <atomic>
 #include <fstream>
@@ -68,9 +69,6 @@ public:
   JsonObject Update(const JsonObject &values);
   JsonArray Erase(const JsonArray &keys);
   JsonArray Find(const JsonArray &keys) const;
-  JsonArray Keys() const;
-  JsonArray Values() const;
-  JsonObject Image() const;
 
 private:
   void RotateJournal();
@@ -80,9 +78,9 @@ private:
   std::string filepath_closed_;
   std::string filepath_snapshot_;
   std::string filepath_corrupted_;
-  std::fstream stream_journal_;
+  std::ofstream stream_journal_;
   Database database_;
-  RandomGenerator random_;
+  Random random_;
   std::thread rollover_worker_;
   std::atomic<bool> rollover_in_progress_;
   std::atomic<bool> rollover_cancel_;

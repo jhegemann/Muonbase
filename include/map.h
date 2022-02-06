@@ -36,11 +36,8 @@ limitations under the License. */
 #include "log.h"
 #include "trace.h"
 
-#undef INNER_BINARY_SEARCH
-#undef OUTER_BINARY_SEARCH
-
-#define INNER_FANOUT 32
-#define OUTER_FANOUT 32
+#define INNER_FANOUT 8
+#define OUTER_FANOUT 8
 
 #define CAST_INNER(node) static_cast<InnerNode<K, V> *>(node)
 #define CAST_OUTER(node) static_cast<OuterNode<K, V> *>(node)
@@ -227,14 +224,6 @@ inline size_t InnerNode<K, V>::ChildIndex(const Node *child) const {
 template <class K, class V>
 inline size_t InnerNode<K, V>::KeyIndex(const K &key) const {
   STACKTRACE;
-#ifdef INNER_BINARY_SEARCH
-  typename std::vector<K>::iterator it =
-      lower_bound(keys_.begin(), keys_.end(), key);
-  if (it != keys_.end() && !(key < *it)) {
-    return it - keys_.begin();
-  }
-  return std::string::npos;
-#else
   if (keys_.empty()) {
     return std::string::npos;
   }
@@ -246,7 +235,6 @@ inline size_t InnerNode<K, V>::KeyIndex(const K &key) const {
     return std::string::npos;
   }
   return position;
-#endif
 }
 
 template <class K, class V>
@@ -274,11 +262,11 @@ void InnerNode<K, V>::Erase(const K &key, Node *child) {
   STACKTRACE;
   size_t key_position = KeyIndex(key);
   if (key_position == std::string::npos) {
-    return;
+    throw std::runtime_error("tree: inner erase");
   }
   size_t child_position = ChildIndex(child);
   if (child_position == std::string::npos) {
-    return;
+    throw std::runtime_error("tree: inner erase");
   }
   keys_.erase(keys_.begin() + key_position);
   children_.erase(children_.begin() + ChildIndex(child));
@@ -515,14 +503,6 @@ size_t OuterNode<K, V>::ValueIndex(const V &value) const {
 template <class K, class V>
 size_t OuterNode<K, V>::KeyIndex(const K &key) const {
   STACKTRACE;
-#ifdef OUTER_BINARY_SEARCH
-  typename std::vector<K>::iterator it =
-      lower_bound(keys_.begin(), keys_.end(), key);
-  if (it != keys_.end() && !(key < *it)) {
-    return it - keys_.begin();
-  }
-  return std::string::npos;
-#else
   if (keys_.empty()) {
     return std::string::npos;
   }
@@ -534,7 +514,6 @@ size_t OuterNode<K, V>::KeyIndex(const K &key) const {
     return std::string::npos;
   }
   return position;
-#endif
 }
 
 template <class K, class V>
@@ -557,7 +536,7 @@ template <class K, class V> void OuterNode<K, V>::Erase(const K &key) {
   STACKTRACE;
   const size_t key_position = KeyIndex(key);
   if (key_position == std::string::npos) {
-    return;
+    throw std::runtime_error("tree: outer erase");
   }
   keys_.erase(keys_.begin() + key_position);
   values_.erase(values_.begin() + key_position);
@@ -670,6 +649,7 @@ template <class K, class V> class Map {
 
 public:
   Map();
+  Map(const Map<K, V> &other);
   virtual ~Map();
   void Clear();
   size_t Size() const;
@@ -699,11 +679,19 @@ protected:
   MapIterator<K, V> Locate(const K &key) const;
   OuterNode<K, V> *FirstLeaf() const;
   OuterNode<K, V> *LastLeaf() const;
-  static size_t Fanout(size_t cache, size_t priority, size_t maximum);
 };
 
 template <class K, class V> Map<K, V>::Map() : root_(nullptr), size_(0) {
   STACKTRACE;
+}
+
+template <class K, class V>
+Map<K, V>::Map(const Map<K, V> &other) : root_(nullptr), size_(0) {
+  MapIterator<K, V> iterator = other.Begin();
+  while (iterator != other.End()) {
+    Insert(iterator.GetKey(), iterator.GetValue());
+    iterator++;
+  }
 }
 
 template <class K, class V> Map<K, V>::~Map() {
@@ -717,14 +705,14 @@ template <class K, class V> void Map<K, V>::Clear() {
     std::stack<Node *> todo;
     todo.push(root_);
     Node *current;
-    InnerNode<K, V> *inner_node;
+    InnerNode<K, V> *inner;
     while (!todo.empty()) {
       current = std::move(todo.top());
       todo.pop();
       if (!current->IsOuter()) {
-        inner_node = CAST_INNER(current);
-        for (auto it = inner_node->children_.begin();
-             it != inner_node->children_.end(); ++it) {
+        inner = CAST_INNER(current);
+        for (auto it = inner->children_.begin(); it != inner->children_.end();
+             ++it) {
           todo.push(*it);
         }
       }
@@ -797,46 +785,46 @@ template <class K, class V>
 void Map<K, V>::PropagateUpwards(Node *origin, K &up_key, Node *kin) {
   STACKTRACE;
   if (origin == root_) {
-    InnerNode<K, V> *inner_node = new InnerNode<K, V>();
-    inner_node->Insert(origin, up_key, kin);
-    root_ = inner_node;
+    InnerNode<K, V> *inner = new InnerNode<K, V>();
+    inner->Insert(origin, up_key, kin);
+    root_ = inner;
     return;
   }
-  InnerNode<K, V> *next_origin = CAST_INNER(origin->GetParent());
-  next_origin->Insert(origin, up_key, kin);
-  if (next_origin->IsFull()) {
-    std::pair<Node *, K> extension = next_origin->Split();
-    PropagateUpwards(next_origin, extension.second, extension.first);
+  InnerNode<K, V> *next = CAST_INNER(origin->GetParent());
+  next->Insert(origin, up_key, kin);
+  if (next->IsFull()) {
+    std::pair<Node *, K> extension = next->Split();
+    PropagateUpwards(next, extension.second, extension.first);
   }
 }
 
 template <class K, class V>
 MapIterator<K, V> Map<K, V>::Locate(const K &key) const {
   STACKTRACE;
-  if (!root_) {
+  if (root_ == nullptr) {
     return End();
   }
   Node *current = root_;
-  InnerNode<K, V> *inner_node = nullptr;
+  InnerNode<K, V> *inner = nullptr;
   while (!current->IsOuter()) {
-    inner_node = CAST_INNER(current);
-    if (key < inner_node->keys_.front()) {
-      current = inner_node->children_.front();
+    inner = CAST_INNER(current);
+    if (key < inner->keys_.front()) {
+      current = inner->children_.front();
       continue;
     }
-    if (key >= inner_node->keys_.back()) {
-      current = inner_node->children_.back();
+    if (key >= inner->keys_.back()) {
+      current = inner->children_.back();
       continue;
     }
-    for (size_t i = 0; i < inner_node->keys_.size() - 1; i++) {
-      if (inner_node->keys_[i] <= key && key < inner_node->keys_[i + 1]) {
-        current = inner_node->children_[i + 1];
-        continue;
+    for (size_t i = 0; i < inner->keys_.size() - 1; i++) {
+      if (key >= inner->keys_[i] && key < inner->keys_[i + 1]) {
+        current = inner->children_[i + 1];
+        break;
       }
     }
   }
-  OuterNode<K, V> *outer_node = CAST_OUTER(current);
-  return MapIterator<K, V>(outer_node->KeyIndex(key), outer_node);
+  OuterNode<K, V> *outer = CAST_OUTER(current);
+  return MapIterator<K, V>(outer->KeyIndex(key), outer);
 }
 
 template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
@@ -886,8 +874,8 @@ template <class K, class V> V &Map<K, V>::operator[](const K &key) {
 template <class K, class V>
 void Map<K, V>::Update(const MapIterator<K, V> &iterator, const V &value) {
   STACKTRACE;
-  if (!iterator.node_ || (iterator.index_ == std::string::npos)) {
-    return;
+  if (iterator.node_ == nullptr || (iterator.index_ == std::string::npos)) {
+    throw std::runtime_error("tree: invalid update");
   }
   iterator.node_->values_[iterator.index_] = value;
 }
@@ -902,22 +890,23 @@ void Map<K, V>::Insert(const K &key, const V &value) {
     return;
   }
   MapIterator<K, V> iterator = Locate(key);
-  if (iterator.node_ && iterator.index_ != std::string::npos) {
-    Update(iterator, value);
-    return;
+  if (iterator.node_ != nullptr && iterator.index_ != std::string::npos) {
+    throw std::runtime_error("tree: key exists already - use update");
   }
   iterator.node_->Insert(key, value);
+  size_++;
   if (iterator.node_->IsFull()) {
     std::pair<Node *, K> extension = iterator.node_->Split();
     PropagateUpwards(iterator.node_, extension.second, extension.first);
   }
-  size_++;
-  return;
 }
 
 template <class K, class V>
 MapIterator<K, V> Map<K, V>::Erase(const MapIterator<K, V> &iterator) {
   STACKTRACE;
+  if (iterator.node_ == nullptr || iterator.index_ == std::string::npos) {
+    throw std::runtime_error("tree: cannot erase due to invalid iterator");
+  }
   Node *current = iterator.node_;
   MapIterator<K, V> next = CAST_OUTER(current)->Erase(iterator);
   size_--;
@@ -957,8 +946,8 @@ MapIterator<K, V> Map<K, V>::Erase(const MapIterator<K, V> &iterator) {
         next.index_ += CAST_OUTER(left)->CountKeys() - current_size;
       }
       InnerNode<K, V> *parent = CAST_INNER(current->GetParent());
-      const K separator_key = SeparatorKey(left, current);
-      parent->Erase(separator_key, current);
+      const K separator = SeparatorKey(left, current);
+      parent->Erase(separator, current);
       delete current;
       current = left->GetParent();
       continue;
@@ -969,17 +958,17 @@ MapIterator<K, V> Map<K, V>::Erase(const MapIterator<K, V> &iterator) {
         next.index_ = current_size;
       }
       InnerNode<K, V> *parent = CAST_INNER(current->GetParent());
-      const K separator_key = SeparatorKey(current, right);
-      parent->Erase(separator_key, right);
+      const K separator = SeparatorKey(current, right);
+      parent->Erase(separator, right);
       delete right;
       current = current->GetParent();
       continue;
     }
   }
-  InnerNode<K, V> *inner_node = CAST_INNER(current);
-  if (inner_node->keys_.empty()) {
+  InnerNode<K, V> *inner = CAST_INNER(current);
+  if (inner->keys_.empty()) {
     Node *backup = root_;
-    root_ = inner_node->children_.front();
+    root_ = inner->children_.front();
     root_->SetParent(nullptr);
     delete backup;
   }
@@ -1047,19 +1036,6 @@ template <class K, class V> const MapIterator<K, V> Map<K, V>::End() const {
   return MapIterator<K, V>();
 }
 
-template <class K, class V>
-size_t Map<K, V>::Fanout(size_t cache, size_t priority, size_t maximum) {
-  if (cache >= 2 * priority) {
-    return priority;
-  } else {
-    if (cache > maximum) {
-      return cache / 2;
-    } else {
-      return cache;
-    }
-  }
-}
-
 template <class K, class V> class MapIterator {
   template <class> friend class ::Serializer;
   template <class> friend class ::Memory;
@@ -1094,49 +1070,61 @@ protected:
 };
 
 template <class K, class V>
-MapIterator<K, V>::MapIterator() : node_(nullptr), index_(std::string::npos) {}
+MapIterator<K, V>::MapIterator() : node_(nullptr), index_(std::string::npos) {
+  STACKTRACE;
+}
 
 template <class K, class V>
 MapIterator<K, V>::MapIterator(size_t index, OuterNode<K, V> *node)
-    : node_(node), index_(index) {}
+    : node_(node), index_(index) {
+  STACKTRACE;
+}
 
-template <class K, class V> MapIterator<K, V>::~MapIterator() {}
+template <class K, class V> MapIterator<K, V>::~MapIterator() { STACKTRACE; }
 
 template <class K, class V> inline K &MapIterator<K, V>::Key() {
+  STACKTRACE;
   return node_->Key(index_);
 }
 
 template <class K, class V> inline const K &MapIterator<K, V>::GetKey() const {
+  STACKTRACE;
   return node_->GetKey(index_);
 }
 
 template <class K, class V> inline V &MapIterator<K, V>::Value() {
+  STACKTRACE;
   return node_->Value(index_);
 }
 
 template <class K, class V>
 inline const V &MapIterator<K, V>::GetValue() const {
+  STACKTRACE;
   return node_->GetValue(index_);
 }
 
 template <class K, class V>
 inline const size_t MapIterator<K, V>::GetIndex() const {
+  STACKTRACE;
   return index_;
 }
 
 template <class K, class V>
 inline const OuterNode<K, V> *MapIterator<K, V>::GetNode() const {
+  STACKTRACE;
   return node_;
 }
 
 template <class K, class V>
 inline MapIterator<K, V> MapIterator<K, V>::operator++() {
+  STACKTRACE;
   Increment();
   return *this;
 }
 
 template <class K, class V>
 inline MapIterator<K, V> MapIterator<K, V>::operator++(int) {
+  STACKTRACE;
   MapIterator<K, V> temp = *this;
   Increment();
   return temp;
@@ -1144,12 +1132,14 @@ inline MapIterator<K, V> MapIterator<K, V>::operator++(int) {
 
 template <class K, class V>
 inline MapIterator<K, V> MapIterator<K, V>::operator--() {
+  STACKTRACE;
   Decrement();
   return *this;
 }
 
 template <class K, class V>
 inline MapIterator<K, V> MapIterator<K, V>::operator--(int) {
+  STACKTRACE;
   MapIterator<K, V> temp = *this;
   Decrement();
   return temp;
@@ -1157,17 +1147,20 @@ inline MapIterator<K, V> MapIterator<K, V>::operator--(int) {
 
 template <class K, class V>
 inline bool MapIterator<K, V>::operator==(const MapIterator<K, V> &rhs) {
+  STACKTRACE;
   return node_ == rhs.node_ && index_ == rhs.index_;
 }
 
 template <class K, class V>
 inline bool MapIterator<K, V>::operator!=(const MapIterator<K, V> &rhs) {
+  STACKTRACE;
   return !(*this == rhs);
 }
 
 template <class K, class V> void MapIterator<K, V>::Increment() {
+  STACKTRACE;
   if (index_ >= node_->keys_.size() - 1) {
-    if (node_->next_) {
+    if (node_->next_ != nullptr) {
       node_ = node_->next_;
       index_ = 0;
     } else {
@@ -1180,8 +1173,9 @@ template <class K, class V> void MapIterator<K, V>::Increment() {
 }
 
 template <class K, class V> void MapIterator<K, V>::Decrement() {
+  STACKTRACE;
   if (index_ == 0) {
-    if (node_->prev_) {
+    if (node_->prev_ != nullptr) {
       node_ = node_->prev_;
       index_ = node_->keys_.size() - 1;
     } else {
@@ -1230,16 +1224,18 @@ protected:
   MultimapIterator<K, V> BeginIterator();
 };
 
-template <class K, class V> Multimap<K, V>::Multimap() {}
+template <class K, class V> Multimap<K, V>::Multimap() { STACKTRACE; }
 
-template <class K, class V> Multimap<K, V>::~Multimap() {}
+template <class K, class V> Multimap<K, V>::~Multimap() { STACKTRACE; }
 
 template <class K, class V> size_t Multimap<K, V>::Size() const {
+  STACKTRACE;
   return tree_.Size();
 }
 
 template <class K, class V>
 void Multimap<K, V>::Insert(const K &key, const V &value) {
+  STACKTRACE;
   MapIterator<K, std::vector<V>> iterator = tree_.Find(key);
   if (iterator != tree_.End()) {
     iterator.Value().emplace_back(value);
@@ -1251,39 +1247,47 @@ void Multimap<K, V>::Insert(const K &key, const V &value) {
 template <class K, class V>
 void Multimap<K, V>::Update(const MultimapIterator<K, V> &iterator,
                             const V &value) {
+  STACKTRACE;
   iterator.node_.values_[iterator.index_][iterator.multi_index_] = value;
 }
 
 template <class K, class V>
 inline const std::vector<V> &Multimap<K, V>::Get(const K &key) const {
+  STACKTRACE;
   return tree_.Get(key);
 }
 
 template <class K, class V>
 inline std::vector<V> &Multimap<K, V>::Get(const K &key) {
+  STACKTRACE;
   return tree_.Get(key);
 }
 
 template <class K, class V> inline void Multimap<K, V>::Clear() {
+  STACKTRACE;
   tree_.Clear();
 }
 
 template <class K, class V>
 const std::vector<V> &Multimap<K, V>::operator[](const K &key) const {
+  STACKTRACE;
   return Get(key);
 }
 
 template <class K, class V>
 std::vector<V> &Multimap<K, V>::operator[](const K &key) {
+  STACKTRACE;
   return Get(key);
 }
 
 template <class K, class V> inline bool Multimap<K, V>::Erase(const K &key) {
+  STACKTRACE;
   return tree_.Erase(key);
 }
 
 template <class K, class V>
 bool Multimap<K, V>::Erase(const K &key, const V &value) {
+  STACKTRACE;
   MapIterator<K, std::vector<V>> iterator = tree_.Find(key);
   if (iterator == tree_.End()) {
     return false;
@@ -1305,6 +1309,7 @@ bool Multimap<K, V>::Erase(const K &key, const V &value) {
 template <class K, class V>
 inline MultimapIterator<K, V>
 Multimap<K, V>::Erase(const MultimapIterator<K, V> &iterator) {
+  STACKTRACE;
   MultimapIterator<K, V> next = iterator;
   MapIterator<K, std::vector<V>> single(iterator.index_, iterator.node_);
   std::vector<V> &multi_value = iterator.node_.values_[iterator.index_];
@@ -1327,11 +1332,13 @@ Multimap<K, V>::Erase(const MultimapIterator<K, V> &iterator) {
 
 template <class K, class V>
 inline bool Multimap<K, V>::Contains(const K &key) const {
+  STACKTRACE;
   return tree_.Contains(key);
 }
 
 template <class K, class V>
 inline bool Multimap<K, V>::Contains(const K &key, const V &value) const {
+  STACKTRACE;
   MapIterator<K, std::vector<V>> iterator = tree_.Find(key);
   std::vector<V> &multi_value = iterator.Value();
   for (size_t i = 0; i < multi_value.size(); i++) {
@@ -1344,6 +1351,7 @@ inline bool Multimap<K, V>::Contains(const K &key, const V &value) const {
 
 template <class K, class V>
 MultimapIterator<K, V> Multimap<K, V>::Find(const K &key) const {
+  STACKTRACE;
   MapIterator<K, std::vector<V>> iterator = tree_.Find(key);
   MultimapIterator<K, V> multi_iterator;
   if (iterator != tree_.End()) {
@@ -1356,6 +1364,7 @@ MultimapIterator<K, V> Multimap<K, V>::Find(const K &key) const {
 template <class K, class V>
 MultimapIterator<K, V> Multimap<K, V>::Find(const K &key,
                                             const V &value) const {
+  STACKTRACE;
   MapIterator<K, std::vector<V>> iterator = tree_.Find(key);
   MultimapIterator<K, V> multi_iterator;
   if (iterator == tree_.End()) {
@@ -1374,6 +1383,7 @@ MultimapIterator<K, V> Multimap<K, V>::Find(const K &key,
 
 template <class K, class V>
 MultimapIterator<K, V> Multimap<K, V>::BeginIterator() {
+  STACKTRACE;
   MultimapIterator<K, V> iterator;
   iterator.node_ = tree_.FirstLeaf();
   if (iterator.node_ == nullptr) {
@@ -1388,21 +1398,25 @@ MultimapIterator<K, V> Multimap<K, V>::BeginIterator() {
 
 template <class K, class V>
 inline MultimapIterator<K, V> Multimap<K, V>::Begin() {
+  STACKTRACE;
   return BeginIterator();
 }
 
 template <class K, class V>
 const MultimapIterator<K, V> inline Multimap<K, V>::Begin() const {
+  STACKTRACE;
   return BeginIterator();
 }
 
 template <class K, class V>
 inline MultimapIterator<K, V> Multimap<K, V>::End() {
+  STACKTRACE;
   return MultimapIterator<K, V>();
 }
 
 template <class K, class V>
 const MultimapIterator<K, V> inline Multimap<K, V>::End() const {
+  STACKTRACE;
   return MultimapIterator<K, V>();
 }
 
@@ -1443,46 +1457,58 @@ protected:
 template <class K, class V>
 MultimapIterator<K, V>::MultimapIterator()
     : node_(nullptr), index_(std::string::npos),
-      multi_index_(std::string::npos) {}
+      multi_index_(std::string::npos) {
+  STACKTRACE;
+}
 
-template <class K, class V> MultimapIterator<K, V>::~MultimapIterator() {}
+template <class K, class V> MultimapIterator<K, V>::~MultimapIterator() {
+  STACKTRACE;
+}
 
 template <class K, class V> inline K &MultimapIterator<K, V>::Key() {
+  STACKTRACE;
   return node_->GetKey(index_);
 }
 
 template <class K, class V>
 inline const K &MultimapIterator<K, V>::GetKey() const {
+  STACKTRACE;
   return node_->GetKey(index_);
 }
 
 template <class K, class V> inline V &MultimapIterator<K, V>::Value() {
+  STACKTRACE;
   return node_->GetValue(index_)[multi_index_];
 }
 
 template <class K, class V>
 inline const V &MultimapIterator<K, V>::GetValue() const {
+  STACKTRACE;
   return node_->GetValue(index_)[multi_index_];
 }
 
 template <class K, class V>
 inline std::vector<V> &MultimapIterator<K, V>::MultiValue() {
+  STACKTRACE;
   return node_->GetValue(index_);
 }
 
 template <class K, class V>
 inline const std::vector<V> &MultimapIterator<K, V>::GetMultiValue() const {
+  STACKTRACE;
   return node_->GetValue(index_);
 }
 
 template <class K, class V>
 inline MultimapIterator<K, V> MultimapIterator<K, V>::operator++() {
+  STACKTRACE;
   Increment();
   return *this;
 }
 
 template <class K, class V>
 inline MultimapIterator<K, V> MultimapIterator<K, V>::operator++(int) {
+  STACKTRACE;
   MultimapIterator<K, V> temp = *this;
   Increment();
   return temp;
@@ -1490,12 +1516,14 @@ inline MultimapIterator<K, V> MultimapIterator<K, V>::operator++(int) {
 
 template <class K, class V>
 inline MultimapIterator<K, V> MultimapIterator<K, V>::operator--() {
+  STACKTRACE;
   Decrement();
   return *this;
 }
 
 template <class K, class V>
 inline MultimapIterator<K, V> MultimapIterator<K, V>::operator--(int) {
+  STACKTRACE;
   MultimapIterator<K, V> temp = *this;
   Decrement();
   return temp;
@@ -1504,6 +1532,7 @@ inline MultimapIterator<K, V> MultimapIterator<K, V>::operator--(int) {
 template <class K, class V>
 inline bool
 MultimapIterator<K, V>::operator==(const MultimapIterator<K, V> &rhs) {
+  STACKTRACE;
   return node_ == rhs.node_ && index_ == rhs.index_ &&
          multi_index_ == rhs.multi_index_;
 }
@@ -1511,12 +1540,14 @@ MultimapIterator<K, V>::operator==(const MultimapIterator<K, V> &rhs) {
 template <class K, class V>
 inline bool
 MultimapIterator<K, V>::operator!=(const MultimapIterator<K, V> &rhs) {
+  STACKTRACE;
   return !(*this == rhs);
 }
 
 template <class K, class V>
 MultimapIterator<K, V> &
 MultimapIterator<K, V>::operator=(const MapIterator<K, V> &iterator) {
+  STACKTRACE;
   if (this != &iterator) {
     node_ = iterator.node_;
     index_ = iterator.index_;
@@ -1525,9 +1556,10 @@ MultimapIterator<K, V>::operator=(const MapIterator<K, V> &iterator) {
 }
 
 template <class K, class V> void MultimapIterator<K, V>::Increment() {
+  STACKTRACE;
   if (index_ >= node_->keys_.size() - 1) {
     if (multi_index_ >= node_->values_[index_].size() - 1) {
-      if (node_->next_) {
+      if (node_->next_ != nullptr) {
         node_ = node_->next_;
         index_ = 0;
         multi_index_ = 0;
@@ -1550,9 +1582,10 @@ template <class K, class V> void MultimapIterator<K, V>::Increment() {
 }
 
 template <class K, class V> void MultimapIterator<K, V>::Decrement() {
+  STACKTRACE;
   if (index_ == 0) {
     if (multi_index_ == 0) {
-      if (node_->previous_) {
+      if (node_->previous_ != nullptr) {
         node_ = node_->previous_;
         index_ = node_->keys_.size() - 1;
         multi_index_ = node_->values_[index_].size() - 1;
@@ -1847,12 +1880,12 @@ size_t Serializer<Map<K, V>>::Serialize(const Map<K, V> &object,
                                         std::ostream &stream,
                                         const std::atomic<bool> &cancel) {
   size_t bytes = 0;
-  if (object.root_ == nullptr) {
-    return bytes;
-  }
   size_t size = object.Size();
   stream.write((const char *)&size, sizeof(size_t));
   bytes += sizeof(size_t);
+  if (object.root_ == nullptr) {
+    return bytes;
+  }
   OuterNode<K, V> *cursor = object.FirstLeaf();
   size_t counter = 0;
   for (;;) {
@@ -1864,13 +1897,14 @@ size_t Serializer<Map<K, V>>::Serialize(const Map<K, V> &object,
       bytes += Serializer<V>::Serialize(cursor->values_[i], stream);
       counter++;
     }
-    if (cursor->next_) {
+    if (cursor->next_ != nullptr) {
       cursor = cursor->next_;
       continue;
     }
     break;
   }
   if (counter != size) {
+    LOG_INFO(std::to_string(counter) + " vs. " + std::to_string(size));
     throw std::runtime_error("unmatched tree size during serialization");
   }
   return stream ? bytes : std::string::npos;
@@ -1885,81 +1919,14 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
   size_t size;
   stream.read((char *)&size, sizeof(size_t));
   bytes += sizeof(size_t);
-  object.size_ = size;
-  const size_t outer_fanout = 3 * OUTER_FANOUT / 4;
-  const size_t inner_fanout = 3 * INNER_FANOUT / 4;
-  std::vector<Node *> cache;
-  OuterNode<K, V> *outer = nullptr;
-  OuterNode<K, V> *outer_previous = nullptr;
-  InnerNode<K, V> *inner = nullptr;
-  std::deque<std::pair<K, V>> kv_cache;
   std::pair<K, V> key_value_pair;
-  size_t fanout;
-  size_t pairs_read = 0;
-  while (pairs_read < size || !kv_cache.empty()) {
+  for (size_t i = 0; i < size; i++) {
     if (cancel) {
       return std::string::npos;
     }
-    while (pairs_read < size && kv_cache.size() < 2 * outer_fanout) {
-      bytes += Serializer<K>::Deserialize(key_value_pair.first, stream);
-      bytes += Serializer<V>::Deserialize(key_value_pair.second, stream);
-      kv_cache.emplace_back(key_value_pair);
-      pairs_read++;
-    }
-    fanout = Map<K, V>::Fanout(kv_cache.size(), outer_fanout, OUTER_FANOUT);
-    outer = new OuterNode<K, V>();
-    outer->keys_.resize(fanout);
-    outer->values_.resize(fanout);
-    for (size_t i = 0; i < fanout; i++) {
-      outer->keys_[i] = kv_cache.front().first;
-      outer->values_[i] = kv_cache.front().second;
-      kv_cache.pop_front();
-    }
-    if (outer_previous) {
-      outer_previous->next_ = outer;
-      outer->previous_ = outer_previous;
-      outer->next_ = nullptr;
-    } else {
-      outer->previous_ = nullptr;
-    }
-    outer_previous = outer;
-    cache.push_back(outer);
-  }
-  for (;;) {
-    if (cancel) {
-      return std::string::npos;
-    }
-    size_t cache_size = cache.size();
-    if (cache_size == 1) {
-      object.root_ = cache[0];
-      break;
-    }
-    size_t cache_index = 0;
-    std::vector<Node *> cache_next;
-    while (cache_size > 0) {
-      fanout =
-          Map<K, V>::Fanout(cache_size, inner_fanout + 1, INNER_FANOUT + 1);
-      cache_size -= fanout;
-      inner = new InnerNode<K, V>();
-      inner->keys_.resize(fanout - 1);
-      inner->children_.resize(fanout);
-      inner->children_[0] = cache[cache_index++];
-      for (size_t i = 0; i < fanout - 1; i++) {
-        if (cache[cache_index]->IsOuter()) {
-          OuterNode<K, V> *node = CAST_OUTER(cache[cache_index]);
-          inner->keys_[i] = node->keys_.front();
-        } else {
-          InnerNode<K, V> *node = CAST_INNER(cache[cache_index]);
-          inner->keys_[i] = node->keys_.front();
-        }
-        inner->children_[i + 1] = cache[cache_index++];
-      }
-      for (size_t i = 0; i < fanout; i++) {
-        inner->children_[i]->SetParent(inner);
-      }
-      cache_next.push_back(inner);
-    }
-    cache = cache_next;
+    bytes += Serializer<K>::Deserialize(key_value_pair.first, stream);
+    bytes += Serializer<V>::Deserialize(key_value_pair.second, stream);
+    object.Insert(key_value_pair.first, key_value_pair.second);
   }
   return stream ? bytes : std::string::npos;
 }

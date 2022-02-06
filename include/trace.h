@@ -24,18 +24,17 @@ limitations under the License. */
 
 #include "utils.h"
 
-#define STACKTRACE                                                             \
-  Trace::GetInstance()->Push(__FILE__, __PRETTY_FUNCTION__, __LINE__)
+#define STACKTRACE Trace::GetInstance()->Push(__FILE__, __LINE__, __FUNCTION__)
 
-const size_t kTraceLimit = 100;
+const size_t kTraceLimit = 1000;
 
 class Trace {
 public:
   static Trace *GetInstance();
   Trace(Trace &other) = delete;
   void operator=(const Trace &) = delete;
-  void Push(const std::string &file, const std::string &function, int line);
-  void Print() const;
+  void Push(const std::string &file, int line, const std::string &function);
+  void Print();
 
 private:
   static Trace *instance_;

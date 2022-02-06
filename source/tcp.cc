@@ -14,14 +14,14 @@ limitations under the License. */
 
 #include "tcp.h"
 
-EpollInstance::EpollInstance() {
+Epoll::Epoll() {
   memset(&event_, 0, sizeof(epoll_event));
   memset(&events_, 0, kEpollMaximumEvents * sizeof(epoll_event));
 }
 
-EpollInstance::~EpollInstance() {}
+Epoll::~Epoll() {}
 
-bool EpollInstance::Create() {
+bool Epoll::Create() {
   instance_ = epoll_create1(0);
   if (instance_ == -1) {
     return false;
@@ -29,13 +29,13 @@ bool EpollInstance::Create() {
   return true;
 }
 
-void EpollInstance::Release() { close(instance_); }
+void Epoll::Release() { close(instance_); }
 
-int EpollInstance::Wait(long timeout) {
+int Epoll::Wait(long timeout) {
   return epoll_wait(instance_, events_, kEpollMaximumEvents, timeout);
 }
 
-bool EpollInstance::AddDescriptor(int descriptor, int flags) {
+bool Epoll::Add(int descriptor, int flags) {
   event_.events = flags | EPOLLERR | EPOLLHUP;
   event_.data.fd = descriptor;
   if (epoll_ctl(instance_, EPOLL_CTL_ADD, descriptor, &event_) == -1) {
@@ -44,26 +44,26 @@ bool EpollInstance::AddDescriptor(int descriptor, int flags) {
   return true;
 }
 
-bool EpollInstance::AddReadableDescriptor(int descriptor) {
-  return AddDescriptor(descriptor, EPOLLIN);
+bool Epoll::AddReadable(int descriptor) {
+  return Add(descriptor, EPOLLIN);
 }
 
-bool EpollInstance::AddWritableDescriptor(int descriptor) {
-  return AddDescriptor(descriptor, EPOLLOUT);
+bool Epoll::AddWritable(int descriptor) {
+  return Add(descriptor, EPOLLOUT);
 }
 
-bool EpollInstance::AddDuplexDescriptor(int descriptor) {
-  return AddDescriptor(descriptor, EPOLLIN | EPOLLOUT);
+bool Epoll::AddDuplex(int descriptor) {
+  return Add(descriptor, EPOLLIN | EPOLLOUT);
 }
 
-bool EpollInstance::DeleteDescriptor(int descriptor) {
+bool Epoll::Delete(int descriptor) {
   if (epoll_ctl(instance_, EPOLL_CTL_DEL, descriptor, NULL) == -1) {
     return false;
   }
   return true;
 }
 
-bool EpollInstance::ModifyDescriptor(int descriptor, int flags) {
+bool Epoll::Modify(int descriptor, int flags) {
   event_.events = flags;
   event_.data.fd = descriptor;
   if (epoll_ctl(instance_, EPOLL_CTL_MOD, descriptor, &event_) == -1) {
@@ -72,51 +72,51 @@ bool EpollInstance::ModifyDescriptor(int descriptor, int flags) {
   return true;
 }
 
-int EpollInstance::GetDescriptor(size_t index) const {
+int Epoll::GetDescriptor(size_t index) const {
   if (index >= kEpollMaximumEvents) {
     return -1;
   }
   return events_[index].data.fd;
 }
 
-int EpollInstance::GetEvents(size_t index) const {
+int Epoll::GetEvents(size_t index) const {
   if (index >= kEpollMaximumEvents) {
     return -1;
   }
   return events_[index].events;
 }
 
-bool EpollInstance::IsReadable(size_t index) const {
+bool Epoll::IsReadable(size_t index) const {
   if (GetEvents(index) == -1) {
     return false;
   }
   return GetEvents(index) & EPOLLIN;
 }
 
-bool EpollInstance::IsWritable(size_t index) const {
+bool Epoll::IsWritable(size_t index) const {
   if (GetEvents(index) == -1) {
     return false;
   }
   return GetEvents(index) & EPOLLOUT;
 }
 
-bool EpollInstance::HasErrors(size_t index) const {
+bool Epoll::HasErrors(size_t index) const {
   if (GetEvents(index) == -1) {
     return false;
   }
   return GetEvents(index) & EPOLLERR || GetEvents(index) & EPOLLHUP;
 }
 
-bool EpollInstance::SetReadable(size_t index) {
-  return ModifyDescriptor(GetDescriptor(index), EPOLLIN | EPOLLERR | EPOLLHUP);
+bool Epoll::SetReadable(size_t index) {
+  return Modify(GetDescriptor(index), EPOLLIN | EPOLLERR | EPOLLHUP);
 }
 
-bool EpollInstance::SetWriteable(size_t index) {
-  return ModifyDescriptor(GetDescriptor(index), EPOLLOUT | EPOLLERR | EPOLLHUP);
+bool Epoll::SetWriteable(size_t index) {
+  return Modify(GetDescriptor(index), EPOLLOUT | EPOLLERR | EPOLLHUP);
 }
 
-bool EpollInstance::SetDuplex(size_t index) {
-  return ModifyDescriptor(GetDescriptor(index),
+bool Epoll::SetDuplex(size_t index) {
+  return Modify(GetDescriptor(index),
                           EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP);
 }
 

@@ -36,26 +36,26 @@ limitations under the License. */
 
 #include "utils.h"
 
-class EpollInstance;
+class Epoll;
 class TcpSocket;
 class TcpReader;
 class TcpWriter;
 
 const unsigned kEpollMaximumEvents = 256;
 
-class EpollInstance {
+class Epoll {
 public:
-  EpollInstance();
-  virtual ~EpollInstance();
+  Epoll();
+  virtual ~Epoll();
   bool Create();
   void Release();
   int Wait(long timeout = -1);
-  bool AddDescriptor(int descriptor, int flags);
-  bool AddReadableDescriptor(int descriptor);
-  bool AddWritableDescriptor(int descriptor);
-  bool AddDuplexDescriptor(int descriptor);
-  bool DeleteDescriptor(int descriptor);
-  bool ModifyDescriptor(int descriptor, int flags);
+  bool Add(int descriptor, int flags);
+  bool AddReadable(int descriptor);
+  bool AddWritable(int descriptor);
+  bool AddDuplex(int descriptor);
+  bool Delete(int descriptor);
+  bool Modify(int descriptor, int flags);
   bool SetReadable(size_t index);
   bool SetWriteable(size_t index);
   bool SetDuplex(size_t index);

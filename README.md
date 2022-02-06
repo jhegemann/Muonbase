@@ -111,9 +111,6 @@ horizontally and launch one new database server per user.
 * POST /update
 * POST /erase
 * POST /find
-* GET /keys
-* GET /values
-* GET /image
 
 ### Insert
 
@@ -213,103 +210,4 @@ date: 20220114155835
 server: muonbase/1
 
 [{"vpEtmw5b":false,"Pzi21R0c":0.567430,"VAVcaonJ":558932,"aXFpa1kF":"0qSBqeyJ","6fkCdRxb":{"5xrdWFgC":null,"b3FmfObr":824061,"hNFHhPve":0.166583,"xp2PPSe2":"qfwcMDQf","TIUvh2yD":false},"91wjBIim":null,"EakrhjKH":[true,0.239117,869812,"jZRMK7nc",null]},{"UW0z1zgo":false,"WQInIWHK":0.240893,"16zYHPhs":869889,"aDeUTiOA":"XYXp66rn","3ZNgyfOK":null,"5KJiLNtD":{"wnEqPApd":false,"uEdqDliF":0.146820,"685pIiYE":"xJsQd9Cx","SneZUuUj":860294,"sLzxPOn7":null},"RRAGk1gP":[false,0.952779,890675,"RI1gHSYD",null]},{"UlJcektq":false,"82WSCLq7":0.235730,"8J4st4dN":null,"EXtrcoYo":479940,"S5jJS32d":"xrpUsgmM","iEWueo2j":{"515ubRmD":true,"zluEN1GC":0.033444,"txB8vGPb":954753,"3YRe1zIC":"KDycqOfX","FzZgXXhE":null},"R1nL5bF4":[false,0.909517,14295,"Qg7EiQFj",null]},{"H36kaeWc":false,"2BWo3yzy":1005188,"iP6oSk5T":0.918809,"FoZtMxb0":"7NEes002","EHlVYpN4":null,"BeuFuH20":{"98SrriHR":null,"pIZL7Btr":"XU6wT7JZ","yu2gJYTi":662960,"kJdUgpiE":0.231272,"a48xtotL":true},"eZFkQnCU":[true,0.125975,781211,"GB0sN1pX",null]},{"8i17IApQ":true,"6...
-```
-### Keys
-
-#### Request
-```
-GET /keys HTTP/1.1
-authorization: Basic cm9vdDowMDAw
-```
-
-#### Response
-```
-HTTP/1.1 200 OK
-access-control-allow-methods: GET, POST
-access-control-allow-origin: *
-content-length: 104853
-content-type: application/json
-date: 20220114155828
-server: muonbase/1
-
-["04DUt7AN","04NCCAiC","04hCtVO5","050gz87F","05nuxJV1","060rL8qh","06DgimZJ","07rohPGa","08BEJKdS","09GlGW46","0ARfA0JA","0CIXsxF5","0D029FxG","0F4IMoRq","0FJv69S1","0H3BLalf","0HGXfexv","0J45THh4","0K5nSDWO","0MLjP1mW","0Meq8jWO","0NbxbX61","0NpW0uAq","0OOXf31b","0P1ExUcs","0QCaJFnt","0QHizo6E","0QnjPHH0","0QvKH3en","0R1U1wC6","0U4JtwmY","0VFgQJ9N","0Vh1km08","0ViAMRr9","0WQYsVZd","0XYt7Vrh","0XgMRpnQ","0YItWhmR","0YOnnH83","0Z06MCIh","0Z7RZSo9","0ZygF5nm","0a1DCX1m","0a6efeLX","0a6gkhy9","0aZuwKu6","0bPcn4vp","0beEm45p","0bwjzxy4","0c7hefIA","0cLLQZfZ","0cqX2LGR","0dEjT74Q","0iUnyIGj","0iZg0N6S","0jAdG4VG","0ja1hlt9","0kAn0hbw","0kN0E2y1","0kkLQ7CV","0krCH2cV","0krZSUir","0l0pMqbp","0lJczQtt","0lXaMpBE","0o6ta9mh","0p5MFxN4","0p7vpAML","0qhFHxOJ","0r4M1zzr","0sKwTwbU","0sq7Ht8e","0tj2dQKa","0vCBXxsJ","0vJ7A9Wy","0wbXkvhG","0xFS2uKR","0xOk3BXb","0xoE0pM2","0z5Q8pG9","0zhRXqOK","11x35Xgh","12PMAk5M","12iGbWIF","12zx7MOF","13wXYVnM","14CQqhJR","15rEOveW","16CzxSH6","16J26d1m","16Sw3GKn","171a5Dty","17Q30LDw",...
-```
-
-### Values
-
-#### Request
-```
-GET /values HTTP/1.1
-authorization: Basic cm9vdDowMDAw
-```
-
-#### Response
-```
-HTTP/1.1 200 OK
-access-control-allow-methods: GET, POST
-access-control-allow-origin: *
-content-length: 2386040
-content-type: application/json
-date: 20220114155830
-server: muonbase/1
-
-[{"vpEtmw5b":false,"Pzi21R0c":0.567430,"VAVcaonJ":558932,"aXFpa1kF":"0qSBqeyJ","6fkCdRxb":{"5xrdWFgC":null,"b3FmfObr":824061,"hNFHhPve":0.166583,"xp2PPSe2":"qfwcMDQf","TIUvh2yD":false},"91wjBIim":null,"EakrhjKH":[true,0.239117,869812,"jZRMK7nc",null]},{"UW0z1zgo":false,"WQInIWHK":0.240893,"16zYHPhs":869889,"aDeUTiOA":"XYXp66rn","3ZNgyfOK":null,"5KJiLNtD":{"wnEqPApd":false,"uEdqDliF":0.146820,"685pIiYE":"xJsQd9Cx","SneZUuUj":860294,"sLzxPOn7":null},"RRAGk1gP":[false,0.952779,890675,"RI1gHSYD",null]},{"UlJcektq":false,"82WSCLq7":0.235730,"8J4st4dN":null,"EXtrcoYo":479940,"S5jJS32d":"xrpUsgmM","iEWueo2j":{"515ubRmD":true,"zluEN1GC":0.033444,"txB8vGPb":954753,"3YRe1zIC":"KDycqOfX","FzZgXXhE":null},"R1nL5bF4":[false,0.909517,14295,"Qg7EiQFj",null]},{"H36kaeWc":false,"2BWo3yzy":1005188,"iP6oSk5T":0.918809,"FoZtMxb0":"7NEes002","EHlVYpN4":null,"BeuFuH20":{"98SrriHR":null,"pIZL7Btr":"XU6wT7JZ","yu2gJYTi":662960,"kJdUgpiE":0.231272,"a48xtotL":true},"eZFkQnCU":[true,0.125975,781211,"GB0sN1pX",null]},{"8i17IApQ":true,"6...
-```
-
-### Image
-
-#### Request
-```
-GET /image HTTP/1.1
-authorization: Basic cm9vdDowMDAw
-```
-
-#### Response
-```
-HTTP/1.1 200 OK
-access-control-allow-methods: GET, POST
-access-control-allow-origin: *
-content-length: 2490892
-content-type: application/json
-date: 20220114155833
-server: muonbase/1
-
-{"zzr5LnsH":{"ncbUwsBQ":[false,0.265096,193415,"C3aQQq9L",null],"Vr9rB8SU":null,"TtjcoESY":"TJOu4tze","BdMPeHbn":{"QACpIKkd":null,"fr8cN7U4":"6epwVv6A","cHa0o7j9":197795,"2LwRv8bE":0.787538,"kWC23Hsc":true},"ryP6MUmU":769357,"fqzTlMKm":0.705919,"9YHE3L5T":false},"zzqau98i":{"c5bQscHb":{"n2kVFSgo":true,"4u5kfjRA":0.872484,"HkygXUsT":4699,"HrpFZZzc":"fEqYtimw","LP9Pwzjy":null},"JhTwN8zs":null,"5iJbIcmn":"2oMkBFlD","rOsyzNI4":444145,"yhbY7qvg":[false,0.584231,419467,"k9L85xyW",null],"FEoxZw84":0.468937,"mT0Xnvbr":false},"zzfetCp7":{"aRA48kWl":false,"3wzBxhMx":"nj02dxuc","k01ULZXC":0.630318,"xkiVNGVK":231285,"pTw5bfkn":null,"OCWNH9JX":{"8rbCQVFw":false,"SvEwWves":0.629154,"06Nt7tOF":73181,"GNdDZ4rF":"qZh2e4W7","QB5I3aUy":null},"1XfxXPKx":[false,0.574921,388153,"DcwFXjW6",null]},"zzQKc0J5":{"Fktc0mne":[false,0.614807,791088,"EY446uHW",null],"XbhaefQR":{"hciZceOp":true,"rajn9Vyx":0.675364,"0WhH3dCT":532056,"45Va45N5":null,"0f5x8n7k":"2imFMQTK"},"gtZz0NMd":null,"uqD6SV2R":0.969152,"v1CmX7g8":"RPW0Eh63","g3KBDOAk":33...
-```
-
-# Benchmark
-Though implementing HTTP REST, Muonbase is highly performant as the benchmarks suggest. In the following example, four threads are simultaneously inserting and erasing random documents, where processing times are around one millisecond. Note that the processing time is measured as the complete HTTP request and response time (measured in a locally connected client) divided by the number of documents that are affected by the operation.
-```
-[3516|21.01.2022-23:17:18|info|source/test.cc:128] available service found on 127.0.0.1:8260
-[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 0 started
-[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 2 started
-[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 3 started
-[3516|21.01.2022-23:17:18|info|source/test.cc:146] thread 1 started
-[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 0 fill db took 0.741290ms per insertion
-[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 2 fill db took 0.747771ms per insertion
-[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 3 fill db took 0.741381ms per insertion
-[3516|21.01.2022-23:17:29|info|source/test.cc:160] thread 1 fill db took 0.745466ms per insertion
-[3516|21.01.2022-23:17:39|info|source/test.cc:178] thread 0 cycle 1 took 0.710467ms per insertion
-[3516|21.01.2022-23:17:39|info|source/test.cc:178] thread 2 cycle 1 took 0.720587ms per insertion
-[3516|21.01.2022-23:17:40|info|source/test.cc:178] thread 3 cycle 1 took 0.716768ms per insertion
-[3516|21.01.2022-23:17:40|info|source/test.cc:178] thread 1 cycle 1 took 0.727198ms per insertion
-[3516|21.01.2022-23:17:49|info|source/test.cc:195] thread 0 cycle 1 took 0.607129ms per erasure
-[3516|21.01.2022-23:17:54|info|source/test.cc:178] thread 0 cycle 2 took 0.379271ms per insertion
-[3516|21.01.2022-23:17:58|info|source/test.cc:195] thread 1 cycle 1 took 1.227128ms per erasure
-[3516|21.01.2022-23:17:58|info|source/test.cc:195] thread 2 cycle 1 took 1.239757ms per erasure
-[3516|21.01.2022-23:17:59|info|source/test.cc:195] thread 3 cycle 1 took 1.277629ms per erasure
-[3516|21.01.2022-23:18:07|info|source/test.cc:178] thread 1 cycle 2 took 0.625199ms per insertion
-[3516|21.01.2022-23:18:07|info|source/test.cc:178] thread 2 cycle 2 took 0.626124ms per insertion
-[3516|21.01.2022-23:18:08|info|source/test.cc:178] thread 3 cycle 2 took 0.608676ms per insertion
-[3516|21.01.2022-23:18:11|info|source/test.cc:195] thread 0 cycle 2 took 1.094233ms per erasure
-[3516|21.01.2022-23:18:21|info|source/test.cc:195] thread 1 cycle 2 took 0.928922ms per erasure
-[3516|21.01.2022-23:18:21|info|source/test.cc:195] thread 2 cycle 2 took 0.916651ms per erasure
-[3516|21.01.2022-23:18:21|info|source/test.cc:195] thread 3 cycle 2 took 0.896016ms per erasure
-[3516|21.01.2022-23:18:21|info|source/test.cc:213] GET /keys
-[3516|21.01.2022-23:18:22|info|source/test.cc:215] GET /values
-[3516|21.01.2022-23:18:29|info|source/test.cc:217] GET /image
-[3516|21.01.2022-23:18:38|info|source/test.cc:219] POST /insert
-[3516|21.01.2022-23:18:38|info|source/test.cc:221] POST /erase
-[3516|21.01.2022-23:18:38|info|source/test.cc:223] POST /find
-[3516|21.01.2022-23:18:47|info|source/test.cc:229] all tests passed
 ```

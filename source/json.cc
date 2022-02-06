@@ -366,11 +366,17 @@ void JsonArray::PutInteger(JsonInteger value) { values_.emplace_back(value); }
 
 void JsonArray::PutFloat(JsonFloat value) { values_.emplace_back(value); }
 
-void JsonArray::PutString(const JsonString &value) { values_.emplace_back(value); }
+void JsonArray::PutString(const JsonString &value) {
+  values_.emplace_back(value);
+}
 
-void JsonArray::PutObject(const JsonObject &value) { values_.emplace_back(value); }
+void JsonArray::PutObject(const JsonObject &value) {
+  values_.emplace_back(value);
+}
 
-void JsonArray::PutArray(const JsonArray &value) { values_.emplace_back(value); }
+void JsonArray::PutArray(const JsonArray &value) {
+  values_.emplace_back(value);
+}
 
 JsonValue JsonArray::GetValue(size_t index) const { return values_[index]; }
 
@@ -816,7 +822,7 @@ size_t Deserialize(JsonArray &object, std::istream &stream) {
 }
 
 JsonObject RandomObject() {
-  static RandomGenerator random((uint64_t)time(nullptr));
+  static Random random(123456789);
   const std::vector<std::string> keys = {
       random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid(),
       random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid(),
@@ -846,7 +852,7 @@ JsonObject RandomObject() {
 }
 
 JsonArray RandomObjectArray() {
-  static RandomGenerator random((uint64_t)time(nullptr));
+  static Random random(987654321);
   JsonArray array;
   for (size_t i = 0; i < 1 + random.Uint64() % 10; i++) {
     array.PutObject(RandomObject());

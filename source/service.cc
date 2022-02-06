@@ -19,9 +19,9 @@ namespace db {
 size_t Serialize(const std::string &filepath, const Database &database,
                  const std::atomic<bool> &cancel) {
   size_t bytes;
-  std::fstream stream;
+  std::ofstream stream;
   remove(filepath.c_str());
-  stream.open(filepath, std::fstream::out | std::fstream::binary);
+  stream.open(filepath, std::fstream::binary);
   bytes = DatabaseSerializer::Serialize(database, stream, cancel);
   stream.close();
   return bytes;
@@ -30,8 +30,8 @@ size_t Serialize(const std::string &filepath, const Database &database,
 size_t Deserialize(const std::string &filepath, Database &database,
                    const std::atomic<bool> &cancel) {
   size_t bytes;
-  std::fstream stream;
-  stream.open(filepath, std::fstream::in | std::fstream::binary);
+  std::ifstream stream;
+  stream.open(filepath, std::fstream::binary);
   bytes = DatabaseSerializer::Deserialize(database, stream, cancel);
   stream.close();
   return bytes;
@@ -54,7 +54,7 @@ DocumentDatabase::~DocumentDatabase() {}
 
 void DocumentDatabase::Initialize() {
   size_t bytes;
-  random_.Seed(time(nullptr));
+  random_.Seed((uint64_t)time(nullptr));
   if (FileExists(filepath_)) {
     bytes = db::Deserialize(filepath_, database_);
     if (bytes == std::string::npos) {
@@ -91,11 +91,10 @@ void DocumentDatabase::Initialize() {
   if (unlink_journal) {
     remove(filepath_journal_.c_str());
   }
-  stream_journal_.open(filepath_journal_,
-                       std::fstream::out | std::fstream::binary);
+  stream_journal_.open(filepath_journal_, std::fstream::binary);
   rollover_in_progress_ = false;
   rollover_cancel_ = false;
-  uint64_t usage = DatabaseMemory::Consumption(database_) / 1024 / 1024;
+  double usage = DatabaseMemory::Consumption(database_) / 1024.0 / 1024.0;
   LOG_INFO("memory usage: " + std::to_string(usage) + " megabytes");
 }
 
@@ -112,8 +111,7 @@ void DocumentDatabase::Shutdown() {
 void DocumentDatabase::RotateJournal() {
   stream_journal_.close();
   rename(filepath_journal_.c_str(), filepath_closed_.c_str());
-  stream_journal_.open(filepath_journal_,
-                       std::fstream::out | std::fstream::binary);
+  stream_journal_.open(filepath_journal_, std::fstream::binary);
 }
 
 void DocumentDatabase::Rollover() {
@@ -132,7 +130,7 @@ void DocumentDatabase::Rollover() {
     }
   } else {
     if (FileExists(filepath_journal_)) {
-      if (FileSize(filepath_journal_) > 4194304) {
+      if (FileSize(filepath_journal_) > 16 * 1024 * 1024) {
         RotateJournal();
       }
     }
@@ -180,37 +178,57 @@ void DocumentDatabase::Rollover() {
 JsonArray DocumentDatabase::Insert(const JsonArray &values) {
   JsonArray result;
   std::string key;
-  bool unique = false;
+  bool unique;
   JsonObject value;
   for (size_t i = 0; i < values.Size(); i++) {
-    value = values.GetObject(i);
+    if (!values.IsObject(i)) {
+      result.PutNull();
+      continue;
+    }
     unique = false;
     while (!unique) {
       key = random_.Uuid();
-      if (database_.Find(key) == database_.End()) {
+      if (!database_.Contains(key)) {
         unique = true;
       }
     }
     result.PutString(key);
-    DatabaseJournal::Append(stream_journal_, STORAGE_INSERT, key, &value);
-    database_.Insert(key, value);
+    value = values.GetObject(i);
+    DatabaseJournal::Append(stream_journal_, kStorageInsert, key, value);
+    try {
+      database_.Insert(key, value);
+    } catch (std::exception &e) {
+      Trace::GetInstance()->Print();
+      LOG_INFO(std::string(e.what()));
+      abort();
+    }
   }
   return result;
 }
 
 JsonObject DocumentDatabase::Update(const JsonObject &values) {
   JsonObject result;
-  JsonObject update;
+  JsonObject value;
   for (std::string &key : values.Keys()) {
-    auto it = database_.Find(key);
-    if (it == database_.End()) {
+    if (!values.IsObject(key)) {
       result.PutNull(key);
       continue;
     }
-    result.PutObject(key, it.GetValue());
-    update = values.GetObject(key);
-    DatabaseJournal::Append(stream_journal_, STORAGE_UPDATE, key, &update);
-    database_.Update(it, update);
+    auto iterator = database_.Find(key);
+    if (iterator == database_.End()) {
+      result.PutNull(key);
+      continue;
+    }
+    result.PutObject(key, iterator.GetValue());
+    value = values.GetObject(key);
+    DatabaseJournal::Append(stream_journal_, kStorageUpdate, key, value);
+    try {
+      database_.Update(iterator, value);
+    } catch (std::exception &e) {
+      Trace::GetInstance()->Print();
+      LOG_INFO(std::string(e.what()));
+      abort();
+    }
   }
   return result;
 }
@@ -218,16 +236,28 @@ JsonObject DocumentDatabase::Update(const JsonObject &values) {
 JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
   JsonArray result;
   std::string key;
+  JsonObject value;
   for (size_t i = 0; i < keys.Size(); i++) {
+    if (!keys.IsString(i)) {
+      result.PutNull();
+      continue;
+    }
     key = keys.GetString(i);
-    auto it = database_.Find(key);
-    if (it == database_.End()) {
+    auto iterator = database_.Find(key);
+    if (iterator == database_.End()) {
       result.PutNull();
       continue;
     }
     result.PutString(key);
-    DatabaseJournal::Append(stream_journal_, STORAGE_ERASE, key, nullptr);
-    database_.Erase(it);
+    value = iterator.GetValue();
+    DatabaseJournal::Append(stream_journal_, kStorageErase, key, value);
+    try {
+      database_.Erase(iterator);
+    } catch (std::exception &e) {
+      Trace::GetInstance()->Print();
+      LOG_INFO(std::string(e.what()));
+      abort();
+    }
   }
   return result;
 }
@@ -235,44 +265,18 @@ JsonArray DocumentDatabase::Erase(const JsonArray &keys) {
 JsonArray DocumentDatabase::Find(const JsonArray &keys) const {
   JsonArray result;
   for (size_t i = 0; i < keys.Size(); i++) {
-    auto it = database_.Find(keys.GetString(i));
-    if (it == database_.End()) {
+    if (!keys.IsString(i)) {
       result.PutNull();
       continue;
     }
-    result.PutObject(it.GetValue());
+    auto iterator = database_.Find(keys.GetString(i));
+    if (iterator == database_.End()) {
+      result.PutNull();
+      continue;
+    }
+    result.PutObject(iterator.GetValue());
   }
   return result;
-}
-
-JsonArray DocumentDatabase::Keys() const {
-  MapIterator<std::string, JsonObject> it = database_.Begin();
-  JsonArray keys;
-  while (it != database_.End()) {
-    keys.PutString(it.GetKey());
-    it++;
-  }
-  return keys;
-}
-
-JsonArray DocumentDatabase::Values() const {
-  MapIterator<std::string, JsonObject> it = database_.Begin();
-  JsonArray values;
-  while (it != database_.End()) {
-    values.PutObject(it.GetValue());
-    it++;
-  }
-  return values;
-}
-
-JsonObject DocumentDatabase::Image() const {
-  MapIterator<std::string, JsonObject> it = database_.Begin();
-  JsonObject image;
-  while (it != database_.End()) {
-    image.PutObject(it.GetKey(), it.GetValue());
-    it++;
-  }
-  return image;
 }
 
 UserPool::UserPool(const std::string &filepath) : filepath_(filepath) {}

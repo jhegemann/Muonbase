@@ -32,9 +32,6 @@ public:
   JsonObject Update(const JsonObject &values);
   JsonArray Erase(const JsonArray &keys);
   JsonArray Find(const JsonArray &keys);
-  JsonArray Keys();
-  JsonArray Values();
-  JsonObject Image();
 
 private:
   std::string ip_;

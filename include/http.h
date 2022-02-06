@@ -264,7 +264,7 @@ private:
   std::atomic<bool> running_;
   TcpSocket server_socket_;
   std::map<std::string, HttpCallback> handlers_;
-  EpollInstance epoll_instance_;
+  Epoll epoll_;
   std::map<int, HttpConnection *> connections_;
   sigset_t sigset_;
   int signal_descriptor_;

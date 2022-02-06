@@ -147,12 +147,10 @@ int main(int argc, char **argv) {
   LOG_INFO("set up routes");
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteInsert,
                          db_api::Insert);
-  server.RegisterHandler(HttpMethod::POST, db_api::kRouteUpdate, db_api::Update);
+  server.RegisterHandler(HttpMethod::POST, db_api::kRouteUpdate,
+                         db_api::Update);
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteErase, db_api::Erase);
   server.RegisterHandler(HttpMethod::POST, db_api::kRouteFind, db_api::Find);
-  server.RegisterHandler(HttpMethod::GET, db_api::kRouteKeys, db_api::Keys);
-  server.RegisterHandler(HttpMethod::GET, db_api::kRouteValues, db_api::Values);
-  server.RegisterHandler(HttpMethod::GET, db_api::kRouteImage, db_api::Image);
 
   LOG_INFO("start server");
   std::string ip = kIpDefault;

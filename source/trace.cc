@@ -27,8 +27,8 @@ Trace *Trace::GetInstance() {
   return Trace::instance_;
 }
 
-void Trace::Push(const std::string &file, const std::string &function,
-                 int line) {
+void Trace::Push(const std::string &file, int line,
+                 const std::string &function) {
   std::lock_guard<std::mutex> guard(mutex_);
   trace_.push_back(file + kStringColon + function + kStringColon +
                    std::to_string(line));
@@ -37,7 +37,9 @@ void Trace::Push(const std::string &file, const std::string &function,
   }
 }
 
-void Trace::Print() const {
+void Trace::Print() {
+  std::lock_guard<std::mutex> guard(mutex_);
+  std::cout << kStringTab << "** STACKTRACE **" << std::endl;
   for (auto it = trace_.begin(); it != trace_.end(); it++) {
     std::cout << kStringTab << *it << std::endl;
   }

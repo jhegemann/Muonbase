@@ -18,11 +18,11 @@ limitations under the License. */
 #include <limits>
 #include <string>
 
-class RandomGenerator {
+class Random {
 public:
-  RandomGenerator();
-  RandomGenerator(uint64_t seed);
-  virtual ~RandomGenerator();
+  Random();
+  Random(uint64_t seed);
+  virtual ~Random();
   void Seed(uint64_t seed);
   uint64_t Uint64();
   double Double();

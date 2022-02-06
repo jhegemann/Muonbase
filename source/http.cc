@@ -575,7 +575,7 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
     LOG_INFO("initialize service " + service.first);
     service.second->Initialize();
   }
-  if (!epoll_instance_.Create()) {
+  if (!epoll_.Create()) {
     LOG_INFO("cannot not set up epoll instance");
     return;
   }
@@ -583,7 +583,7 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
     LOG_INFO("cannot not set up server socket");
     return;
   }
-  if (!epoll_instance_.AddReadableDescriptor(server_socket_.GetDescriptor())) {
+  if (!epoll_.AddReadable(server_socket_.GetDescriptor())) {
     LOG_INFO("cannot not add listening socket to epoll instance");
     return;
   }
@@ -592,7 +592,7 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
     LOG_INFO("cannot setup signal descriptor");
     return;
   }
-  if (!epoll_instance_.AddReadableDescriptor(signal_descriptor_)) {
+  if (!epoll_.AddReadable(signal_descriptor_)) {
     LOG_INFO("cannot add signal descriptor to epoll instance");
     return;
   }
@@ -605,13 +605,13 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
     LOG_INFO("cannot schedule timer");
     return;
   }
-  if (!epoll_instance_.AddReadableDescriptor(timer_descriptor_)) {
+  if (!epoll_.AddReadable(timer_descriptor_)) {
     LOG_INFO("cannot add timer descriptor to epoll instance");
     return;
   }
   running_ = true;
   while (running_) {
-    int ready = epoll_instance_.Wait();
+    int ready = epoll_.Wait();
     if (ready == -1) {
       if (errno != EINTR) {
         running_ = false;
@@ -619,23 +619,23 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
       continue;
     }
     for (size_t idx = 0; idx < (size_t)ready; idx++) {
-      int current_descriptor = epoll_instance_.GetDescriptor(idx);
+      int current_descriptor = epoll_.GetDescriptor(idx);
       if (timer_descriptor_ == current_descriptor) {
-        if (epoll_instance_.IsReadable(idx)) {
+        if (epoll_.IsReadable(idx)) {
           HandleTimerEvent();
-        } else if (epoll_instance_.HasErrors(idx)) {
+        } else if (epoll_.HasErrors(idx)) {
           HandleTimerError();
         }
       } else if (signal_descriptor_ == current_descriptor) {
-        if (epoll_instance_.IsReadable(idx)) {
+        if (epoll_.IsReadable(idx)) {
           HandleSignalEvent();
-        } else if (epoll_instance_.HasErrors(idx)) {
+        } else if (epoll_.HasErrors(idx)) {
           HandleSignalError();
         }
       } else if (server_socket_.GetDescriptor() == current_descriptor) {
-        if (epoll_instance_.IsReadable(idx)) {
+        if (epoll_.IsReadable(idx)) {
           HandleServerEvent();
-        } else if (epoll_instance_.HasErrors(idx)) {
+        } else if (epoll_.HasErrors(idx)) {
           HandleServerError(service, host);
         }
       } else {
@@ -650,25 +650,25 @@ void HttpServer::Serve(const std::string &service, const std::string &host) {
     delete service.second;
   }
   LOG_INFO("close timer descriptor");
-  epoll_instance_.DeleteDescriptor(timer_descriptor_);
+  epoll_.Delete(timer_descriptor_);
   close(timer_descriptor_);
   LOG_INFO("close signal descriptor");
-  epoll_instance_.DeleteDescriptor(signal_descriptor_);
+  epoll_.Delete(signal_descriptor_);
   close(signal_descriptor_);
   LOG_INFO("close server socket");
-  epoll_instance_.DeleteDescriptor(server_socket_.GetDescriptor());
+  epoll_.Delete(server_socket_.GetDescriptor());
   server_socket_.Close();
   LOG_INFO("delete connections");
   DeleteAllConnections();
   LOG_INFO("release epoll instance");
-  epoll_instance_.Release();
+  epoll_.Release();
   running_ = false;
   LOG_INFO("clean http server shutdown succeeded");
 }
 
 void HttpServer::HandleTimerError() {
   LOG_INFO("error on timer descriptor; close timer descriptor");
-  epoll_instance_.DeleteDescriptor(timer_descriptor_);
+  epoll_.Delete(timer_descriptor_);
   close(timer_descriptor_);
   LOG_INFO("setup timer descriptor");
   if (!SetupTimerDescriptor()) {
@@ -681,7 +681,7 @@ void HttpServer::HandleTimerError() {
     running_ = false;
     return;
   }
-  if (!epoll_instance_.AddReadableDescriptor(timer_descriptor_)) {
+  if (!epoll_.AddReadable(timer_descriptor_)) {
     LOG_INFO("cannot add timer descriptor to epoll instance");
     running_ = false;
     return;
@@ -702,7 +702,7 @@ bool HttpServer::SetupTimerDescriptor() {
 
 void HttpServer::HandleSignalError() {
   LOG_INFO("error on signal descriptor; close signal descriptor");
-  epoll_instance_.DeleteDescriptor(signal_descriptor_);
+  epoll_.Delete(signal_descriptor_);
   close(signal_descriptor_);
   LOG_INFO("setup signal descriptor");
   if (!SetupSignalDescriptor()) {
@@ -710,7 +710,7 @@ void HttpServer::HandleSignalError() {
     running_ = false;
     return;
   }
-  if (!epoll_instance_.AddReadableDescriptor(signal_descriptor_)) {
+  if (!epoll_.AddReadable(signal_descriptor_)) {
     LOG_INFO("cannot add signal descriptor to epoll instance");
     running_ = false;
     return;
@@ -759,7 +759,7 @@ void HttpServer::DeleteConnection(int descriptor) {
     return;
   }
   LOG_INFO("delete connection " + std::to_string(descriptor));
-  epoll_instance_.DeleteDescriptor(descriptor);
+  epoll_.Delete(descriptor);
   delete it_connection->second;
   it_connection = connections_.erase(it_connection);
 }
@@ -768,7 +768,7 @@ void HttpServer::DeleteAllConnections() {
   auto it_connection = connections_.begin();
   while (it_connection != connections_.end()) {
     LOG_INFO("delete connection " + std::to_string(it_connection->first));
-    epoll_instance_.DeleteDescriptor(it_connection->first);
+    epoll_.Delete(it_connection->first);
     delete it_connection->second;
     it_connection = connections_.erase(it_connection);
   }
@@ -780,10 +780,10 @@ void HttpServer::DeleteExpiredConnections() {
   int descriptor;
   auto it_connection = connections_.begin();
   while (it_connection != connections_.end()) {
-    if (it_connection->second->GetExpiry() <= TimeEpochMilliseconds()) {
+    if (it_connection->second->GetExpiry() < TimeEpochMilliseconds()) {
       descriptor = it_connection->first;
       LOG_INFO("delete expired connection " + std::to_string(descriptor));
-      epoll_instance_.DeleteDescriptor(descriptor);
+      epoll_.Delete(descriptor);
       delete it_connection->second;
       it_connection = connections_.erase(it_connection);
     } else {
@@ -895,7 +895,7 @@ void HttpServer::HandleSignalEvent() {
 void HttpServer::HandleServerError(const std::string &service,
                                    const std::string &host) {
   LOG_INFO("error condition on server socket; close server socket");
-  epoll_instance_.DeleteDescriptor(server_socket_.GetDescriptor());
+  epoll_.Delete(server_socket_.GetDescriptor());
   server_socket_.Close();
   LOG_INFO("try to restart server socket");
   if (!SetupServerSocket(service, host)) {
@@ -903,7 +903,7 @@ void HttpServer::HandleServerError(const std::string &service,
     running_ = false;
     return;
   }
-  if (!epoll_instance_.AddReadableDescriptor(server_socket_.GetDescriptor())) {
+  if (!epoll_.AddReadable(server_socket_.GetDescriptor())) {
     LOG_INFO("cannot add listening socket to epoll instance");
     running_ = false;
     return;
@@ -926,7 +926,7 @@ void HttpServer::HandleServerEvent() {
     LOG_INFO("error accepting new client socket");
     return;
   }
-  if (!epoll_instance_.AddReadableDescriptor(client_socket->GetDescriptor())) {
+  if (!epoll_.AddReadable(client_socket->GetDescriptor())) {
     LOG_INFO("cannot add new client socket to epoll instance");
     client_socket->Close();
     delete client_socket;
@@ -945,15 +945,15 @@ void HttpServer::HandleServerEvent() {
 
 void HttpServer::HandleClientEvent(int index) {
   LOG_INFO("event on client socket - connection " +
-           std::to_string(epoll_instance_.GetDescriptor(index)));
-  auto lookup = connections_.find(epoll_instance_.GetDescriptor(index));
+           std::to_string(epoll_.GetDescriptor(index)));
+  auto lookup = connections_.find(epoll_.GetDescriptor(index));
   if (lookup == connections_.end()) {
     LOG_INFO("cannot not find connection");
     return;
   }
   int descriptor = lookup->first;
   HttpConnection *connection = lookup->second;
-  if (epoll_instance_.IsReadable(index)) {
+  if (epoll_.IsReadable(index)) {
     connection->ResetExpiry();
     if (connection->GetStage() == END) {
       LOG_INFO("connection still readable though successfully parsed");
@@ -974,18 +974,17 @@ void HttpServer::HandleClientEvent(int index) {
           ExecuteHandler(connection->GetRequest(), services_);
       LOG_INFO("response: " + response.AsShortString());
       connection->GetWriter()->Write(response.String());
-      if (!epoll_instance_.SetWriteable(index)) {
+      if (!epoll_.SetWriteable(index)) {
         LOG_INFO("could not set descriptor to write mode");
         DeleteConnection(descriptor);
-        return;
       }
     }
     if (connection->GetReader()->HasErrors()) {
-      LOG_INFO("connection closed by client");
+      LOG_INFO("connection closed by client before response was sent");
       DeleteConnection(descriptor);
       return;
     }
-  } else if (epoll_instance_.IsWritable(index)) {
+  } else if (epoll_.IsWritable(index)) {
     connection->ResetExpiry();
     connection->GetWriter()->SendSome();
     if (connection->GetWriter()->IsEmpty()) {
@@ -996,7 +995,7 @@ void HttpServer::HandleClientEvent(int index) {
               .compare("keep-alive") == 0) {
         LOG_INFO("keep-alive request detected");
         connection->Restart();
-        if (!epoll_instance_.SetReadable(index)) {
+        if (!epoll_.SetReadable(index)) {
           LOG_INFO("could not set descriptor to read mode");
           DeleteConnection(descriptor);
           return;
@@ -1012,7 +1011,7 @@ void HttpServer::HandleClientEvent(int index) {
       DeleteConnection(descriptor);
       return;
     }
-  } else if (epoll_instance_.HasErrors(index)) {
+  } else if (epoll_.HasErrors(index)) {
     LOG_INFO("client socket has errors");
     DeleteConnection(descriptor);
     return;
@@ -1044,17 +1043,25 @@ SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
   }
   TcpSocket *socket = new TcpSocket();
   if (!socket->Connect(port, ip)) {
+    delete socket;
     return {};
   }
   if (!socket->Unblock()) {
+    delete socket;
     return {};
   }
   HttpConnection connection(socket);
   connection.GetWriter()->Write(request.String());
   connection.GetWriter()->Send();
-  while (connection.GetStage() != END) {
+  const size_t max_count = 5;
+  size_t count = 0;
+  while (connection.GetStage() != END && count < max_count) {
+    if (!connection.IsGood()) {
+      return {};
+    }
     connection.GetReader()->SyncRead(kTcpTimeout);
     connection.ParseResponse();
+    count++;
   }
   return connection.GetResponse();
 }

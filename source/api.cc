@@ -138,44 +138,4 @@ HttpResponse Find(const HttpRequest &request, ServiceMap &services) {
                              db->Find(array).String());
 }
 
-HttpResponse Keys(const HttpRequest &request, ServiceMap &services) {
-  if (!ServicesAvailable(services)) {
-    return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR);
-  }
-  if (!AccessPermitted(request, services)) {
-    return HttpResponse::Build(HttpStatus::UNAUTHORIZED);
-  }
-  DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
-  return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
-                             db->Keys().String());
-}
-
-HttpResponse Values(const HttpRequest &request, ServiceMap &services) {
-  if (!ServicesAvailable(services)) {
-    return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR);
-  }
-  if (!AccessPermitted(request, services)) {
-    return HttpResponse::Build(HttpStatus::UNAUTHORIZED);
-  }
-  DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
-  return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
-                             db->Values().String());
-}
-
-HttpResponse Image(const HttpRequest &request, ServiceMap &services) {
-  if (!ServicesAvailable(services)) {
-    return HttpResponse::Build(HttpStatus::INTERNAL_SERVER_ERROR);
-  }
-  if (!AccessPermitted(request, services)) {
-    return HttpResponse::Build(HttpStatus::UNAUTHORIZED);
-  }
-  JsonObject result;
-  DocumentDatabase *db =
-      static_cast<DocumentDatabase *>(services[kServiceDatabase]);
-  return HttpResponse::Build(HttpStatus::OK, APPLICATION_JSON,
-                             db->Image().String());
-}
-
 } // namespace db_api
