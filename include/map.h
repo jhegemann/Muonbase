@@ -115,7 +115,7 @@ public:
   size_t CountKids() const;
   K &Key(size_t index);
   const K &GetKey(size_t index) const;
-  Node *Child(size_t index);
+  Node *Kid(size_t index);
   const Node *KidIndex(size_t index) const;
   size_t KidIndex(const Node *kid) const;
   size_t KeyIndex(const K &key) const;
@@ -194,7 +194,7 @@ inline const K &InnerNode<K, V>::GetKey(size_t index) const {
   return keys_[index];
 }
 
-template <class K, class V> inline Node *InnerNode<K, V>::Child(size_t index) {
+template <class K, class V> inline Node *InnerNode<K, V>::Kid(size_t index) {
   STACKTRACE;
   return kids_[index];
 }
