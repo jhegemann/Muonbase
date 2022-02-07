@@ -181,7 +181,6 @@ std::string JsonObject::String() const {
     } else if (value.type() == typeid(JsonArray)) {
       ss << std::any_cast<JsonArray>(value).String();
     } else {
-      std::cout << ss.str() << std::endl;
       throw std::runtime_error("incompatible json type");
     }
     sep = kStringComma;

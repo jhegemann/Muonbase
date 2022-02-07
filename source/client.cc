@@ -34,6 +34,7 @@ JsonArray Client::Insert(const JsonArray &values) {
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
+    LOG_INFO("DEBUG: " + (*response).String());
     throw std::runtime_error("insert request");
   }
   JsonArray array;
@@ -59,6 +60,7 @@ JsonObject Client::Update(const JsonObject &values) {
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
+    LOG_INFO("DEBUG: " + (*response).String());
     throw std::runtime_error("insert request");
   }
   JsonObject object;
@@ -84,6 +86,7 @@ JsonArray Client::Erase(const JsonArray &keys) {
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
+    LOG_INFO("DEBUG: " + (*response).String());
     throw std::runtime_error("insert request");
   }
   JsonArray array;
@@ -108,6 +111,7 @@ JsonArray Client::Find(const JsonArray &keys) {
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
+    LOG_INFO("DEBUG: " + (*response).String());
     throw std::runtime_error("insert request");
   }
   JsonArray array;
