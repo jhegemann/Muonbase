@@ -337,7 +337,6 @@ void HttpConnection::ResetExpiry() {
 
 void HttpConnection::ParseRequest() {
   std::string token;
-  HttpMethod method = GET;
   switch (stage_) {
   case START:
     [[fallthrough]];
@@ -350,12 +349,12 @@ void HttpConnection::ParseRequest() {
       stage_ = FAILED;
       return;
     }
-    method = HttpConstants::GetMethod(token);
-    if (method == INVALID_METHOD) {
+    method_ = HttpConstants::GetMethod(token);
+    if (method_ == INVALID_METHOD) {
       stage_ = FAILED;
       return;
     }
-    request_.SetMethod(method);
+    request_.SetMethod(method_);
     stage_ = URL;
     [[fallthrough]];
   case URL:
@@ -395,7 +394,6 @@ void HttpConnection::ParseRequest() {
 
 void HttpConnection::ParseResponse() {
   std::string token;
-  HttpStatus status = OK;
   switch (stage_) {
   case START:
     [[fallthrough]];
@@ -417,16 +415,16 @@ void HttpConnection::ParseResponse() {
     }
     token = reader_->Tok();
     try {
-      status = static_cast<HttpStatus>(std::atoi(token.c_str()));
+      status_ = static_cast<HttpStatus>(std::atoi(token.c_str()));
     } catch (std::invalid_argument &) {
       stage_ = FAILED;
       return;
     }
-    if (HttpConstants::GetStatusString(status).empty()) {
+    if (HttpConstants::GetStatusString(status_).empty()) {
       stage_ = FAILED;
       return;
     }
-    response_.SetStatus(status);
+    response_.SetStatus(status_);
     stage_ = MESSAGE;
     [[fallthrough]];
   case MESSAGE:
@@ -434,7 +432,7 @@ void HttpConnection::ParseResponse() {
       return;
     }
     token = reader_->Tok();
-    if (HttpConstants::GetStatusString(status).compare(token) != 0) {
+    if (HttpConstants::GetStatusString(status_).compare(token) != 0) {
       stage_ = FAILED;
       return;
     }

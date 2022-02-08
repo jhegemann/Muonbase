@@ -220,7 +220,9 @@ private:
   HttpRequest request_;
   HttpResponse response_;
   HttpStage stage_;
+  HttpMethod method_;
   size_t count_headers_;
+  HttpStatus status_;
   TcpReader *reader_;
   TcpWriter *writer_;
   TcpSocket *socket_;
