@@ -820,41 +820,36 @@ size_t Deserialize(JsonArray &object, std::istream &stream) {
   return stream ? bytes : std::string::npos;
 }
 
-JsonObject RandomObject() {
-  static Random random(123456789);
-  const std::vector<std::string> keys = {
-      random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid(),
-      random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid(),
-      random.Uuid(), random.Uuid(), random.Uuid(), random.Uuid()};
+JsonObject RandomObject(Random &random) {
   JsonObject object;
-  size_t n = 0;
-  object.PutBoolean(keys[n++], random.Uniform() > 0.5 ? true : false);
-  object.PutFloat(keys[n++], random.Uniform());
-  object.PutInteger(keys[n++], random.Uint64() % 1048576);
-  object.PutString(keys[n++], random.Uuid());
-  object.PutNull(keys[n++]);
+  object.PutBoolean(kJsonKeySet[0],
+                    random.UniformDouble() > 0.5 ? true : false);
+  object.PutFloat(kJsonKeySet[1], random.UniformDouble());
+  object.PutInteger(kJsonKeySet[2], random.UniformInteger() % 1048576);
+  object.PutString(kJsonKeySet[3], random.Uuid());
+  object.PutNull(kJsonKeySet[4]);
   JsonObject nested;
-  nested.PutBoolean(keys[n++], random.Uniform() > 0.5 ? true : false);
-  nested.PutFloat(keys[n++], random.Uniform());
-  nested.PutInteger(keys[n++], random.Uint64() % 1048576);
-  nested.PutString(keys[n++], random.Uuid());
-  nested.PutNull(keys[n++]);
-  object.PutObject(keys[n++], nested);
+  nested.PutBoolean(kJsonKeySet[5],
+                    random.UniformDouble() > 0.5 ? true : false);
+  nested.PutFloat(kJsonKeySet[6], random.UniformDouble());
+  nested.PutInteger(kJsonKeySet[7], random.UniformInteger() % 1048576);
+  nested.PutString(kJsonKeySet[8], random.Uuid());
+  nested.PutNull(kJsonKeySet[9]);
+  object.PutObject(kJsonKeySet[10], nested);
   JsonArray array;
-  array.PutBoolean(random.Uniform() > 0.5 ? true : false);
-  array.PutFloat(random.Uniform());
-  array.PutInteger(random.Uint64() % 1048576);
+  array.PutBoolean(random.UniformDouble() > 0.5 ? true : false);
+  array.PutFloat(random.UniformDouble());
+  array.PutInteger(random.UniformInteger() % 1048576);
   array.PutString(random.Uuid());
   array.PutNull();
-  object.PutArray(keys[n++], array);
+  object.PutArray(kJsonKeySet[11], array);
   return object;
 }
 
-JsonArray RandomObjectArray() {
-  static Random random(987654321);
+JsonArray RandomObjectArray(Random &random) {
   JsonArray array;
-  for (size_t i = 0; i < 1 + random.Uint64() % 10; i++) {
-    array.PutObject(RandomObject());
+  for (size_t i = 0; i < 1 + random.UniformInteger() % 10; i++) {
+    array.PutObject(RandomObject(random));
   }
   return array;
 }

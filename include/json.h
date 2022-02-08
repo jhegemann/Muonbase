@@ -30,6 +30,10 @@ limitations under the License. */
 #include "rand.h"
 #include "utils.h"
 
+const std::vector<std::string> kJsonKeySet = {
+    "guNloO9A", "8NGbsNfc", "OrJxzNTq", "RV6fLLMW", "tC3TF09H", "zfKtUEbG",
+    "rOv9Tq5u", "lKKdJAFt", "fsm9iOxx", "BiyEstkf", "9IKxj6Qw", "c8EwQ9n9"};
+
 typedef std::any JsonValue;
 class JsonArray;
 class JsonObject;
@@ -152,8 +156,8 @@ size_t Deserialize(JsonArray &object, std::istream &stream);
 uint64_t Memory(const JsonObject &object);
 uint64_t Memory(const JsonArray &object);
 
-JsonObject RandomObject();
-JsonArray RandomObjectArray();
+JsonObject RandomObject(Random &random);
+JsonArray RandomObjectArray(Random &random);
 
 } // namespace json
 

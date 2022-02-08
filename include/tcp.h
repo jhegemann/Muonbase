@@ -75,7 +75,7 @@ const std::string kTcpLocalHost = "127.0.0.1";
 const long kTcpReceiveBufferSize = 65536L;
 const long kTcpSendBufferSize = 65536L;
 const long kTcpMaximumPayloadSize = 1073741824L;
-const long kTcpTimeout = 1000L;
+const long kTcpTimeout = 10000L;
 
 enum IoStatusCode {
   SUCCESS = 0,
@@ -112,8 +112,8 @@ public:
   bool Block();
   bool IsGood() const;
   TcpSocket *Accept();
-  IoStatusCode Receive(std::string &payload, long timeout = 0);
-  IoStatusCode Send(std::string &payload, long timeout = 0);
+  IoStatusCode Receive(std::string &payload);
+  IoStatusCode Send(std::string &payload);
 
 private:
   std::string host_;
@@ -127,9 +127,9 @@ class TcpReader {
 public:
   TcpReader(TcpSocket *socket);
   virtual ~TcpReader();
-  void ReadUntil(const std::string &token, long max_idle = kTcpTimeout);
-  void ReadUntil(size_t length, long max_idle = kTcpTimeout);
-  void ReadSome(long timeout = 0);
+  void ReadUntil(const std::string &token);
+  void ReadUntil(size_t length);
+  void ReadSome();
   void SyncRead();
   IoStatusCode GetStatus() const;
   size_t GetPosition(const std::string &token) const;

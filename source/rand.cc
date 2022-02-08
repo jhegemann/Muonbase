@@ -14,34 +14,26 @@ limitations under the License. */
 
 #include "rand.h"
 
-Random::Random() : state_(123456789) {}
+Random::Random() {}
 
-Random::Random(uint64_t seed) : state_(seed) {}
+Random::Random(uint64_t seed) { Seed(seed); }
 
 Random::~Random() {}
 
-void Random::Seed(uint64_t seed) { state_ = seed; }
+void Random::Seed(uint64_t seed) { generator_.seed(seed); }
 
-uint64_t Random::Uint64() {
-  state_ ^= state_ << 13;
-  state_ ^= state_ >> 7;
-  state_ ^= state_ << 17;
-  return state_;
+unsigned long Random::UniformInteger() {
+  return distribution_integer_(generator_);
 }
-
-double Random::Double() { return static_cast<double>(Uint64()); }
-
-double Random::Uniform() {
-  return Double() / static_cast<double>(std::numeric_limits<uint64_t>::max());
+double Random::UniformDouble() {
+  return distribution_float_(generator_);
 }
 
 std::string Random::Uuid(size_t length) {
-  static std::string charset =
-      "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   std::string uuid;
   uuid.resize(length);
   for (size_t i = 0; i < length; i++) {
-    uuid[i] = charset[Uint64() % charset.length()];
+    uuid[i] = kUuidCharset[UniformInteger() % kUuidCharset.length()];
   }
   return uuid;
 }

@@ -981,6 +981,7 @@ void HttpServer::HandleClientEvent(int index) {
     }
     if (connection->GetReader()->HasErrors()) {
       LOG_INFO("connection closed by client before response was sent");
+      LOG_INFO("code:" + std::to_string(connection->GetReader()->GetStatus()));
       DeleteConnection(descriptor);
       return;
     }
@@ -1060,7 +1061,8 @@ SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
   if (connection.GetStage() == END) {
     return connection.GetResponse();
   }
-  LOG_INFO(connection.GetReader()->GetBuffer());
+  LOG_INFO(std::to_string(connection.GetStage()) + kStringSpace +
+           connection.GetReader()->GetBuffer());
   return {};
 }
 

@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
           clock.Start();
           count = 0;
           for (size_t j = 0; j < order; j++) {
-            JsonArray values = json::RandomObjectArray();
+            JsonArray values = json::RandomObjectArray(random);
             JsonArray result = client.Insert(values);
             for (size_t k = 0; k < values.Size(); k++) {
               if (!result.IsString(k)) {
@@ -172,9 +172,9 @@ int main(int argc, char **argv) {
           clock.Start();
           for (size_t i = 0; i < order; i++) {
             auto it = mirror.begin();
-            std::advance(it, random.Uint64() % mirror.size());
+            std::advance(it, random.UniformInteger() % mirror.size());
             std::string key = it->first;
-            JsonObject value = json::RandomObject();
+            JsonObject value = json::RandomObject(random);
             JsonObject values;
             values.PutObject(key, value);
             JsonObject result = client.Update(values);
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
           clock.Start();
           for (size_t i = 0; i < order; i++) {
             auto it = mirror.begin();
-            std::advance(it, random.Uint64() % mirror.size());
+            std::advance(it, random.UniformInteger() % mirror.size());
             std::string key = it->first;
             JsonArray keys;
             keys.PutString(key);
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
           clock.Start();
           for (size_t i = 0; i < order; i++) {
             auto it = mirror.begin();
-            std::advance(it, random.Uint64() % mirror.size());
+            std::advance(it, random.UniformInteger() % mirror.size());
             std::string key = it->first;
             JsonArray keys;
             keys.PutString(key);

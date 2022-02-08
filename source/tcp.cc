@@ -334,7 +334,7 @@ TcpSocket *TcpSocket::Accept() {
   return client;
 }
 
-IoStatusCode TcpSocket::Receive(std::string &payload, long timeout) {
+IoStatusCode TcpSocket::Receive(std::string &payload) {
   if (IsBlocking()) {
     return SOCKET_FLAGS;
   }
@@ -347,7 +347,6 @@ IoStatusCode TcpSocket::Receive(std::string &payload, long timeout) {
   ssize_t bytes;
   ssize_t length;
   char buffer[kTcpReceiveBufferSize];
-  long start = TimeEpochMilliseconds();
   for (;;) {
     length = std::min(kTcpReceiveBufferSize,
                       kTcpMaximumPayloadSize - (long)payload.size());
@@ -355,23 +354,10 @@ IoStatusCode TcpSocket::Receive(std::string &payload, long timeout) {
     switch (bytes) {
     case -1:
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        if (timeout == 0) {
-          return BLOCKED;
-        }
-        if (TimeEpochMilliseconds() - start >= timeout) {
-          return TIMEOUT;
-        }
-        usleep(timeout * 100);
-        continue;
+        return BLOCKED;
       }
       if (errno == EINTR) {
-        if (timeout == 0) {
-          return INTERRUPTED;
-        }
-        if (TimeEpochMilliseconds() - start >= timeout) {
-          return TIMEOUT;
-        }
-        continue;
+        return INTERRUPTED;
       }
       return ERROR;
     case 0:
@@ -381,18 +367,12 @@ IoStatusCode TcpSocket::Receive(std::string &payload, long timeout) {
       if (payload.size() >= kTcpMaximumPayloadSize) {
         return OVERFLOW;
       }
-      if (timeout == 0) {
-        return SUCCESS;
-      }
-      if (TimeEpochMilliseconds() - start >= timeout) {
-        return TIMEOUT;
-      }
       continue;
     }
   }
 }
 
-IoStatusCode TcpSocket::Send(std::string &payload, long timeout) {
+IoStatusCode TcpSocket::Send(std::string &payload) {
   if (IsBlocking()) {
     return SOCKET_FLAGS;
   }
@@ -407,30 +387,16 @@ IoStatusCode TcpSocket::Send(std::string &payload, long timeout) {
   }
   ssize_t bytes;
   ssize_t length;
-  long start = TimeEpochMilliseconds();
   for (;;) {
     length = std::min(kTcpSendBufferSize, (long)payload.size());
     bytes = send(descriptor_, &payload[0], length, 0);
     switch (bytes) {
     case -1:
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        if (timeout == 0) {
-          return BLOCKED;
-        }
-        if (TimeEpochMilliseconds() - start >= timeout) {
-          return TIMEOUT;
-        }
-        usleep(timeout * 100);
-        continue;
+        return BLOCKED;
       }
       if (errno == EINTR) {
-        if (timeout == 0) {
-          return INTERRUPTED;
-        }
-        if (TimeEpochMilliseconds() - start >= timeout) {
-          return TIMEOUT;
-        }
-        continue;
+        return INTERRUPTED;
       }
       return ERROR;
     case 0:
@@ -439,12 +405,6 @@ IoStatusCode TcpSocket::Send(std::string &payload, long timeout) {
       payload.erase(0, bytes);
       if (payload.empty()) {
         return SUCCESS;
-      }
-      if (timeout == 0) {
-        return SUCCESS;
-      }
-      if (TimeEpochMilliseconds() - start >= timeout) {
-        return TIMEOUT;
       }
       continue;
     }
@@ -457,11 +417,11 @@ TcpReader::TcpReader(TcpSocket *socket)
 
 TcpReader::~TcpReader() {}
 
-void TcpReader::ReadUntil(const std::string &token, long max_idle) {
+void TcpReader::ReadUntil(const std::string &token) {
   size_t start = 0;
   while (!StringContains(buffer_, token, start)) {
     start = buffer_.size();
-    if (!socket_->WaitReceive(max_idle)) {
+    if (!socket_->WaitReceive(kTcpTimeout)) {
       status_ = EMPTY_BUFFER;
       break;
     }
@@ -472,9 +432,9 @@ void TcpReader::ReadUntil(const std::string &token, long max_idle) {
   }
 }
 
-void TcpReader::ReadUntil(size_t length, long max_idle) {
+void TcpReader::ReadUntil(size_t length) {
   while (buffer_.length() < length) {
-    if (!socket_->WaitReceive(max_idle)) {
+    if (!socket_->WaitReceive(kTcpTimeout)) {
       status_ = EMPTY_BUFFER;
       break;
     }
@@ -485,13 +445,9 @@ void TcpReader::ReadUntil(size_t length, long max_idle) {
   }
 }
 
-bool TcpReader::HasErrors() const {
-  return status_ != SUCCESS && status_ != BLOCKED;
-}
+bool TcpReader::HasErrors() const { return status_ != BLOCKED; }
 
-void TcpReader::ReadSome(long timeout) {
-  status_ = socket_->Receive(buffer_, timeout);
-}
+void TcpReader::ReadSome() { status_ = socket_->Receive(buffer_); }
 
 void TcpReader::SyncRead() {
   while (true) {
