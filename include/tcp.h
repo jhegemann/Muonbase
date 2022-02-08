@@ -130,7 +130,7 @@ public:
   void ReadUntil(const std::string &token, long max_idle = kTcpTimeout);
   void ReadUntil(size_t length, long max_idle = kTcpTimeout);
   void ReadSome(long timeout = 0);
-  void SyncRead(long timeout);
+  void SyncRead();
   IoStatusCode GetStatus() const;
   size_t GetPosition(const std::string &token) const;
   std::string PopAll();

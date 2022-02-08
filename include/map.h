@@ -116,7 +116,7 @@ public:
   K &Key(size_t index);
   const K &GetKey(size_t index) const;
   Node *Kid(size_t index);
-  const Node *KidIndex(size_t index) const;
+  const Node *Kid(size_t index) const;
   size_t KidIndex(const Node *kid) const;
   size_t KeyIndex(const K &key) const;
   void Insert(Node *left, K &separator, Node *right);
@@ -177,8 +177,7 @@ template <class K, class V> inline size_t InnerNode<K, V>::CountKeys() const {
   return keys_.size();
 }
 
-template <class K, class V>
-inline size_t InnerNode<K, V>::CountKids() const {
+template <class K, class V> inline size_t InnerNode<K, V>::CountKids() const {
   STACKTRACE;
   return kids_.size();
 }
@@ -200,7 +199,7 @@ template <class K, class V> inline Node *InnerNode<K, V>::Kid(size_t index) {
 }
 
 template <class K, class V>
-inline const Node *InnerNode<K, V>::KidIndex(size_t index) const {
+inline const Node *InnerNode<K, V>::Kid(size_t index) const {
   STACKTRACE;
   return kids_[index];
 }
@@ -2027,7 +2026,7 @@ public:
         result += (inner->keys_.capacity() - inner->CountKeys()) * sizeof(K);
         result += sizeof(void *) * inner->kids_.capacity();
         for (size_t i = 0; i < inner->CountKids(); i++) {
-          todo.push(inner->KidIndex(i));
+          todo.push(inner->Kid(i));
         }
       } else {
         const OuterNode<K, V> *outer = CAST_CONST_OUTER(current);

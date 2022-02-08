@@ -44,13 +44,9 @@ bool Epoll::Add(int descriptor, int flags) {
   return true;
 }
 
-bool Epoll::AddReadable(int descriptor) {
-  return Add(descriptor, EPOLLIN);
-}
+bool Epoll::AddReadable(int descriptor) { return Add(descriptor, EPOLLIN); }
 
-bool Epoll::AddWritable(int descriptor) {
-  return Add(descriptor, EPOLLOUT);
-}
+bool Epoll::AddWritable(int descriptor) { return Add(descriptor, EPOLLOUT); }
 
 bool Epoll::AddDuplex(int descriptor) {
   return Add(descriptor, EPOLLIN | EPOLLOUT);
@@ -116,8 +112,7 @@ bool Epoll::SetWriteable(size_t index) {
 }
 
 bool Epoll::SetDuplex(size_t index) {
-  return Modify(GetDescriptor(index),
-                          EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP);
+  return Modify(GetDescriptor(index), EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP);
 }
 
 TcpSocket::TcpSocket()
@@ -498,11 +493,16 @@ void TcpReader::ReadSome(long timeout) {
   status_ = socket_->Receive(buffer_, timeout);
 }
 
-void TcpReader::SyncRead(long timeout) {
-  if (!socket_->WaitReceive(timeout)) {
-    return;
+void TcpReader::SyncRead() {
+  while (true) {
+    if (!socket_->WaitReceive(kTcpTimeout)) {
+      break;
+    }
+    status_ = socket_->Receive(buffer_);
+    if (HasErrors()) {
+      break;
+    }
   }
-  status_ = socket_->Receive(buffer_);
 }
 
 size_t TcpReader::GetPosition(const std::string &token) const {

@@ -30,17 +30,19 @@ JsonArray Client::Insert(const JsonArray &values) {
   }
   if (response->GetStatus() != HttpStatus::OK) {
     LOG_INFO("failed: insert response status");
+    LOG_INFO((*response).String());
     throw std::runtime_error("insert request");
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
-    LOG_INFO("DEBUG: " + (*response).String());
+    LOG_INFO((*response).String());
     throw std::runtime_error("insert request");
   }
   JsonArray array;
   try {
     array.Parse((*response).GetBody());
   } catch (std::runtime_error &e) {
+    LOG_INFO((*response).GetBody());
     LOG_INFO(std::string(e.what()));
   }
   return array;
@@ -56,17 +58,19 @@ JsonObject Client::Update(const JsonObject &values) {
   }
   if (response->GetStatus() != HttpStatus::OK) {
     LOG_INFO("failed: update response status");
+    LOG_INFO((*response).String());
     throw std::runtime_error("update request");
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
-    LOG_INFO("DEBUG: " + (*response).String());
+    LOG_INFO((*response).String());
     throw std::runtime_error("insert request");
   }
   JsonObject object;
   try {
     object.Parse((*response).GetBody());
   } catch (std::runtime_error &e) {
+    LOG_INFO((*response).GetBody());
     LOG_INFO(std::string(e.what()));
   }
   return object;
@@ -82,17 +86,19 @@ JsonArray Client::Erase(const JsonArray &keys) {
   }
   if (response->GetStatus() != HttpStatus::OK) {
     LOG_INFO("failed: erase response status");
+    LOG_INFO((*response).String());
     throw std::runtime_error("erase request");
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
-    LOG_INFO("DEBUG: " + (*response).String());
+    LOG_INFO((*response).String());
     throw std::runtime_error("insert request");
   }
   JsonArray array;
   try {
     array.Parse((*response).GetBody());
   } catch (std::runtime_error &e) {
+    LOG_INFO((*response).GetBody());
     LOG_INFO(std::string(e.what()));
   }
   return array;
@@ -107,17 +113,19 @@ JsonArray Client::Find(const JsonArray &keys) {
   }
   if (response->GetStatus() != HttpStatus::OK) {
     LOG_INFO("failed: find response status");
+    LOG_INFO((*response).String());
     throw std::runtime_error("find request");
   }
   if (response->GetBody().empty()) {
     LOG_INFO("failed: empty body");
-    LOG_INFO("DEBUG: " + (*response).String());
+    LOG_INFO((*response).String());
     throw std::runtime_error("insert request");
   }
   JsonArray array;
   try {
     array.Parse((*response).GetBody());
   } catch (std::runtime_error &e) {
+    LOG_INFO((*response).GetBody());
     LOG_INFO(std::string(e.what()));
   }
   return array;

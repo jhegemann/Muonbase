@@ -336,8 +336,8 @@ void HttpConnection::ResetExpiry() {
 }
 
 void HttpConnection::ParseRequest() {
-  static std::string token;
-  static HttpMethod method;
+  std::string token;
+  HttpMethod method = GET;
   switch (stage_) {
   case START:
     [[fallthrough]];
@@ -394,8 +394,8 @@ void HttpConnection::ParseRequest() {
 }
 
 void HttpConnection::ParseResponse() {
-  static std::string token;
-  static HttpStatus status;
+  std::string token;
+  HttpStatus status = OK;
   switch (stage_) {
   case START:
     [[fallthrough]];
@@ -452,13 +452,13 @@ void HttpConnection::ParseResponse() {
 }
 
 void HttpConnection::ParseMessage(HttpPacket &packet) {
-  static std::string token;
-  static std::string key;
-  static std::string value;
-  static std::string content_length_string;
-  static size_t content_length;
-  static size_t bytes_left;
-  static bool headers_complete;
+  std::string token;
+  std::string key;
+  std::string value;
+  std::string content_length_string;
+  size_t content_length;
+  size_t bytes_left;
+  bool headers_complete;
   switch (stage_) {
   case HEADER:
     headers_complete = false;
@@ -1044,26 +1044,24 @@ SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
   TcpSocket *socket = new TcpSocket();
   if (!socket->Connect(port, ip)) {
     delete socket;
+    LOG_INFO("could not connect to server");
     return {};
   }
   if (!socket->Unblock()) {
     delete socket;
+    LOG_INFO("could not unblock client socket");
     return {};
   }
   HttpConnection connection(socket);
   connection.GetWriter()->Write(request.String());
   connection.GetWriter()->Send();
-  const size_t max_count = 5;
-  size_t count = 0;
-  while (connection.GetStage() != END && count < max_count) {
-    if (!connection.IsGood()) {
-      return {};
-    }
-    connection.GetReader()->SyncRead(kTcpTimeout);
-    connection.ParseResponse();
-    count++;
+  connection.GetReader()->SyncRead();
+  connection.ParseResponse();
+  if (connection.GetStage() == END) {
+    return connection.GetResponse();
   }
-  return connection.GetResponse();
+  LOG_INFO(connection.GetReader()->GetBuffer());
+  return {};
 }
 
 } // namespace http
