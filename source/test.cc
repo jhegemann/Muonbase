@@ -181,6 +181,12 @@ int main(int argc, char **argv) {
             if (!result.Has(key) || result.IsNull(key)) {
               throw std::runtime_error("update non-existent key");
             }
+            if (!result.IsObject(key)) {
+              throw std::runtime_error("return value is non-object");
+            }
+            if (it->second.String() != result.GetObject(key).String()) {
+              throw std::runtime_error("return value differs from mirror");
+            }
             it->second = value;
           }
           clock.Stop();
@@ -201,6 +207,9 @@ int main(int argc, char **argv) {
             if (result.Size() == 0 || !result.IsObject(0)) {
               LOG_INFO(result.String());
               throw std::runtime_error("could not find key ");
+            }
+            if (it->second.String() != result.GetObject(0).String()) {
+              throw std::runtime_error("return value differs from mirror");
             }
           }
           clock.Stop();

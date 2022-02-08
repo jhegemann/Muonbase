@@ -268,7 +268,7 @@ void InnerNode<K, V>::Erase(const K &key, Node *kid) {
     throw std::runtime_error("tree: inner erase");
   }
   keys_.erase(keys_.begin() + key_position);
-  kids_.erase(kids_.begin() + KidIndex(kid));
+  kids_.erase(kids_.begin() + kid_position);
 }
 
 template <class K, class V>
