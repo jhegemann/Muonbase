@@ -34,6 +34,6 @@ HttpResponse Update(const HttpRequest &request, ServiceMap &services);
 HttpResponse Erase(const HttpRequest &request, ServiceMap &services);
 HttpResponse Find(const HttpRequest &request, ServiceMap &services);
 
-} // namespace db_api
+}  // namespace db_api
 
 #endif

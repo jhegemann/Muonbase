@@ -67,10 +67,10 @@ bool IsInteger(const JsonValue &value);
 bool IsFloat(const JsonValue &value);
 bool IsString(const JsonValue &value);
 
-} // namespace json
+}  // namespace json
 
 class JsonArray {
-public:
+ public:
   friend class JsonObject;
   JsonArray();
   JsonArray(const JsonArray &array);
@@ -102,13 +102,13 @@ public:
   std::string String() const;
   void Parse(const std::string &source);
 
-private:
+ private:
   std::vector<JsonValue> values_;
   void Parse(const std::string &source, size_t &source_offset);
 };
 
 class JsonObject {
-public:
+ public:
   friend class JsonArray;
   JsonObject();
   JsonObject(const JsonObject &object);
@@ -141,7 +141,7 @@ public:
   std::string String() const;
   void Parse(const std::string &source);
 
-private:
+ private:
   std::unordered_map<std::string, JsonValue> values_;
   void Parse(const std::string &source, size_t &source_offset);
 };
@@ -159,6 +159,6 @@ uint64_t Memory(const JsonArray &object);
 JsonObject RandomObject(Random &random);
 JsonArray RandomObjectArray(Random &random);
 
-} // namespace json
+}  // namespace json
 
 #endif

@@ -15,16 +15,17 @@ limitations under the License. */
 #ifndef SERVICE_H
 #define SERVICE_H
 
+#include <atomic>
+#include <fstream>
+#include <optional>
+#include <thread>
+
 #include "journal.h"
 #include "json.h"
 #include "map.h"
 #include "rand.h"
 #include "trace.h"
 #include "utils.h"
-#include <atomic>
-#include <fstream>
-#include <optional>
-#include <thread>
 
 class ApiService;
 class DocumentDatabase;
@@ -47,10 +48,10 @@ size_t Serialize(const std::string &filepath, const Database &database,
 size_t Deserialize(const std::string &filepath, Database &database,
                    const std::atomic<bool> &cancel = false);
 
-} // namespace db
+}  // namespace db
 
 class ApiService {
-public:
+ public:
   ApiService();
   virtual ~ApiService();
   virtual void Initialize() = 0;
@@ -59,7 +60,7 @@ public:
 };
 
 class DocumentDatabase : public ApiService {
-public:
+ public:
   DocumentDatabase(const std::string &filepath);
   virtual ~DocumentDatabase();
   virtual void Initialize();
@@ -70,7 +71,7 @@ public:
   JsonArray Erase(const JsonArray &keys);
   JsonArray Find(const JsonArray &keys) const;
 
-private:
+ private:
   void RotateJournal();
   void Rollover();
   std::string filepath_;
@@ -87,7 +88,7 @@ private:
 };
 
 class UserPool : public ApiService {
-public:
+ public:
   UserPool(const std::string &filepath);
   virtual ~UserPool();
   virtual void Initialize();
@@ -96,7 +97,7 @@ public:
   bool AccessPermitted(const std::string &user,
                        const std::string &password) const;
 
-private:
+ private:
   std::string filepath_;
   JsonObject users_;
 };

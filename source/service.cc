@@ -37,18 +37,20 @@ size_t Deserialize(const std::string &filepath, Database &database,
   return bytes;
 }
 
-} // namespace db
+}  // namespace db
 
 ApiService::ApiService() {}
 
 ApiService::~ApiService() {}
 
 DocumentDatabase::DocumentDatabase(const std::string &filepath)
-    : filepath_(filepath), filepath_journal_(filepath + kServiceSuffixJournal),
+    : filepath_(filepath),
+      filepath_journal_(filepath + kServiceSuffixJournal),
       filepath_closed_(filepath + kServiceSuffixJournal + kServiceSuffixClosed),
       filepath_snapshot_(filepath + kServiceSuffixSnapshot),
       filepath_corrupted_(filepath_ + kServiceSuffixCorrupted),
-      rollover_in_progress_(false), rollover_cancel_(false) {}
+      rollover_in_progress_(false),
+      rollover_cancel_(false) {}
 
 DocumentDatabase::~DocumentDatabase() {}
 

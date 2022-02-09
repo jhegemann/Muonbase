@@ -16,7 +16,6 @@ limitations under the License. */
 #define HTTP_H
 
 #include <signal.h>
-#include <string.h>
 #include <sys/signalfd.h>
 #include <sys/timerfd.h>
 
@@ -115,7 +114,7 @@ enum HttpStatus {
 };
 
 class HttpConstants {
-public:
+ public:
   static std::string GetStatusString(int status);
   static std::string GetMethodString(const HttpMethod method);
   static HttpMethod GetMethod(const std::string &method_string);
@@ -124,7 +123,7 @@ public:
 };
 
 class HttpPacket {
-public:
+ public:
   HttpPacket();
   virtual ~HttpPacket();
   void AddHeader(const std::string &key, const std::string &value);
@@ -137,13 +136,13 @@ public:
   const std::string &GetBody() const;
   void ClearBody();
 
-protected:
+ protected:
   std::map<std::string, std::string> headers_;
   std::string body_;
 };
 
 class HttpRequest : public HttpPacket {
-public:
+ public:
   HttpRequest();
   virtual ~HttpRequest();
   void Initialize();
@@ -156,14 +155,14 @@ public:
   const std::string String() const;
   const std::string AsShortString() const;
 
-private:
+ private:
   HttpMethod method_;
   std::string url_;
   std::string protocol_;
 };
 
 class HttpResponse : public HttpPacket {
-public:
+ public:
   HttpResponse();
   virtual ~HttpResponse();
   void Initialize();
@@ -180,7 +179,7 @@ public:
   const std::string String() const;
   const std::string AsShortString() const;
 
-private:
+ private:
   std::string protocol_;
   int status_;
   std::string message_;
@@ -200,7 +199,7 @@ enum HttpStage {
 };
 
 class HttpConnection {
-public:
+ public:
   HttpConnection(TcpSocket *socket);
   virtual ~HttpConnection();
   HttpStage GetStage() const;
@@ -215,7 +214,7 @@ public:
   void ResetExpiry();
   long GetExpiry() const;
 
-private:
+ private:
   void ParseMessage(HttpPacket &packet);
   HttpRequest request_;
   HttpResponse response_;
@@ -234,7 +233,7 @@ typedef std::function<HttpResponse(const HttpRequest &, ServiceMap &services)>
     HttpCallback;
 
 class HttpServer {
-public:
+ public:
   HttpServer();
   virtual ~HttpServer();
   void RegisterHandler(HttpMethod method, const std::string &url,
@@ -242,7 +241,7 @@ public:
   void RegisterService(const std::string &name, ApiService *service);
   void Serve(const std::string &service, const std::string &host);
 
-private:
+ private:
   HttpResponse ExecuteHandler(const HttpRequest &request, ServiceMap &services);
   bool SetupTimerDescriptor();
   bool SetupSignalDescriptor();
@@ -279,12 +278,12 @@ private:
 
 namespace http {
 
-std::optional<HttpResponse>
-SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
-            const std::string &url, const std::string &user = kStringEmpty,
-            const std::string &password = kStringEmpty,
-            HttpContentType content_type = INVALID_CONTENT_TYPE,
-            const std::string &content = kStringEmpty);
+std::optional<HttpResponse> SendRequest(
+    const std::string &ip, const std::string &port, HttpMethod method,
+    const std::string &url, const std::string &user = kStringEmpty,
+    const std::string &password = kStringEmpty,
+    HttpContentType content_type = INVALID_CONTENT_TYPE,
+    const std::string &content = kStringEmpty);
 
 }
 

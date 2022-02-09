@@ -24,7 +24,7 @@ const std::string kUuidCharset =
     "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 class Random {
-public:
+ public:
   Random();
   Random(uint64_t seed);
   virtual ~Random();
@@ -33,7 +33,7 @@ public:
   double UniformDouble();
   std::string Uuid(size_t length = 8);
 
-private:
+ private:
   std::mt19937_64 generator_;
   std::uniform_int_distribution<unsigned long> distribution_integer_;
   std::uniform_real_distribution<double> distribution_float_;

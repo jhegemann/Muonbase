@@ -25,9 +25,7 @@ void Random::Seed(uint64_t seed) { generator_.seed(seed); }
 unsigned long Random::UniformInteger() {
   return distribution_integer_(generator_);
 }
-double Random::UniformDouble() {
-  return distribution_float_(generator_);
-}
+double Random::UniformDouble() { return distribution_float_(generator_); }
 
 std::string Random::Uuid(size_t length) {
   std::string uuid;

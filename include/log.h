@@ -15,22 +15,23 @@ limitations under the License. */
 #ifndef LOG_H
 #define LOG_H
 
-#include <fstream>
-#include <iostream>
-#include <mutex>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <fstream>
+#include <iostream>
+#include <mutex>
+
 #include "utils.h"
 
-#define LOG_INFO(message)                                                      \
+#define LOG_INFO(message) \
   Log::GetInstance()->Info(message, __FILE__, __LINE__, __FUNCTION__)
 
 const std::string kLogInfo = "info";
 const std::string kLogDatetimeFormat = "%Y%m%d%H%M%S";
 
 class Log {
-public:
+ public:
   static Log *GetInstance();
   Log(Log &other) = delete;
   void operator=(const Log &) = delete;
@@ -39,7 +40,7 @@ public:
   void SetLogfile(const std::string &filepath);
   void SetVerbose(bool verbose);
 
-private:
+ private:
   static Log *instance_;
   std::fstream stream_;
   bool verbose_;

@@ -138,4 +138,4 @@ HttpResponse Find(const HttpRequest &request, ServiceMap &services) {
                              db->Find(array).String());
 }
 
-} // namespace db_api
+}  // namespace db_api

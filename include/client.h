@@ -24,7 +24,7 @@ limitations under the License. */
 #include "log.h"
 
 class Client {
-public:
+ public:
   Client(const std::string &ip, const std::string &port,
          const std::string &user, const std::string &password);
   virtual ~Client();
@@ -33,7 +33,7 @@ public:
   JsonArray Erase(const JsonArray &keys);
   JsonArray Find(const JsonArray &keys);
 
-private:
+ private:
   std::string ip_;
   std::string port_;
   std::string user_;

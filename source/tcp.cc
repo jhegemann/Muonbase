@@ -116,8 +116,11 @@ bool Epoll::SetDuplex(size_t index) {
 }
 
 TcpSocket::TcpSocket()
-    : host_(kStringEmpty), service_(kStringEmpty), descriptor_(-1),
-      listening_(false), connected_(false) {}
+    : host_(kStringEmpty),
+      service_(kStringEmpty),
+      descriptor_(-1),
+      listening_(false),
+      connected_(false) {}
 
 TcpSocket::~TcpSocket() { Close(); }
 
@@ -352,22 +355,22 @@ IoStatusCode TcpSocket::Receive(std::string &payload) {
                       kTcpMaximumPayloadSize - (long)payload.size());
     bytes = recv(descriptor_, buffer, length, 0);
     switch (bytes) {
-    case -1:
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        return BLOCKED;
-      }
-      if (errno == EINTR) {
-        return INTERRUPTED;
-      }
-      return ERROR;
-    case 0:
-      return DISCONNECT;
-    default:
-      payload.insert(payload.end(), &buffer[0], &buffer[bytes]);
-      if (payload.size() >= kTcpMaximumPayloadSize) {
-        return OVERFLOW;
-      }
-      continue;
+      case -1:
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+          return BLOCKED;
+        }
+        if (errno == EINTR) {
+          return INTERRUPTED;
+        }
+        return ERROR;
+      case 0:
+        return DISCONNECT;
+      default:
+        payload.insert(payload.end(), &buffer[0], &buffer[bytes]);
+        if (payload.size() >= kTcpMaximumPayloadSize) {
+          return OVERFLOW;
+        }
+        continue;
     }
   }
 }
@@ -391,28 +394,32 @@ IoStatusCode TcpSocket::Send(std::string &payload) {
     length = std::min(kTcpSendBufferSize, (long)payload.size());
     bytes = send(descriptor_, &payload[0], length, 0);
     switch (bytes) {
-    case -1:
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        return BLOCKED;
-      }
-      if (errno == EINTR) {
-        return INTERRUPTED;
-      }
-      return ERROR;
-    case 0:
-      return ERROR;
-    default:
-      payload.erase(0, bytes);
-      if (payload.empty()) {
-        return SUCCESS;
-      }
-      continue;
+      case -1:
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+          return BLOCKED;
+        }
+        if (errno == EINTR) {
+          return INTERRUPTED;
+        }
+        return ERROR;
+      case 0:
+        return ERROR;
+      default:
+        payload.erase(0, bytes);
+        if (payload.empty()) {
+          return SUCCESS;
+        }
+        continue;
     }
   }
 }
 
 TcpReader::TcpReader(TcpSocket *socket)
-    : buffer_(kStringEmpty), socket_(socket), status_(NONE), peak_(0), base_(0),
+    : buffer_(kStringEmpty),
+      socket_(socket),
+      status_(NONE),
+      peak_(0),
+      base_(0),
       next_base_(0) {}
 
 TcpReader::~TcpReader() {}

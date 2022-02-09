@@ -44,7 +44,7 @@ class TcpWriter;
 const unsigned kEpollMaximumEvents = 256;
 
 class Epoll {
-public:
+ public:
   Epoll();
   virtual ~Epoll();
   bool Create();
@@ -65,7 +65,7 @@ public:
   bool IsWritable(size_t index) const;
   bool HasErrors(size_t index) const;
 
-private:
+ private:
   int instance_;
   epoll_event event_;
   epoll_event events_[kEpollMaximumEvents];
@@ -94,7 +94,7 @@ enum IoStatusCode {
 };
 
 class TcpSocket {
-public:
+ public:
   TcpSocket();
   virtual ~TcpSocket();
   void Close();
@@ -115,7 +115,7 @@ public:
   IoStatusCode Receive(std::string &payload);
   IoStatusCode Send(std::string &payload);
 
-private:
+ private:
   std::string host_;
   std::string service_;
   int descriptor_;
@@ -124,7 +124,7 @@ private:
 };
 
 class TcpReader {
-public:
+ public:
   TcpReader(TcpSocket *socket);
   virtual ~TcpReader();
   void ReadUntil(const std::string &token);
@@ -142,7 +142,7 @@ public:
   std::string Tok(size_t length);
   bool HasErrors() const;
 
-private:
+ private:
   std::string buffer_;
   TcpSocket *socket_;
   IoStatusCode status_;
@@ -152,7 +152,7 @@ private:
 };
 
 class TcpWriter {
-public:
+ public:
   TcpWriter(TcpSocket *socket);
   virtual ~TcpWriter();
   void Write(const std::string &payload);
@@ -162,7 +162,7 @@ public:
   bool IsEmpty() const;
   bool HasErrors() const;
 
-private:
+ private:
   std::string buffer_;
   TcpSocket *socket_;
   IoStatusCode status_;

@@ -12,13 +12,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
+#include <unistd.h>
+
+#include <iostream>
+
 #include "api.h"
 #include "http.h"
 #include "log.h"
 #include "service.h"
 #include "utils.h"
-#include <iostream>
-#include <unistd.h>
 
 static const char kOptionVerbose = 'v';
 static const char kOptionConfig = 'c';
@@ -42,6 +44,12 @@ static const std::string kWorkingDirectoryDefault = "./";
 static const bool kDaemonizeDefault = false;
 static const bool kVerboseDefault = false;
 
+static void PrintVersion() {
+  std::cout << "Muonbase v1.0.0" << std::endl;
+  std::cout << "Copyright 2022 Jonas Hegemann <jonas.hegemann@hotmail.de>"
+            << std::endl;
+}
+
 static void PrintUsage() {
   std::cout << "Usage: muonbase-server [-h] [-v] [-d] [-c <config>]"
             << std::endl;
@@ -54,6 +62,7 @@ static void PrintUsage() {
 }
 
 int main(int argc, char **argv) {
+  PrintVersion();
   int option;
   JsonObject config;
   bool daemonize = kDaemonizeDefault;
@@ -61,35 +70,35 @@ int main(int argc, char **argv) {
   bool config_available = false;
   while ((option = getopt(argc, argv, kOptionString)) != -1) {
     switch (option) {
-    case kOptionVerbose:
-      verbose = true;
-      break;
-    case kOptionConfig:
-      try {
-        config.Parse(FileToString(optarg));
-      } catch (std::runtime_error &) {
-        LOG_INFO("error parsing configuration");
+      case kOptionVerbose:
+        verbose = true;
+        break;
+      case kOptionConfig:
+        try {
+          config.Parse(FileToString(optarg));
+        } catch (std::runtime_error &) {
+          LOG_INFO("error parsing configuration");
+          exit(1);
+        }
+        config_available = true;
+        break;
+      case kOptionDaemon:
+        daemonize = true;
+        break;
+      case kOptionHelp:
+        PrintUsage();
+        exit(0);
+      case kCharColon:
+        LOG_INFO("option needs a value");
+        PrintUsage();
         exit(1);
-      }
-      config_available = true;
-      break;
-    case kOptionDaemon:
-      daemonize = true;
-      break;
-    case kOptionHelp:
-      PrintUsage();
-      exit(0);
-    case kCharColon:
-      LOG_INFO("option needs a value");
-      PrintUsage();
-      exit(1);
-    case kCharQuestionMark:
-      LOG_INFO("unknown option " + std::string(optopt, 1));
-      PrintUsage();
-      exit(1);
-    default:
-      PrintUsage();
-      exit(0);
+      case kCharQuestionMark:
+        LOG_INFO("unknown option " + std::string(optopt, 1));
+        PrintUsage();
+        exit(1);
+      default:
+        PrintUsage();
+        exit(0);
     }
   }
 

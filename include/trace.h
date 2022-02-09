@@ -15,12 +15,13 @@ limitations under the License. */
 #ifndef TRACE_H
 #define TRACE_H
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <deque>
 #include <fstream>
 #include <iostream>
 #include <mutex>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "utils.h"
 
@@ -29,14 +30,14 @@ limitations under the License. */
 const size_t kTraceLimit = 1000;
 
 class Trace {
-public:
+ public:
   static Trace *GetInstance();
   Trace(Trace &other) = delete;
   void operator=(const Trace &) = delete;
   void Push(const std::string &file, int line, const std::string &function);
   void Print();
 
-private:
+ private:
   static Trace *instance_;
   std::mutex mutex_;
   std::deque<std::string> trace_;

@@ -49,37 +49,63 @@ limitations under the License. */
 #define UNLOCK(node) node->SharedMutex().unlock()
 
 class Node;
-template <class K, class V> class InnerNode;
-template <class K, class V> class OuterNode;
-template <class K, class V> class Map;
-template <class K, class V> class MapIterator;
-template <class K, class V> class Multimap;
-template <class K, class V> class MultimapIterator;
+template <class K, class V>
+class InnerNode;
+template <class K, class V>
+class OuterNode;
+template <class K, class V>
+class Map;
+template <class K, class V>
+class MapIterator;
+template <class K, class V>
+class Multimap;
+template <class K, class V>
+class MultimapIterator;
 
-template <class T> class Serializer;
-template <> class Serializer<std::string>;
-template <class K, class V> class Serializer<std::map<K, V>>;
-template <class K> class Serializer<std::map<K, std::string>>;
-template <class V> class Serializer<std::map<std::string, V>>;
-template <class T> class Serializer<std::vector<T>>;
-template <> class Serializer<std::vector<std::string>>;
-template <> class Serializer<JsonObject>;
-template <> class Serializer<JsonArray>;
-template <class K, class V> class Serializer<Map<K, V>>;
+template <class T>
+class Serializer;
+template <>
+class Serializer<std::string>;
+template <class K, class V>
+class Serializer<std::map<K, V>>;
+template <class K>
+class Serializer<std::map<K, std::string>>;
+template <class V>
+class Serializer<std::map<std::string, V>>;
+template <class T>
+class Serializer<std::vector<T>>;
+template <>
+class Serializer<std::vector<std::string>>;
+template <>
+class Serializer<JsonObject>;
+template <>
+class Serializer<JsonArray>;
+template <class K, class V>
+class Serializer<Map<K, V>>;
 
-template <class T> class Memory;
-template <> class Memory<std::string>;
-template <class K, class V> class Memory<std::map<K, V>>;
-template <class K> class Memory<std::map<K, std::string>>;
-template <class V> class Memory<std::map<std::string, V>>;
-template <class T> class Memory<std::vector<T>>;
-template <> class Memory<std::vector<std::string>>;
-template <> class Memory<JsonObject>;
-template <> class Memory<JsonArray>;
-template <class K, class V> class Memory<Map<K, V>>;
+template <class T>
+class Memory;
+template <>
+class Memory<std::string>;
+template <class K, class V>
+class Memory<std::map<K, V>>;
+template <class K>
+class Memory<std::map<K, std::string>>;
+template <class V>
+class Memory<std::map<std::string, V>>;
+template <class T>
+class Memory<std::vector<T>>;
+template <>
+class Memory<std::vector<std::string>>;
+template <>
+class Memory<JsonObject>;
+template <>
+class Memory<JsonArray>;
+template <class K, class V>
+class Memory<Map<K, V>>;
 
 class Node {
-public:
+ public:
   Node() {}
   virtual ~Node() {}
   virtual bool IsOuter() const = 0;
@@ -93,16 +119,24 @@ public:
   virtual std::shared_mutex &SharedMutex() = 0;
 };
 
-template <class K, class V> class InnerNode : public Node {
-  template <class> friend class ::Serializer;
-  template <class> friend class ::Memory;
-  template <class, class> friend class ::OuterNode;
-  template <class, class> friend class ::Map;
-  template <class, class> friend class ::MapIterator;
-  template <class, class> friend class ::Multimap;
-  template <class, class> friend class ::MultimapIterator;
+template <class K, class V>
+class InnerNode : public Node {
+  template <class>
+  friend class ::Serializer;
+  template <class>
+  friend class ::Memory;
+  template <class, class>
+  friend class ::OuterNode;
+  template <class, class>
+  friend class ::Map;
+  template <class, class>
+  friend class ::MapIterator;
+  template <class, class>
+  friend class ::Multimap;
+  template <class, class>
+  friend class ::MultimapIterator;
 
-public:
+ public:
   InnerNode();
   virtual ~InnerNode();
   Node *GetParent() const;
@@ -127,62 +161,75 @@ public:
   bool Coalesce(Node *node);
   std::shared_mutex &SharedMutex();
 
-protected:
+ protected:
   Node *parent_;
   std::vector<K> keys_;
   std::vector<Node *> kids_;
   std::shared_mutex mutex_;
 };
 
-template <class K, class V> InnerNode<K, V>::InnerNode() {
+template <class K, class V>
+InnerNode<K, V>::InnerNode() {
   STACKTRACE;
   keys_.reserve(INNER_FANOUT + 1);
   kids_.reserve(INNER_FANOUT + 2);
 }
 
-template <class K, class V> InnerNode<K, V>::~InnerNode() { STACKTRACE; }
+template <class K, class V>
+InnerNode<K, V>::~InnerNode() {
+  STACKTRACE;
+}
 
-template <class K, class V> inline Node *InnerNode<K, V>::GetParent() const {
+template <class K, class V>
+inline Node *InnerNode<K, V>::GetParent() const {
   STACKTRACE;
   return parent_;
 }
 
-template <class K, class V> inline void InnerNode<K, V>::SetParent(Node *node) {
+template <class K, class V>
+inline void InnerNode<K, V>::SetParent(Node *node) {
   STACKTRACE;
   parent_ = node;
 }
 
-template <class K, class V> inline bool InnerNode<K, V>::IsOuter() const {
+template <class K, class V>
+inline bool InnerNode<K, V>::IsOuter() const {
   STACKTRACE;
   return false;
 }
 
-template <class K, class V> inline bool InnerNode<K, V>::IsSparse() const {
+template <class K, class V>
+inline bool InnerNode<K, V>::IsSparse() const {
   STACKTRACE;
   return keys_.size() < INNER_FANOUT / 2;
 }
 
-template <class K, class V> inline bool InnerNode<K, V>::IsFull() const {
+template <class K, class V>
+inline bool InnerNode<K, V>::IsFull() const {
   STACKTRACE;
   return keys_.size() > INNER_FANOUT;
 }
 
-template <class K, class V> inline bool InnerNode<K, V>::IsEmpty() const {
+template <class K, class V>
+inline bool InnerNode<K, V>::IsEmpty() const {
   STACKTRACE;
   return keys_.empty();
 }
 
-template <class K, class V> inline size_t InnerNode<K, V>::CountKeys() const {
+template <class K, class V>
+inline size_t InnerNode<K, V>::CountKeys() const {
   STACKTRACE;
   return keys_.size();
 }
 
-template <class K, class V> inline size_t InnerNode<K, V>::CountKids() const {
+template <class K, class V>
+inline size_t InnerNode<K, V>::CountKids() const {
   STACKTRACE;
   return kids_.size();
 }
 
-template <class K, class V> inline K &InnerNode<K, V>::Key(size_t index) {
+template <class K, class V>
+inline K &InnerNode<K, V>::Key(size_t index) {
   STACKTRACE;
   return keys_[index];
 }
@@ -193,7 +240,8 @@ inline const K &InnerNode<K, V>::GetKey(size_t index) const {
   return keys_[index];
 }
 
-template <class K, class V> inline Node *InnerNode<K, V>::Kid(size_t index) {
+template <class K, class V>
+inline Node *InnerNode<K, V>::Kid(size_t index) {
   STACKTRACE;
   return kids_[index];
 }
@@ -309,7 +357,8 @@ size_t InnerNode<K, V>::SeparatorIndex(InnerNode<K, V> *kin) {
   return std::min(self_index, kin_index);
 }
 
-template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
+template <class K, class V>
+bool InnerNode<K, V>::Redistribute(Node *node) {
   STACKTRACE;
   InnerNode<K, V> *kin = CAST_INNER(node);
   const size_t separator_index = SeparatorIndex(kin);
@@ -338,7 +387,8 @@ template <class K, class V> bool InnerNode<K, V>::Redistribute(Node *node) {
   return false;
 }
 
-template <class K, class V> bool InnerNode<K, V>::Coalesce(Node *node) {
+template <class K, class V>
+bool InnerNode<K, V>::Coalesce(Node *node) {
   STACKTRACE;
   InnerNode<K, V> *kin = CAST_INNER(node);
   if (keys_.size() + kin->keys_.size() > INNER_FANOUT) {
@@ -366,16 +416,24 @@ inline std::shared_mutex &InnerNode<K, V>::SharedMutex() {
   return mutex_;
 }
 
-template <class K, class V> class OuterNode : public Node {
-  template <class> friend class ::Serializer;
-  template <class> friend class ::Memory;
-  template <class, class> friend class ::InnerNode;
-  template <class, class> friend class ::Map;
-  template <class, class> friend class ::MapIterator;
-  template <class, class> friend class ::Multimap;
-  template <class, class> friend class ::MultimapIterator;
+template <class K, class V>
+class OuterNode : public Node {
+  template <class>
+  friend class ::Serializer;
+  template <class>
+  friend class ::Memory;
+  template <class, class>
+  friend class ::InnerNode;
+  template <class, class>
+  friend class ::Map;
+  template <class, class>
+  friend class ::MapIterator;
+  template <class, class>
+  friend class ::Multimap;
+  template <class, class>
+  friend class ::MultimapIterator;
 
-public:
+ public:
   OuterNode();
   virtual ~OuterNode();
   Node *GetParent() const;
@@ -402,7 +460,7 @@ public:
   OuterNode<K, V> *GetPrevious() const;
   std::shared_mutex &SharedMutex();
 
-protected:
+ protected:
   std::vector<K> keys_;
   std::vector<V> values_;
   Node *parent_;
@@ -418,49 +476,61 @@ OuterNode<K, V>::OuterNode() : next_(nullptr), previous_(nullptr) {
   values_.reserve(OUTER_FANOUT + 1);
 }
 
-template <class K, class V> OuterNode<K, V>::~OuterNode() { STACKTRACE; }
+template <class K, class V>
+OuterNode<K, V>::~OuterNode() {
+  STACKTRACE;
+}
 
-template <class K, class V> inline Node *OuterNode<K, V>::GetParent() const {
+template <class K, class V>
+inline Node *OuterNode<K, V>::GetParent() const {
   STACKTRACE;
   return parent_;
 }
 
-template <class K, class V> inline void OuterNode<K, V>::SetParent(Node *node) {
+template <class K, class V>
+inline void OuterNode<K, V>::SetParent(Node *node) {
   STACKTRACE;
   parent_ = node;
 }
 
-template <class K, class V> inline bool OuterNode<K, V>::IsOuter() const {
+template <class K, class V>
+inline bool OuterNode<K, V>::IsOuter() const {
   STACKTRACE;
   return true;
 }
 
-template <class K, class V> inline bool OuterNode<K, V>::IsSparse() const {
+template <class K, class V>
+inline bool OuterNode<K, V>::IsSparse() const {
   STACKTRACE;
   return keys_.size() < OUTER_FANOUT / 2;
 }
 
-template <class K, class V> inline bool OuterNode<K, V>::IsFull() const {
+template <class K, class V>
+inline bool OuterNode<K, V>::IsFull() const {
   STACKTRACE;
   return keys_.size() > OUTER_FANOUT;
 }
 
-template <class K, class V> inline bool OuterNode<K, V>::IsEmpty() const {
+template <class K, class V>
+inline bool OuterNode<K, V>::IsEmpty() const {
   STACKTRACE;
   return keys_.empty();
 }
 
-template <class K, class V> inline size_t OuterNode<K, V>::CountKeys() const {
+template <class K, class V>
+inline size_t OuterNode<K, V>::CountKeys() const {
   STACKTRACE;
   return keys_.size();
 }
 
-template <class K, class V> inline size_t OuterNode<K, V>::CountValues() const {
+template <class K, class V>
+inline size_t OuterNode<K, V>::CountValues() const {
   STACKTRACE;
   return values_.size();
 }
 
-template <class K, class V> inline K &OuterNode<K, V>::Key(size_t index) {
+template <class K, class V>
+inline K &OuterNode<K, V>::Key(size_t index) {
   STACKTRACE;
   return keys_[index];
 }
@@ -471,7 +541,8 @@ inline const K &OuterNode<K, V>::GetKey(size_t index) const {
   return keys_[index];
 }
 
-template <class K, class V> inline V &OuterNode<K, V>::Value(size_t index) {
+template <class K, class V>
+inline V &OuterNode<K, V>::Value(size_t index) {
   STACKTRACE;
   return values_[index];
 }
@@ -530,7 +601,8 @@ void OuterNode<K, V>::Insert(const K &key, const V &value) {
   values_.insert(values_.begin() + position, value);
 }
 
-template <class K, class V> void OuterNode<K, V>::Erase(const K &key) {
+template <class K, class V>
+void OuterNode<K, V>::Erase(const K &key) {
   STACKTRACE;
   const size_t key_position = KeyIndex(key);
   if (key_position == std::string::npos) {
@@ -575,7 +647,8 @@ std::pair<OuterNode<K, V> *, K> OuterNode<K, V>::Split() {
   return std::make_pair(kin, up_key);
 }
 
-template <class K, class V> bool OuterNode<K, V>::Redistribute(Node *node) {
+template <class K, class V>
+bool OuterNode<K, V>::Redistribute(Node *node) {
   STACKTRACE;
   OuterNode<K, V> *kin = CAST_OUTER(node);
   if (kin->keys_.size() >= keys_.size() + 2) {
@@ -600,7 +673,8 @@ template <class K, class V> bool OuterNode<K, V>::Redistribute(Node *node) {
   return true;
 }
 
-template <class K, class V> bool OuterNode<K, V>::Coalesce(Node *node) {
+template <class K, class V>
+bool OuterNode<K, V>::Coalesce(Node *node) {
   STACKTRACE;
   OuterNode<K, V> *kin = CAST_OUTER(node);
   if (kin->keys_.size() + keys_.size() > OUTER_FANOUT) {
@@ -636,16 +710,24 @@ inline std::shared_mutex &OuterNode<K, V>::SharedMutex() {
   return mutex_;
 }
 
-template <class K, class V> class Map {
-  template <class> friend class ::Serializer;
-  template <class> friend class ::Memory;
-  template <class, class> friend class ::InnerNode;
-  template <class, class> friend class ::OuterNode;
-  template <class, class> friend class ::MapIterator;
-  template <class, class> friend class ::Multimap;
-  template <class, class> friend class ::MultimapIterator;
+template <class K, class V>
+class Map {
+  template <class>
+  friend class ::Serializer;
+  template <class>
+  friend class ::Memory;
+  template <class, class>
+  friend class ::InnerNode;
+  template <class, class>
+  friend class ::OuterNode;
+  template <class, class>
+  friend class ::MapIterator;
+  template <class, class>
+  friend class ::Multimap;
+  template <class, class>
+  friend class ::MultimapIterator;
 
-public:
+ public:
   Map();
   Map(const Map<K, V> &other);
   virtual ~Map();
@@ -664,7 +746,7 @@ public:
   MapIterator<K, V> End();
   const MapIterator<K, V> End() const;
 
-protected:
+ protected:
   Node *root_;
   size_t size_;
   const V &Get(const K &key) const;
@@ -679,7 +761,8 @@ protected:
   OuterNode<K, V> *LastLeaf() const;
 };
 
-template <class K, class V> Map<K, V>::Map() : root_(nullptr), size_(0) {
+template <class K, class V>
+Map<K, V>::Map() : root_(nullptr), size_(0) {
   STACKTRACE;
 }
 
@@ -692,12 +775,14 @@ Map<K, V>::Map(const Map<K, V> &other) : root_(nullptr), size_(0) {
   }
 }
 
-template <class K, class V> Map<K, V>::~Map() {
+template <class K, class V>
+Map<K, V>::~Map() {
   STACKTRACE;
   Clear();
 }
 
-template <class K, class V> void Map<K, V>::Clear() {
+template <class K, class V>
+void Map<K, V>::Clear() {
   STACKTRACE;
   if (root_ != nullptr) {
     std::stack<Node *> todo;
@@ -720,9 +805,13 @@ template <class K, class V> void Map<K, V>::Clear() {
   size_ = 0;
 }
 
-template <class K, class V> size_t Map<K, V>::Size() const { return size_; }
+template <class K, class V>
+size_t Map<K, V>::Size() const {
+  return size_;
+}
 
-template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) const {
+template <class K, class V>
+Node *Map<K, V>::LeftNode(Node *node) const {
   STACKTRACE;
   if (node == root_) {
     return nullptr;
@@ -735,7 +824,8 @@ template <class K, class V> Node *Map<K, V>::LeftNode(Node *node) const {
   return node_parent->kids_[position - 1];
 }
 
-template <class K, class V> Node *Map<K, V>::RightNode(Node *node) const {
+template <class K, class V>
+Node *Map<K, V>::RightNode(Node *node) const {
   STACKTRACE;
   if (node == root_) {
     return nullptr;
@@ -824,7 +914,8 @@ MapIterator<K, V> Map<K, V>::Locate(const K &key) const {
   return MapIterator<K, V>(outer->KeyIndex(key), outer);
 }
 
-template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
+template <class K, class V>
+OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
   STACKTRACE;
   if (root_ == nullptr) {
     return nullptr;
@@ -836,7 +927,8 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::FirstLeaf() const {
   return CAST_OUTER(current);
 }
 
-template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() const {
+template <class K, class V>
+OuterNode<K, V> *Map<K, V>::LastLeaf() const {
   STACKTRACE;
   if (root_ == nullptr) {
     return nullptr;
@@ -848,22 +940,26 @@ template <class K, class V> OuterNode<K, V> *Map<K, V>::LastLeaf() const {
   return CAST_OUTER(current);
 }
 
-template <class K, class V> const V &Map<K, V>::Get(const K &key) const {
+template <class K, class V>
+const V &Map<K, V>::Get(const K &key) const {
   STACKTRACE;
   return Locate(key).GetValue();
 }
 
-template <class K, class V> V &Map<K, V>::Get(const K &key) {
+template <class K, class V>
+V &Map<K, V>::Get(const K &key) {
   STACKTRACE;
   return Locate(key).GetValue();
 }
 
-template <class K, class V> const V &Map<K, V>::operator[](const K &key) const {
+template <class K, class V>
+const V &Map<K, V>::operator[](const K &key) const {
   STACKTRACE;
   return Get(key);
 }
 
-template <class K, class V> V &Map<K, V>::operator[](const K &key) {
+template <class K, class V>
+V &Map<K, V>::operator[](const K &key) {
   STACKTRACE;
   return Get(key);
 }
@@ -972,7 +1068,8 @@ MapIterator<K, V> Map<K, V>::Erase(const MapIterator<K, V> &iterator) {
   return next;
 }
 
-template <class K, class V> bool Map<K, V>::Erase(const K &key) {
+template <class K, class V>
+bool Map<K, V>::Erase(const K &key) {
   STACKTRACE;
   MapIterator<K, V> iterator = Locate(key);
   if (iterator.index_ == std::string::npos) {
@@ -982,7 +1079,8 @@ template <class K, class V> bool Map<K, V>::Erase(const K &key) {
   return true;
 }
 
-template <class K, class V> bool Map<K, V>::Contains(const K &key) const {
+template <class K, class V>
+bool Map<K, V>::Contains(const K &key) const {
   STACKTRACE;
   MapIterator<K, V> iterator = Locate(key);
   if (iterator.index_ == std::string::npos) {
@@ -1001,7 +1099,8 @@ MapIterator<K, V> Map<K, V>::Find(const K &key) const {
   return iterator;
 }
 
-template <class K, class V> MapIterator<K, V> Map<K, V>::Begin() {
+template <class K, class V>
+MapIterator<K, V> Map<K, V>::Begin() {
   STACKTRACE;
   if (root_ == nullptr) {
     return End();
@@ -1012,7 +1111,8 @@ template <class K, class V> MapIterator<K, V> Map<K, V>::Begin() {
   return iter;
 }
 
-template <class K, class V> const MapIterator<K, V> Map<K, V>::Begin() const {
+template <class K, class V>
+const MapIterator<K, V> Map<K, V>::Begin() const {
   STACKTRACE;
   if (root_ == nullptr) {
     return End();
@@ -1023,26 +1123,36 @@ template <class K, class V> const MapIterator<K, V> Map<K, V>::Begin() const {
   return iter;
 }
 
-template <class K, class V> MapIterator<K, V> Map<K, V>::End() {
+template <class K, class V>
+MapIterator<K, V> Map<K, V>::End() {
   STACKTRACE;
   return MapIterator<K, V>();
 }
 
-template <class K, class V> const MapIterator<K, V> Map<K, V>::End() const {
+template <class K, class V>
+const MapIterator<K, V> Map<K, V>::End() const {
   STACKTRACE;
   return MapIterator<K, V>();
 }
 
-template <class K, class V> class MapIterator {
-  template <class> friend class ::Serializer;
-  template <class> friend class ::Memory;
-  template <class, class> friend class ::InnerNode;
-  template <class, class> friend class ::OuterNode;
-  template <class, class> friend class ::Map;
-  template <class, class> friend class ::Multimap;
-  template <class, class> friend class ::MultimapIterator;
+template <class K, class V>
+class MapIterator {
+  template <class>
+  friend class ::Serializer;
+  template <class>
+  friend class ::Memory;
+  template <class, class>
+  friend class ::InnerNode;
+  template <class, class>
+  friend class ::OuterNode;
+  template <class, class>
+  friend class ::Map;
+  template <class, class>
+  friend class ::Multimap;
+  template <class, class>
+  friend class ::MultimapIterator;
 
-public:
+ public:
   MapIterator();
   virtual ~MapIterator();
   const K &GetKey() const;
@@ -1054,7 +1164,7 @@ public:
   bool operator==(const MapIterator<K, V> &rhs);
   bool operator!=(const MapIterator<K, V> &rhs);
 
-protected:
+ protected:
   MapIterator(size_t index, OuterNode<K, V> *node);
   const size_t GetIndex() const;
   const OuterNode<K, V> *GetNode() const;
@@ -1077,19 +1187,25 @@ MapIterator<K, V>::MapIterator(size_t index, OuterNode<K, V> *node)
   STACKTRACE;
 }
 
-template <class K, class V> MapIterator<K, V>::~MapIterator() { STACKTRACE; }
+template <class K, class V>
+MapIterator<K, V>::~MapIterator() {
+  STACKTRACE;
+}
 
-template <class K, class V> inline K &MapIterator<K, V>::Key() {
+template <class K, class V>
+inline K &MapIterator<K, V>::Key() {
   STACKTRACE;
   return node_->Key(index_);
 }
 
-template <class K, class V> inline const K &MapIterator<K, V>::GetKey() const {
+template <class K, class V>
+inline const K &MapIterator<K, V>::GetKey() const {
   STACKTRACE;
   return node_->GetKey(index_);
 }
 
-template <class K, class V> inline V &MapIterator<K, V>::Value() {
+template <class K, class V>
+inline V &MapIterator<K, V>::Value() {
   STACKTRACE;
   return node_->Value(index_);
 }
@@ -1154,7 +1270,8 @@ inline bool MapIterator<K, V>::operator!=(const MapIterator<K, V> &rhs) {
   return !(*this == rhs);
 }
 
-template <class K, class V> void MapIterator<K, V>::Increment() {
+template <class K, class V>
+void MapIterator<K, V>::Increment() {
   STACKTRACE;
   if (index_ >= node_->keys_.size() - 1) {
     if (node_->next_ != nullptr) {
@@ -1169,7 +1286,8 @@ template <class K, class V> void MapIterator<K, V>::Increment() {
   }
 }
 
-template <class K, class V> void MapIterator<K, V>::Decrement() {
+template <class K, class V>
+void MapIterator<K, V>::Decrement() {
   STACKTRACE;
   if (index_ == 0) {
     if (node_->prev_ != nullptr) {
@@ -1184,16 +1302,24 @@ template <class K, class V> void MapIterator<K, V>::Decrement() {
   }
 }
 
-template <class K, class V> class Multimap {
-  template <class> friend class ::Serializer;
-  template <class> friend class ::Memory;
-  template <class, class> friend class ::InnerNode;
-  template <class, class> friend class ::OuterNode;
-  template <class, class> friend class ::Map;
-  template <class, class> friend class ::MapIterator;
-  template <class, class> friend class ::MultimapIterator;
+template <class K, class V>
+class Multimap {
+  template <class>
+  friend class ::Serializer;
+  template <class>
+  friend class ::Memory;
+  template <class, class>
+  friend class ::InnerNode;
+  template <class, class>
+  friend class ::OuterNode;
+  template <class, class>
+  friend class ::Map;
+  template <class, class>
+  friend class ::MapIterator;
+  template <class, class>
+  friend class ::MultimapIterator;
 
-public:
+ public:
   Multimap();
   virtual ~Multimap();
   size_t Size() const;
@@ -1214,18 +1340,25 @@ public:
   MultimapIterator<K, V> End();
   const MultimapIterator<K, V> End() const;
 
-protected:
+ protected:
   Map<K, std::vector<V>> tree_;
   const std::vector<V> &Get(const K &key) const;
   std::vector<V> &Get(const K &key);
   MultimapIterator<K, V> BeginIterator();
 };
 
-template <class K, class V> Multimap<K, V>::Multimap() { STACKTRACE; }
+template <class K, class V>
+Multimap<K, V>::Multimap() {
+  STACKTRACE;
+}
 
-template <class K, class V> Multimap<K, V>::~Multimap() { STACKTRACE; }
+template <class K, class V>
+Multimap<K, V>::~Multimap() {
+  STACKTRACE;
+}
 
-template <class K, class V> size_t Multimap<K, V>::Size() const {
+template <class K, class V>
+size_t Multimap<K, V>::Size() const {
   STACKTRACE;
   return tree_.Size();
 }
@@ -1260,7 +1393,8 @@ inline std::vector<V> &Multimap<K, V>::Get(const K &key) {
   return tree_.Get(key);
 }
 
-template <class K, class V> inline void Multimap<K, V>::Clear() {
+template <class K, class V>
+inline void Multimap<K, V>::Clear() {
   STACKTRACE;
   tree_.Clear();
 }
@@ -1277,7 +1411,8 @@ std::vector<V> &Multimap<K, V>::operator[](const K &key) {
   return Get(key);
 }
 
-template <class K, class V> inline bool Multimap<K, V>::Erase(const K &key) {
+template <class K, class V>
+inline bool Multimap<K, V>::Erase(const K &key) {
   STACKTRACE;
   return tree_.Erase(key);
 }
@@ -1304,8 +1439,8 @@ bool Multimap<K, V>::Erase(const K &key, const V &value) {
 }
 
 template <class K, class V>
-inline MultimapIterator<K, V>
-Multimap<K, V>::Erase(const MultimapIterator<K, V> &iterator) {
+inline MultimapIterator<K, V> Multimap<K, V>::Erase(
+    const MultimapIterator<K, V> &iterator) {
   STACKTRACE;
   MultimapIterator<K, V> next = iterator;
   MapIterator<K, std::vector<V>> single(iterator.index_, iterator.node_);
@@ -1417,16 +1552,24 @@ const MultimapIterator<K, V> inline Multimap<K, V>::End() const {
   return MultimapIterator<K, V>();
 }
 
-template <class K, class V> class MultimapIterator {
-  template <class> friend class ::Serializer;
-  template <class> friend class ::Memory;
-  template <class, class> friend class ::InnerNode;
-  template <class, class> friend class ::OuterNode;
-  template <class, class> friend class ::Map;
-  template <class, class> friend class ::MapIterator;
-  template <class, class> friend class ::Multimap;
+template <class K, class V>
+class MultimapIterator {
+  template <class>
+  friend class ::Serializer;
+  template <class>
+  friend class ::Memory;
+  template <class, class>
+  friend class ::InnerNode;
+  template <class, class>
+  friend class ::OuterNode;
+  template <class, class>
+  friend class ::Map;
+  template <class, class>
+  friend class ::MapIterator;
+  template <class, class>
+  friend class ::Multimap;
 
-public:
+ public:
   MultimapIterator();
   virtual ~MultimapIterator();
   const K &GetKey() const;
@@ -1439,7 +1582,7 @@ public:
   bool operator==(const MultimapIterator<K, V> &rhs);
   bool operator!=(const MultimapIterator<K, V> &rhs);
 
-protected:
+ protected:
   MultimapIterator &operator=(const MapIterator<K, V> &iterator);
   K &Key();
   V &Value();
@@ -1453,16 +1596,19 @@ protected:
 
 template <class K, class V>
 MultimapIterator<K, V>::MultimapIterator()
-    : node_(nullptr), index_(std::string::npos),
+    : node_(nullptr),
+      index_(std::string::npos),
       multi_index_(std::string::npos) {
   STACKTRACE;
 }
 
-template <class K, class V> MultimapIterator<K, V>::~MultimapIterator() {
+template <class K, class V>
+MultimapIterator<K, V>::~MultimapIterator() {
   STACKTRACE;
 }
 
-template <class K, class V> inline K &MultimapIterator<K, V>::Key() {
+template <class K, class V>
+inline K &MultimapIterator<K, V>::Key() {
   STACKTRACE;
   return node_->GetKey(index_);
 }
@@ -1473,7 +1619,8 @@ inline const K &MultimapIterator<K, V>::GetKey() const {
   return node_->GetKey(index_);
 }
 
-template <class K, class V> inline V &MultimapIterator<K, V>::Value() {
+template <class K, class V>
+inline V &MultimapIterator<K, V>::Value() {
   STACKTRACE;
   return node_->GetValue(index_)[multi_index_];
 }
@@ -1527,23 +1674,23 @@ inline MultimapIterator<K, V> MultimapIterator<K, V>::operator--(int) {
 }
 
 template <class K, class V>
-inline bool
-MultimapIterator<K, V>::operator==(const MultimapIterator<K, V> &rhs) {
+inline bool MultimapIterator<K, V>::operator==(
+    const MultimapIterator<K, V> &rhs) {
   STACKTRACE;
   return node_ == rhs.node_ && index_ == rhs.index_ &&
          multi_index_ == rhs.multi_index_;
 }
 
 template <class K, class V>
-inline bool
-MultimapIterator<K, V>::operator!=(const MultimapIterator<K, V> &rhs) {
+inline bool MultimapIterator<K, V>::operator!=(
+    const MultimapIterator<K, V> &rhs) {
   STACKTRACE;
   return !(*this == rhs);
 }
 
 template <class K, class V>
-MultimapIterator<K, V> &
-MultimapIterator<K, V>::operator=(const MapIterator<K, V> &iterator) {
+MultimapIterator<K, V> &MultimapIterator<K, V>::operator=(
+    const MapIterator<K, V> &iterator) {
   STACKTRACE;
   if (this != &iterator) {
     node_ = iterator.node_;
@@ -1552,7 +1699,8 @@ MultimapIterator<K, V>::operator=(const MapIterator<K, V> &iterator) {
   return *this;
 }
 
-template <class K, class V> void MultimapIterator<K, V>::Increment() {
+template <class K, class V>
+void MultimapIterator<K, V>::Increment() {
   STACKTRACE;
   if (index_ >= node_->keys_.size() - 1) {
     if (multi_index_ >= node_->values_[index_].size() - 1) {
@@ -1578,7 +1726,8 @@ template <class K, class V> void MultimapIterator<K, V>::Increment() {
   }
 }
 
-template <class K, class V> void MultimapIterator<K, V>::Decrement() {
+template <class K, class V>
+void MultimapIterator<K, V>::Decrement() {
   STACKTRACE;
   if (index_ == 0) {
     if (multi_index_ == 0) {
@@ -1604,8 +1753,9 @@ template <class K, class V> void MultimapIterator<K, V>::Decrement() {
   }
 }
 
-template <class T> class Serializer {
-public:
+template <class T>
+class Serializer {
+ public:
   static size_t Serialize(const T &object, std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
     stream.write((const char *)&object, sizeof(T));
@@ -1618,8 +1768,9 @@ public:
   }
 };
 
-template <> class Serializer<std::string> {
-public:
+template <>
+class Serializer<std::string> {
+ public:
   static size_t Serialize(const std::string &object, std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
     size_t length = object.length();
@@ -1638,8 +1789,9 @@ public:
   }
 };
 
-template <class K, class V> class Serializer<std::map<K, V>> {
-public:
+template <class K, class V>
+class Serializer<std::map<K, V>> {
+ public:
   static size_t Serialize(const std::map<K, V> &object, std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
     typename std::map<K, V>::iterator it;
@@ -1675,8 +1827,9 @@ public:
   }
 };
 
-template <class K> class Serializer<std::map<K, std::string>> {
-public:
+template <class K>
+class Serializer<std::map<K, std::string>> {
+ public:
   static size_t Serialize(const std::map<K, std::string> &object,
                           std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
@@ -1721,8 +1874,9 @@ public:
   }
 };
 
-template <class V> class Serializer<std::map<std::string, V>> {
-public:
+template <class V>
+class Serializer<std::map<std::string, V>> {
+ public:
   static size_t Serialize(const std::map<std::string, V> &object,
                           std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
@@ -1767,8 +1921,9 @@ public:
   }
 };
 
-template <class T> class Serializer<std::vector<T>> {
-public:
+template <class T>
+class Serializer<std::vector<T>> {
+ public:
   static size_t Serialize(const std::vector<T> &object, std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
     size_t size = object.size();
@@ -1797,8 +1952,9 @@ public:
   }
 };
 
-template <> class Serializer<std::vector<std::string>> {
-public:
+template <>
+class Serializer<std::vector<std::string>> {
+ public:
   static size_t Serialize(const std::vector<std::string> &object,
                           std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
@@ -1840,8 +1996,9 @@ public:
   }
 };
 
-template <> class Serializer<JsonArray> {
-public:
+template <>
+class Serializer<JsonArray> {
+ public:
   static size_t Serialize(const JsonArray &object, std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
     return json::Serialize(object, stream);
@@ -1852,8 +2009,9 @@ public:
   }
 };
 
-template <> class Serializer<JsonObject> {
-public:
+template <>
+class Serializer<JsonObject> {
+ public:
   static size_t Serialize(const JsonObject &object, std::ostream &stream,
                           const std::atomic<bool> &cancel = false) {
     return json::Serialize(object, stream);
@@ -1864,8 +2022,9 @@ public:
   }
 };
 
-template <class K, class V> class Serializer<Map<K, V>> {
-public:
+template <class K, class V>
+class Serializer<Map<K, V>> {
+ public:
   static size_t Serialize(const Map<K, V> &object, std::ostream &stream,
                           const std::atomic<bool> &cancel = false);
   static size_t Deserialize(Map<K, V> &object, std::istream &stream,
@@ -1928,20 +2087,23 @@ size_t Serializer<Map<K, V>>::Deserialize(Map<K, V> &object,
   return stream ? bytes : std::string::npos;
 }
 
-template <class T> class Memory {
-public:
+template <class T>
+class Memory {
+ public:
   static uint64_t Consumption(const T &object) { return sizeof(object); }
 };
 
-template <> class Memory<std::string> {
-public:
+template <>
+class Memory<std::string> {
+ public:
   static uint64_t Consumption(const std::string &object) {
     return sizeof(std::string) + object.capacity();
   }
 };
 
-template <class K, class V> class Memory<std::map<K, V>> {
-public:
+template <class K, class V>
+class Memory<std::map<K, V>> {
+ public:
   static uint64_t Consumption(const std::map<K, V> &object) {
     uint64_t result = sizeof(std::map<K, V>);
     for (auto it = object.begin(); it != object.end(); it++) {
@@ -1951,8 +2113,9 @@ public:
   }
 };
 
-template <class K> class Memory<std::map<K, std::string>> {
-public:
+template <class K>
+class Memory<std::map<K, std::string>> {
+ public:
   static uint64_t Consumption(const std::map<K, std::string> &object) {
     uint64_t result = sizeof(std::map<K, std::string>);
     for (auto it = object.begin(); it != object.end(); it++) {
@@ -1962,8 +2125,9 @@ public:
   }
 };
 
-template <class V> class Memory<std::map<std::string, V>> {
-public:
+template <class V>
+class Memory<std::map<std::string, V>> {
+ public:
   static uint64_t Consumption(const std::map<std::string, V> &object) {
     uint64_t result = sizeof(std::map<std::string, V>);
     for (auto it = object.begin(); it != object.end(); it++) {
@@ -1973,15 +2137,17 @@ public:
   }
 };
 
-template <class T> class Memory<std::vector<T>> {
-public:
+template <class T>
+class Memory<std::vector<T>> {
+ public:
   static uint64_t Consumption(const std::vector<T> &object) {
     return sizeof(T) * object.capacity();
   }
 };
 
-template <> class Memory<std::vector<std::string>> {
-public:
+template <>
+class Memory<std::vector<std::string>> {
+ public:
   static uint64_t Consumption(const std::vector<std::string> &object) {
     uint64_t result = sizeof(std::vector<std::string>);
     for (size_t i = 0; i < object.size(); i++) {
@@ -1991,22 +2157,25 @@ public:
   }
 };
 
-template <> class Memory<JsonObject> {
-public:
+template <>
+class Memory<JsonObject> {
+ public:
   static uint64_t Consumption(const JsonObject &object) {
     return json::Memory(object);
   }
 };
 
-template <> class Memory<JsonArray> {
-public:
+template <>
+class Memory<JsonArray> {
+ public:
   static uint64_t Consumption(const JsonArray &object) {
     return json::Memory(object);
   }
 };
 
-template <class K, class V> class Memory<Map<K, V>> {
-public:
+template <class K, class V>
+class Memory<Map<K, V>> {
+ public:
   static uint64_t Consumption(const Map<K, V> &object) {
     uint64_t result = sizeof(Map<K, V>);
     if (object.root_ == nullptr) {

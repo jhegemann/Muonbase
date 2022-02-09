@@ -12,15 +12,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. */
 
+#include <unistd.h>
+
+#include <iostream>
+#include <optional>
+
 #include "client.h"
 #include "clock.h"
 #include "http.h"
 #include "log.h"
 #include "trace.h"
 #include "utils.h"
-#include <iostream>
-#include <optional>
-#include <unistd.h>
 
 static const char kOptionRun = 't';
 static const char kOptionIp = 'i';
@@ -42,6 +44,12 @@ static const size_t kOrderDefault = 32;
 static const size_t kCyclesDefault = 8;
 static const size_t kThreadsDefault = 4;
 
+static void PrintVersion() {
+  std::cout << "Muonbase v1.0.0" << std::endl;
+  std::cout << "Copyright 2022 Jonas Hegemann <jonas.hegemann@hotmail.de>"
+            << std::endl;
+}
+
 static void PrintUsage() {
   std::cout << "Usage: muonbase-client [-h] [-n <threads>] [-t] [-i <ip>] "
                "[-p <port>] [-o <order>] "
@@ -59,6 +67,7 @@ static void PrintUsage() {
 }
 
 int main(int argc, char **argv) {
+  PrintVersion();
   int option;
   bool run = false;
   std::string ip = kIpDefault;
@@ -68,53 +77,53 @@ int main(int argc, char **argv) {
   size_t num_threads = kThreadsDefault;
   while ((option = getopt(argc, argv, kOptionString)) != -1) {
     switch (option) {
-    case kOptionRun:
-      run = true;
-      break;
-    case kOptionIp:
-      ip = optarg;
-      break;
-    case kOptionPort:
-      port = optarg;
-      break;
-    case kOptionThreads:
-      try {
-        num_threads = std::atoi(optarg);
-      } catch (std::invalid_argument &) {
+      case kOptionRun:
+        run = true;
+        break;
+      case kOptionIp:
+        ip = optarg;
+        break;
+      case kOptionPort:
+        port = optarg;
+        break;
+      case kOptionThreads:
+        try {
+          num_threads = std::atoi(optarg);
+        } catch (std::invalid_argument &) {
+          PrintUsage();
+          exit(1);
+        }
+        break;
+      case kOptionHelp:
+        PrintUsage();
+        exit(0);
+      case kOptionOrder:
+        try {
+          order = std::atoi(optarg);
+        } catch (std::invalid_argument &) {
+          PrintUsage();
+          exit(1);
+        }
+        break;
+      case kOptionCycles:
+        try {
+          cycles = std::atoi(optarg);
+        } catch (std::invalid_argument &) {
+          PrintUsage();
+          exit(1);
+        }
+        break;
+      case kCharColon:
+        LOG_INFO("option needs a value");
         PrintUsage();
         exit(1);
-      }
-      break;
-    case kOptionHelp:
-      PrintUsage();
-      exit(0);
-    case kOptionOrder:
-      try {
-        order = std::atoi(optarg);
-      } catch (std::invalid_argument &) {
+      case kCharQuestionMark:
+        LOG_INFO("unknown option " + std::string(optopt, 1));
         PrintUsage();
         exit(1);
-      }
-      break;
-    case kOptionCycles:
-      try {
-        cycles = std::atoi(optarg);
-      } catch (std::invalid_argument &) {
+      default:
         PrintUsage();
-        exit(1);
-      }
-      break;
-    case kCharColon:
-      LOG_INFO("option needs a value");
-      PrintUsage();
-      exit(1);
-    case kCharQuestionMark:
-      LOG_INFO("unknown option " + std::string(optopt, 1));
-      PrintUsage();
-      exit(1);
-    default:
-      PrintUsage();
-      exit(0);
+        exit(0);
     }
   }
 

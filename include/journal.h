@@ -15,17 +15,19 @@ limitations under the License. */
 #ifndef JOURNAL_H
 #define JOURNAL_H
 
-#include "json.h"
-#include "map.h"
 #include <deque>
 #include <sstream>
+
+#include "json.h"
+#include "map.h"
 
 const uint8_t kStorageInsert = 0;
 const uint8_t kStorageUpdate = 1;
 const uint8_t kStorageErase = 2;
 
-template <class K, class V> class Journal {
-public:
+template <class K, class V>
+class Journal {
+ public:
   static void Replay(const std::string &filepath, Map<K, V> &db);
   static void Append(std::ofstream &stream, uint8_t operation, const K &key,
                      const V &value);
@@ -63,22 +65,22 @@ void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
     bytes += value_bytes;
     MapIterator<K, V> iterator;
     switch (operation) {
-    case kStorageInsert:
-      db.Insert(key, value);
-      break;
-    case kStorageUpdate:
-      iterator = db.Find(key);
-      if (iterator != db.End()) {
-        db.Update(iterator, value);
-      } else {
-        throw std::runtime_error("journal: update non-existent key " + key);
-      }
-      break;
-    case kStorageErase:
-      db.Erase(key);
-      break;
-    default:
-      throw std::runtime_error("journal: unknown storage modification");
+      case kStorageInsert:
+        db.Insert(key, value);
+        break;
+      case kStorageUpdate:
+        iterator = db.Find(key);
+        if (iterator != db.End()) {
+          db.Update(iterator, value);
+        } else {
+          throw std::runtime_error("journal: update non-existent key " + key);
+        }
+        break;
+      case kStorageErase:
+        db.Erase(key);
+        break;
+      default:
+        throw std::runtime_error("journal: unknown storage modification");
     }
   }
   stream.close();

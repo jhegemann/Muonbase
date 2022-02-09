@@ -18,14 +18,14 @@ limitations under the License. */
 #include <chrono>
 
 class Clock {
-public:
+ public:
   Clock();
   virtual ~Clock();
   void Start();
   void Stop();
   double Time();
 
-private:
+ private:
   std::chrono::_V2::system_clock::time_point start_;
   std::chrono::_V2::system_clock::time_point stop_;
 };

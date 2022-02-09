@@ -102,8 +102,8 @@ HttpMethod HttpConstants::GetMethod(const std::string &method_string) {
   return INVALID_METHOD;
 }
 
-std::string
-HttpConstants::GetContentTypeString(const HttpContentType content_type) {
+std::string HttpConstants::GetContentTypeString(
+    const HttpContentType content_type) {
   struct StaticMap : std::unordered_map<HttpContentType, std::string> {
     StaticMap() {
       insert(std::make_pair(TEXT_HTML, "text/html"));
@@ -126,8 +126,8 @@ HttpConstants::GetContentTypeString(const HttpContentType content_type) {
   return kStringEmpty;
 }
 
-HttpContentType
-HttpConstants::GetContentType(const std::string &content_type_string) {
+HttpContentType HttpConstants::GetContentType(
+    const std::string &content_type_string) {
   struct StaticMap : std::unordered_map<std::string, HttpContentType> {
     StaticMap() {
       insert(std::make_pair("text/html", TEXT_HTML));
@@ -228,7 +228,8 @@ const std::string HttpRequest::AsShortString() const {
 }
 
 HttpResponse::HttpResponse()
-    : protocol_(kHttpProtocol1_1), status_(OK),
+    : protocol_(kHttpProtocol1_1),
+      status_(OK),
       message_(HttpConstants::GetStatusString(OK)) {}
 
 HttpResponse::~HttpResponse() {}
@@ -306,7 +307,9 @@ const std::string HttpResponse::AsShortString() const {
 }
 
 HttpConnection::HttpConnection(TcpSocket *socket)
-    : stage_(START), count_headers_(0), socket_(socket),
+    : stage_(START),
+      count_headers_(0),
+      socket_(socket),
       expiry_(TimeEpochMilliseconds() + kHttpConnectionTimeout) {
   reader_ = new TcpReader(socket);
   writer_ = new TcpWriter(socket);
@@ -338,114 +341,114 @@ void HttpConnection::ResetExpiry() {
 void HttpConnection::ParseRequest() {
   std::string token;
   switch (stage_) {
-  case START:
-    [[fallthrough]];
-  case METHOD:
-    if (!reader_->Peak(kStringSpace)) {
+    case START:
+      [[fallthrough]];
+    case METHOD:
+      if (!reader_->Peak(kStringSpace)) {
+        return;
+      }
+      token = reader_->Tok();
+      if (token.empty()) {
+        stage_ = FAILED;
+        return;
+      }
+      method_ = HttpConstants::GetMethod(token);
+      if (method_ == INVALID_METHOD) {
+        stage_ = FAILED;
+        return;
+      }
+      request_.SetMethod(method_);
+      stage_ = URL;
+      [[fallthrough]];
+    case URL:
+      if (!reader_->Peak(kStringSpace)) {
+        return;
+      }
+      token = reader_->Tok();
+      if (token.empty() || !StringStartsWith(token, kStringSlash) ||
+          StringContains(token, kStringSlash + kStringSlash)) {
+        stage_ = FAILED;
+        return;
+      }
+      request_.SetUrl(token);
+      stage_ = PROTOCOL;
+      [[fallthrough]];
+    case PROTOCOL:
+      if (!reader_->Peak(kHttpLineFeed)) {
+        return;
+      }
+      token = reader_->Tok();
+      if (token.compare(kHttpProtocol1_1) != 0) {
+        stage_ = FAILED;
+        return;
+      }
+      request_.SetProtocol(kHttpProtocol1_1);
+      stage_ = HEADER;
+      [[fallthrough]];
+    case HEADER:
+      [[fallthrough]];
+    case BODY:
+      ParseMessage(request_);
+      break;
+    default:
       return;
-    }
-    token = reader_->Tok();
-    if (token.empty()) {
-      stage_ = FAILED;
-      return;
-    }
-    method_ = HttpConstants::GetMethod(token);
-    if (method_ == INVALID_METHOD) {
-      stage_ = FAILED;
-      return;
-    }
-    request_.SetMethod(method_);
-    stage_ = URL;
-    [[fallthrough]];
-  case URL:
-    if (!reader_->Peak(kStringSpace)) {
-      return;
-    }
-    token = reader_->Tok();
-    if (token.empty() || !StringStartsWith(token, kStringSlash) ||
-        StringContains(token, kStringSlash + kStringSlash)) {
-      stage_ = FAILED;
-      return;
-    }
-    request_.SetUrl(token);
-    stage_ = PROTOCOL;
-    [[fallthrough]];
-  case PROTOCOL:
-    if (!reader_->Peak(kHttpLineFeed)) {
-      return;
-    }
-    token = reader_->Tok();
-    if (token.compare(kHttpProtocol1_1) != 0) {
-      stage_ = FAILED;
-      return;
-    }
-    request_.SetProtocol(kHttpProtocol1_1);
-    stage_ = HEADER;
-    [[fallthrough]];
-  case HEADER:
-    [[fallthrough]];
-  case BODY:
-    ParseMessage(request_);
-    break;
-  default:
-    return;
   }
 }
 
 void HttpConnection::ParseResponse() {
   std::string token;
   switch (stage_) {
-  case START:
-    [[fallthrough]];
-  case PROTOCOL:
-    if (!reader_->Peak(kStringSpace)) {
+    case START:
+      [[fallthrough]];
+    case PROTOCOL:
+      if (!reader_->Peak(kStringSpace)) {
+        return;
+      }
+      token = reader_->Tok();
+      if (token.compare(kHttpProtocol1_1) != 0) {
+        stage_ = FAILED;
+        return;
+      }
+      response_.SetProtocol(kHttpProtocol1_1);
+      stage_ = STATUS;
+      [[fallthrough]];
+    case STATUS:
+      if (!reader_->Peak(kStringSpace)) {
+        return;
+      }
+      token = reader_->Tok();
+      try {
+        status_ = static_cast<HttpStatus>(std::atoi(token.c_str()));
+      } catch (std::invalid_argument &) {
+        stage_ = FAILED;
+        return;
+      }
+      if (HttpConstants::GetStatusString(status_).empty()) {
+        stage_ = FAILED;
+        return;
+      }
+      response_.SetStatus(status_);
+      stage_ = MESSAGE;
+      [[fallthrough]];
+    case MESSAGE:
+      if (!reader_->Peak(kHttpLineFeed)) {
+        return;
+      }
+      token = reader_->Tok();
+      if (HttpConstants::GetStatusString(status_).compare(token) != 0) {
+        stage_ = FAILED;
+        return;
+      }
+      response_.SetMessage(token);
+      stage_ = HEADER;
+      [[fallthrough]];
+    case HEADER:
+      [[fallthrough]];
+    case BODY:
+      ParseMessage(response_);
+      break;
+    default:
       return;
-    }
-    token = reader_->Tok();
-    if (token.compare(kHttpProtocol1_1) != 0) {
-      stage_ = FAILED;
-      return;
-    }
-    response_.SetProtocol(kHttpProtocol1_1);
-    stage_ = STATUS;
-    [[fallthrough]];
-  case STATUS:
-    if (!reader_->Peak(kStringSpace)) {
-      return;
-    }
-    token = reader_->Tok();
-    try {
-      status_ = static_cast<HttpStatus>(std::atoi(token.c_str()));
-    } catch (std::invalid_argument &) {
-      stage_ = FAILED;
-      return;
-    }
-    if (HttpConstants::GetStatusString(status_).empty()) {
-      stage_ = FAILED;
-      return;
-    }
-    response_.SetStatus(status_);
-    stage_ = MESSAGE;
-    [[fallthrough]];
-  case MESSAGE:
-    if (!reader_->Peak(kHttpLineFeed)) {
-      return;
-    }
-    token = reader_->Tok();
-    if (HttpConstants::GetStatusString(status_).compare(token) != 0) {
-      stage_ = FAILED;
-      return;
-    }
-    response_.SetMessage(token);
-    stage_ = HEADER;
-    [[fallthrough]];
-  case HEADER:
-    [[fallthrough]];
-  case BODY:
-    ParseMessage(response_);
-    break;
-  default:
-    return;
   }
 }
 
@@ -458,62 +461,62 @@ void HttpConnection::ParseMessage(HttpPacket &packet) {
   size_t bytes_left;
   bool headers_complete;
   switch (stage_) {
-  case HEADER:
-    headers_complete = false;
-    while (count_headers_ <= kHttpMaxHeaderCount) {
-      if (!reader_->Peak(kHttpLineFeed)) {
-        return;
+    case HEADER:
+      headers_complete = false;
+      while (count_headers_ <= kHttpMaxHeaderCount) {
+        if (!reader_->Peak(kHttpLineFeed)) {
+          return;
+        }
+        token = reader_->Tok();
+        if (token.empty()) {
+          headers_complete = true;
+          break;
+        }
+        key = StringPopSegment(token, kStringColon + kStringSpace);
+        if (key.empty()) {
+          stage_ = FAILED;
+          return;
+        }
+        value = token;
+        if (value.empty()) {
+          stage_ = FAILED;
+          return;
+        }
+        packet.AddHeader(key, value);
+        count_headers_++;
       }
-      token = reader_->Tok();
-      if (token.empty()) {
-        headers_complete = true;
-        break;
-      }
-      key = StringPopSegment(token, kStringColon + kStringSpace);
-      if (key.empty()) {
+      if (!headers_complete) {
         stage_ = FAILED;
         return;
       }
-      value = token;
-      if (value.empty()) {
-        stage_ = FAILED;
+      stage_ = BODY;
+      [[fallthrough]];
+    case BODY:
+      content_length_string = packet.GetHeader("content-length");
+      content_length = 0;
+      if (!content_length_string.empty()) {
+        try {
+          content_length = std::atoi(content_length_string.c_str());
+        } catch (std::invalid_argument &) {
+          stage_ = FAILED;
+          return;
+        }
+      }
+      if (content_length == 0) {
+        stage_ = END;
         return;
       }
-      packet.AddHeader(key, value);
-      count_headers_++;
-    }
-    if (!headers_complete) {
-      stage_ = FAILED;
-      return;
-    }
-    stage_ = BODY;
-    [[fallthrough]];
-  case BODY:
-    content_length_string = packet.GetHeader("content-length");
-    content_length = 0;
-    if (!content_length_string.empty()) {
-      try {
-        content_length = std::atoi(content_length_string.c_str());
-      } catch (std::invalid_argument &) {
-        stage_ = FAILED;
+      bytes_left = content_length - packet.GetBody().length();
+      packet.AppendToBody(reader_->Tok(bytes_left));
+      if (packet.GetBody().length() < content_length) {
         return;
       }
-    }
-    if (content_length == 0) {
       stage_ = END;
+      [[fallthrough]];
+    case END:
       return;
-    }
-    bytes_left = content_length - packet.GetBody().length();
-    packet.AppendToBody(reader_->Tok(bytes_left));
-    if (packet.GetBody().length() < content_length) {
+    default:
       return;
-    }
-    stage_ = END;
-    [[fallthrough]];
-  case END:
-    return;
-  default:
-    return;
   }
 }
 
@@ -1019,18 +1022,18 @@ void HttpServer::HandleClientEvent(int index) {
 
 namespace http {
 
-std::optional<HttpResponse>
-SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
-            const std::string &url, const std::string &user,
-            const std::string &password, HttpContentType content_type,
-            const std::string &content) {
+std::optional<HttpResponse> SendRequest(
+    const std::string &ip, const std::string &port, HttpMethod method,
+    const std::string &url, const std::string &user,
+    const std::string &password, HttpContentType content_type,
+    const std::string &content) {
   HttpRequest request;
   request.SetMethod(method);
   request.SetUrl(url);
   if (!user.empty() && !password.empty()) {
-    request.AddHeader("authorization",
-                      "Basic" + kStringSpace +
-                          EncodeBase64(user + kStringColon + password));
+    request.AddHeader(
+        "authorization",
+        "Basic" + kStringSpace + EncodeBase64(user + kStringColon + password));
   }
   if (content_type != INVALID_CONTENT_TYPE) {
     request.AddHeader("content-type",
@@ -1064,4 +1067,4 @@ SendRequest(const std::string &ip, const std::string &port, HttpMethod method,
   return {};
 }
 
-} // namespace http
+}  // namespace http
