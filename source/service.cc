@@ -163,6 +163,7 @@ void DocumentDatabase::Rollover() {
             LOG_INFO("rollover failed: snapshot corrupted");
             rename(filepath_.c_str(), filepath_corrupted_.c_str());
           }
+          rollover_in_progress_ = false;
           return;
         }
       }
@@ -172,10 +173,12 @@ void DocumentDatabase::Rollover() {
       } catch (std::runtime_error &) {
         LOG_INFO("rollover failed: closed journal corrupted");
         rename(filepath_closed_.c_str(), filepath_corrupted_.c_str());
+        rollover_in_progress_ = false;
         return;
       }
       if (rollover_cancel_) {
         LOG_INFO("rollover cancel");
+        rollover_in_progress_ = false;
         return;
       }
       LOG_INFO("journal rollover: write snapshot");
@@ -187,11 +190,11 @@ void DocumentDatabase::Rollover() {
           LOG_INFO("rollover failed: remove snapshot");
         }
         remove(filepath_snapshot_.c_str());
+        rollover_in_progress_ = false;
         return;
-      } else {
-        rename(filepath_snapshot_.c_str(), filepath_.c_str());
-        remove(filepath_closed_.c_str());
       }
+      rename(filepath_snapshot_.c_str(), filepath_.c_str());
+      remove(filepath_closed_.c_str());
       rollover_in_progress_ = false;
     });
   }
