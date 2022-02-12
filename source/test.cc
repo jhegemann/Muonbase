@@ -175,8 +175,8 @@ int main(int argc, char **argv) {
           LOG_INFO("thread" + kStringSpace + std::to_string(index) +
                    kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
                    kStringSpace + "took" + kStringSpace +
-                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
-                   "per insertion");
+                   std::to_string(clock.Time() / count) + kStringSpace +
+                   "microseconds" + kStringSpace + "per insertion");
 
           clock.Start();
           for (size_t i = 0; i < order; i++) {
@@ -202,8 +202,8 @@ int main(int argc, char **argv) {
           LOG_INFO("thread" + kStringSpace + std::to_string(index) +
                    kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
                    kStringSpace + "took" + kStringSpace +
-                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
-                   "per update");
+                   std::to_string(clock.Time() / count) + kStringSpace +
+                   "microseconds" + kStringSpace + "per update");
 
           clock.Start();
           for (size_t i = 0; i < order; i++) {
@@ -225,8 +225,8 @@ int main(int argc, char **argv) {
           LOG_INFO("thread" + kStringSpace + std::to_string(index) +
                    kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
                    kStringSpace + "took" + kStringSpace +
-                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
-                   "per lookup");
+                   std::to_string(clock.Time() / count) + kStringSpace +
+                   "microseconds" + kStringSpace + "per lookup");
 
           clock.Start();
           for (size_t i = 0; i < order; i++) {
@@ -245,8 +245,8 @@ int main(int argc, char **argv) {
           LOG_INFO("thread" + kStringSpace + std::to_string(index) +
                    kStringSpace + "cycle" + kStringSpace + std::to_string(i) +
                    kStringSpace + "took" + kStringSpace +
-                   std::to_string(clock.Time() / count) + "ms" + kStringSpace +
-                   "per erasure");
+                   std::to_string(clock.Time() / count) + kStringSpace +
+                   "microseconds" + kStringSpace + "per erasure");
         }
       } catch (std::exception &e) {
         LOG_INFO("test failed: " + std::string(e.what()));

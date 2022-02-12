@@ -61,7 +61,7 @@ const std::string kStringSingleQuote = "'";
 const std::string kStringPipe = "|";
 const std::string kStringWss = "\b\t\n\a\r ";
 const std::string kStringAlphabet = "abcdefghijklmnopqrstuvwxyz";
-const std::string kNumberCharset = "0123456789";
+const std::string kStringDigits = "0123456789";
 
 const char kCharZero = '0';
 const char kCharOne = '1';

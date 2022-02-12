@@ -68,12 +68,22 @@ void DocumentDatabase::Initialize() {
   bool unlink_closed = false;
   bool unlink_journal = false;
   if (FileExists(filepath_closed_)) {
-    DatabaseJournal::Replay(filepath_closed_, database_);
+    try {
+      DatabaseJournal::Replay(filepath_closed_, database_);
+    } catch (std::runtime_error &) {
+      rename(filepath_closed_.c_str(), filepath_corrupted_.c_str());
+      throw std::runtime_error("error during closed journal replay");
+    }
     rollover_necessary = true;
     unlink_closed = true;
   }
   if (FileExists(filepath_journal_)) {
-    DatabaseJournal::Replay(filepath_journal_, database_);
+    try {
+      DatabaseJournal::Replay(filepath_journal_, database_);
+    } catch (std::runtime_error &) {
+      rename(filepath_journal_.c_str(), filepath_corrupted_.c_str());
+      throw std::runtime_error("error during journal replay");
+    }
     rollover_necessary = true;
     unlink_journal = true;
   }
@@ -157,7 +167,17 @@ void DocumentDatabase::Rollover() {
         }
       }
       LOG_INFO("journal rollover: replay closed journal");
-      DatabaseJournal::Replay(filepath_closed_, database);
+      try {
+        DatabaseJournal::Replay(filepath_closed_, database, rollover_cancel_);
+      } catch (std::runtime_error &) {
+        LOG_INFO("rollover failed: closed journal corrupted");
+        rename(filepath_closed_.c_str(), filepath_corrupted_.c_str());
+        return;
+      }
+      if (rollover_cancel_) {
+        LOG_INFO("rollover cancel");
+        return;
+      }
       LOG_INFO("journal rollover: write snapshot");
       bytes = db::Serialize(filepath_snapshot_, database, rollover_cancel_);
       if (bytes == std::string::npos) {

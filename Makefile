@@ -4,7 +4,7 @@ SD = ./source
 ID = ./include
 BN = ./bin
 CC = g++
-CFLAGS = -O2 -std=c++2a -Wall -pedantic
+CFLAGS = -O3 -march=native -std=c++2a -Wall -pedantic
 
 TARGETS = server client
 
