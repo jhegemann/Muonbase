@@ -28,13 +28,15 @@ const uint8_t kStorageErase = 2;
 template <class K, class V>
 class Journal {
  public:
-  static void Replay(const std::string &filepath, Map<K, V> &db);
+  static void Replay(const std::string &filepath, Map<K, V> &db,
+                     const std::atomic<bool> &cancel = false);
   static void Append(std::ofstream &stream, uint8_t operation, const K &key,
                      const V &value);
 };
 
 template <class K, class V>
-void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
+void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db,
+                           const std::atomic<bool> &cancel) {
   if (!FileExists(filepath)) {
     return;
   }
@@ -48,6 +50,9 @@ void Journal<K, V>::Replay(const std::string &filepath, Map<K, V> &db) {
   V value;
   size_t bytes = 0;
   while (bytes < size) {
+    if (cancel) {
+      return;
+    }
     stream.read((char *)&operation, sizeof(uint8_t));
     bytes += sizeof(uint8_t);
     if (!stream) {
