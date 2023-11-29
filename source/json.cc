@@ -96,7 +96,15 @@ JsonInteger JsonObject::GetInteger(const std::string &key) const {
 }
 
 JsonFloat JsonObject::GetFloat(const std::string &key) const {
-  return std::any_cast<JsonFloat>(values_.at(key));
+	JsonFloat value;
+	if (values_.at(key).type() == typeid(JsonFloat)) {
+		value = std::any_cast<JsonFloat>(values_.at(key));
+	} else if (values_.at(key).type() == typeid(JsonInteger)) {
+		value = (JsonFloat)std::any_cast<JsonInteger>(values_.at(key));
+	} else {
+		throw std::runtime_error("invalid type");
+	}
+	return value;
 }
 
 JsonString JsonObject::GetString(const std::string &key) const {
@@ -207,11 +215,11 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
   bool dot;
   std::string text;
   char border;
-  if (!ExpectString(source, kStringCurlyBracketOpen, offset)) {
+  if (!StringExpect(source, kStringCurlyBracketOpen, offset)) {
     throw std::runtime_error("json: initial bracket");
   }
   for (;;) {
-    if (!ExpectString(source, kStringDoubleQuote, offset)) {
+    if (!StringExpect(source, kStringDoubleQuote, offset)) {
       throw std::runtime_error("json: initial quote key");
     }
     position = source.find(kStringDoubleQuote, offset);
@@ -220,10 +228,10 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
     }
     key = source.substr(offset, position - offset);
     offset = position + 1;
-    if (!ExpectString(source, kStringColon, offset)) {
+    if (!StringExpect(source, kStringColon, offset)) {
       throw std::runtime_error("json: colon separator");
     }
-    if (!ExpectString(source, kStringEmpty, offset)) {
+    if (!StringExpect(source, kStringEmpty, offset)) {
       throw std::runtime_error("json: value start");
     }
     switch (source[offset]) {
@@ -328,7 +336,7 @@ void JsonObject::Parse(const std::string &source, size_t &source_offset) {
       default:
         throw std::runtime_error("json: invalid value");
     }
-    if (!ExpectString(source, kStringEmpty, offset)) {
+    if (!StringExpect(source, kStringEmpty, offset)) {
       throw std::runtime_error("json: missing terminator");
     }
     if (source[offset] == kCharComma) {
@@ -388,7 +396,15 @@ JsonInteger JsonArray::GetInteger(size_t index) const {
 }
 
 JsonFloat JsonArray::GetFloat(size_t index) const {
-  return std::any_cast<JsonFloat>(values_[index]);
+	JsonFloat value;
+	if (values_[index].type() == typeid(JsonFloat)) {
+		value = std::any_cast<JsonFloat>(values_[index]);
+	} else if (values_[index].type() == typeid(JsonInteger)) {
+		value = (JsonFloat)std::any_cast<JsonInteger>(values_[index]);
+	} else {
+		throw std::runtime_error("invalid type");
+	}
+	return value;
 }
 
 JsonString JsonArray::GetString(size_t index) const {
@@ -484,11 +500,11 @@ void JsonArray::Parse(const std::string &source, size_t &source_offset) {
   char border;
   bool dot;
   std::string text;
-  if (!ExpectString(source, kStringSquareBracketOpen, offset)) {
+  if (!StringExpect(source, kStringSquareBracketOpen, offset)) {
     throw std::runtime_error("json: initial bracket");
   }
   for (;;) {
-    if (!ExpectString(source, kStringEmpty, offset)) {
+    if (!StringExpect(source, kStringEmpty, offset)) {
       throw std::runtime_error("json: value start");
     }
     switch (source[offset]) {
@@ -593,7 +609,7 @@ void JsonArray::Parse(const std::string &source, size_t &source_offset) {
       default:
         throw std::runtime_error("json: invalid value");
     }
-    if (!ExpectString(source, kStringEmpty, offset)) {
+    if (!StringExpect(source, kStringEmpty, offset)) {
       throw std::runtime_error("json: missing terminator");
     }
     if (source[offset] == kCharComma) {

@@ -45,7 +45,7 @@ static const size_t kCyclesDefault = 8;
 static const size_t kThreadsDefault = 4;
 
 static void PrintVersion() {
-  std::cout << "Muonbase v1.0.0" << std::endl;
+  std::cout << "Muonbase v1.0.2" << std::endl;
   std::cout << "Copyright 2022 Jonas Hegemann <jonas.hegemann@hotmail.de>"
             << std::endl;
 }

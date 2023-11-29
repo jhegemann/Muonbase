@@ -39,16 +39,15 @@ void Log::Info(const std::string &msg, const std::string &file, int line,
   }
   std::string pid = std::to_string(getpid());
   std::string datetime = EpochToString(time(nullptr), kLogDatetimeFormat);
-  if (stream_.is_open()) {
-    stream_ << kStringSquareBracketOpen << pid << kStringPipe << datetime
+  sstream_.str(kStringEmpty);
+  sstream_ << kStringSquareBracketOpen << pid << kStringPipe << datetime
             << kStringPipe << kLogInfo << kStringPipe << file << kStringColon
             << line << kStringColon << function << kStringSquareBracketClose
             << kStringSpace << msg << std::endl;
+  if (stream_.is_open()) {
+    stream_ << sstream_.str();
   } else {
-    std::cout << kStringSquareBracketOpen << pid << kStringPipe << datetime
-              << kStringPipe << kLogInfo << kStringPipe << file << kStringColon
-              << line << kStringColon << function << kStringSquareBracketClose
-              << kStringSpace << msg << std::endl;
+    std::cout << sstream_.str();
   }
 }
 

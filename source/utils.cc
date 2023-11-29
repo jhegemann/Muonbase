@@ -45,11 +45,25 @@ std::string DecodeBase64(const std::string &to_decode) {
 }
 
 std::string Sha256Hash(const std::string &to_hash) {
-  unsigned char hash[SHA256_DIGEST_LENGTH];
-  SHA256_CTX sha256;
-  SHA256_Init(&sha256);
-  SHA256_Update(&sha256, to_hash.c_str(), to_hash.size());
-  SHA256_Final(hash, &sha256);
+  unsigned char *hash;
+  unsigned int hash_length;
+  EVP_MD_CTX *mdctx;
+  if ((mdctx = EVP_MD_CTX_new()) == nullptr) {
+    return kStringEmpty;
+  }
+  if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), nullptr)) {
+    return kStringEmpty;
+  }
+  if (1 != EVP_DigestUpdate(mdctx, to_hash.c_str(), to_hash.size())) {
+    return kStringEmpty;
+  }
+  if ((hash = (unsigned char *)OPENSSL_malloc(EVP_MD_size(EVP_sha256()))) == nullptr) {
+    return kStringEmpty;
+  }
+  if (1 != EVP_DigestFinal_ex(mdctx, hash, &hash_length)) {
+    return kStringEmpty;
+  }
+  EVP_MD_CTX_free(mdctx);
   std::stringstream ss;
   for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
     ss << std::hex << std::setw(2) << std::setfill(kCharZero) << (int)hash[i];
@@ -66,7 +80,7 @@ bool CharIsAnyOf(char character, const std::string &charset) {
   return false;
 }
 
-bool ExpectString(const std::string &text, const std::string &what,
+bool StringExpect(const std::string &text, const std::string &what,
                   size_t &offset) {
   size_t position = offset;
   while (position < text.length()) {

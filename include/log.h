@@ -42,6 +42,7 @@ class Log {
 
  private:
   static Log *instance_;
+  std::stringstream sstream_;
   std::fstream stream_;
   bool verbose_;
   std::mutex mutex_;

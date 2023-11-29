@@ -101,7 +101,7 @@ std::string EncodeBase64(const std::string &to_encode);
 std::string DecodeBase64(const std::string &to_decode);
 std::string Sha256Hash(const std::string &to_hash);
 bool CharIsAnyOf(char character, const std::string &charset);
-bool ExpectString(const std::string &text, const std::string &what,
+bool StringExpect(const std::string &text, const std::string &what,
                   size_t &offset);
 std::string DoubleToString(double number, int precision = 6);
 double StringToDouble(const char *text);
